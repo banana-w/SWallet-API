@@ -5,9 +5,9 @@ VisualStudioVersion = 17.11.35303.130
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SWallet-API", "SWallet-API\SWallet-API.csproj", "{293ADF62-E1E7-45E7-8C72-3CC613D68597}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SWallet.Domain", "SWallet.Domain\SWallet.Domain.csproj", "{1A61B8DB-6922-4B07-B007-D0AB9495C48C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SWallet.Domain", "SWallet.Domain\SWallet.Domain.csproj", "{1A61B8DB-6922-4B07-B007-D0AB9495C48C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SWallet.Repository", "SWallet.Repository\SWallet.Repository.csproj", "{C1A1CCC5-7268-49A2-BD0D-39986E6DF110}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SWallet.Repository", "SWallet.Repository\SWallet.Repository.csproj", "{C1A1CCC5-7268-49A2-BD0D-39986E6DF110}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
