@@ -1380,7 +1380,7 @@ public partial class SwalletDbContext : DbContext
                 .HasColumnName("station_id");
             entity.Property(e => e.Status).HasColumnName("status");
 
-            entity.HasOne(d => d.Account).WithMany(p => p.Staff)
+            entity.HasOne(d => d.Account).WithMany(p => p.Staffs)
                 .HasForeignKey(d => d.AccountId)
                 .HasConstraintName("FK_tbl_staff_tbl_account_account_id");
 

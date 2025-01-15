@@ -16,8 +16,10 @@ namespace SWallet.Repository.Services.Implements
     {
         private readonly Mapper mapper;
         private readonly IEmailService _emailService;
+        private readonly ICloudinaryService _cloudinaryService;
 
-        public AccountService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<AccountService> logger, IHttpContextAccessor httpContextAccessor, IEmailService emailService) : base(unitOfWork, logger, httpContextAccessor)
+        public AccountService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<AccountService> logger, IHttpContextAccessor httpContextAccessor, 
+            IEmailService emailService, ICloudinaryService cloudinaryService) : base(unitOfWork, logger, httpContextAccessor)
         {
             var config = new MapperConfiguration(cfg
                 =>
@@ -93,6 +95,7 @@ namespace SWallet.Repository.Services.Implements
             });
             mapper ??= new Mapper(config);
             _emailService = emailService;
+            _cloudinaryService = cloudinaryService;
         }
 
         public async Task<AccountResponse> CreateStudentAccount(CreateStudentAccount accountCreation)
@@ -104,7 +107,19 @@ namespace SWallet.Repository.Services.Implements
 
             student.AccountId = account.Id;
             //upload font-back student card images
-            //
+            if(accountCreation.StudentCardFront != null && accountCreation.StudentCardFront.Length > 0)
+            {
+                var uploadResult = _cloudinaryService.UploadImageAsync(accountCreation.StudentCardFront);
+                student.StudentCardFront = uploadResult.Result.SecureUrl.AbsoluteUri;
+                student.FileNameFront = uploadResult.Result.PublicId;
+            }
+            if(accountCreation.StudentCardBack != null && accountCreation.StudentCardBack.Length > 0)
+            {
+                var uploadResult = _cloudinaryService.UploadImageAsync(accountCreation.StudentCardBack);
+                student.StudentCardBack = uploadResult.Result.SecureUrl.AbsoluteUri;
+                student.FileNameBack = uploadResult.Result.PublicId;
+            }
+
             await _unitOfWork.GetRepository<Student>().InsertAsync(student);
 
             bool issuccessfull = await _unitOfWork.CommitAsync() > 0;
