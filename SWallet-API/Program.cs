@@ -1,6 +1,7 @@
 ﻿using CloudinaryDotNet;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
+using SWallet.Repository.Payload;
 using SWallet_API.Extentions;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,7 +21,6 @@ builder.Services.AddConfigSwagger();
 
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("Cloudinary"));
 
-// Đăng ký Cloudinary
 builder.Services.AddSingleton<Cloudinary>(sp =>
 {
     var cloudinarySettings = sp.GetRequiredService<IOptions<CloudinarySettings>>().Value;

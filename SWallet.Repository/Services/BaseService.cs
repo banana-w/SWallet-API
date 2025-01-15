@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using SWallet.Domain.Models;
 using SWallet.Repository.Interfaces;
 
-namespace Reso.Invoice.Repository.Services
+namespace SWallet.Repository.Services
 {
     public abstract class BaseService<T> where T : class
     {
