@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using SWallet.Repository.Services.Implements;
+using SWallet.Repository.Services.Interfaces;
 using System.Text;
 
 namespace SWallet_API.Extentions
@@ -9,6 +11,8 @@ namespace SWallet_API.Extentions
     {
         public static IServiceCollection AddServices(this IServiceCollection services, IConfiguration config)
         {
+            services.AddScoped<IAccountService, AccountService>();
+
             return services;
         }
 
