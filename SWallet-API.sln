@@ -9,8 +9,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SWallet.Domain", "SWallet.D
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SWallet.Repository", "SWallet.Repository\SWallet.Repository.csproj", "{C1A1CCC5-7268-49A2-BD0D-39986E6DF110}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cloudinary", "Cloudinary\Cloudinary.csproj", "{E13BD4CA-A24F-4E31-9316-FD2EFCA1A192}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,10 +27,6 @@ Global
 		{C1A1CCC5-7268-49A2-BD0D-39986E6DF110}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C1A1CCC5-7268-49A2-BD0D-39986E6DF110}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C1A1CCC5-7268-49A2-BD0D-39986E6DF110}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E13BD4CA-A24F-4E31-9316-FD2EFCA1A192}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E13BD4CA-A24F-4E31-9316-FD2EFCA1A192}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E13BD4CA-A24F-4E31-9316-FD2EFCA1A192}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E13BD4CA-A24F-4E31-9316-FD2EFCA1A192}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
