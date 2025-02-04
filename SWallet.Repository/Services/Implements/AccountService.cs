@@ -5,7 +5,9 @@ using SWallet.Domain.Models;
 using SWallet.Repository.Enums;
 using SWallet.Repository.Interfaces;
 using SWallet.Repository.Payload.Request.Account;
+using SWallet.Repository.Payload.Request.Login;
 using SWallet.Repository.Payload.Response.Account;
+using SWallet.Repository.Payload.Response.Login;
 using SWallet.Repository.Services.Interfaces;
 using SWallet.Repository.Utils;
 using BCryptNet = BCrypt.Net.BCrypt;
@@ -87,7 +89,7 @@ namespace SWallet.Repository.Services.Implements
            .ReverseMap()
            .ForMember(t => t.Id, opt => opt.MapFrom(src => Ulid.NewUlid()))
            .ForMember(t => t.Role, opt => opt.MapFrom(src => Role.Student))
-           .ForMember(t => t.Password, opt => opt.MapFrom(src => BCryptNet.HashPassword(src.Password)))
+           .ForMember(t => t.Password, opt => opt.MapFrom(src => BCryptNet.HashPassword(src.Password))) // HashPassword when create account
            .ForMember(t => t.IsVerify, opt => opt.MapFrom(src => true))
            .ForMember(t => t.DateCreated, opt => opt.MapFrom(src => DateTime.Now))
            .ForMember(t => t.DateUpdated, opt => opt.MapFrom(src => DateTime.Now))
@@ -129,6 +131,29 @@ namespace SWallet.Repository.Services.Implements
                 return mapper.Map<AccountResponse>(account);
             }
             return null;
+        }
+
+        public async Task<AccountResponse> GetAccountById(string id)
+        {
+            Account account = await _unitOfWork.GetRepository<Account>().SingleOrDefaultAsync(predicate: x => x.Id == id);
+            return mapper.Map<AccountResponse>(account);
+        }
+
+        public async Task<LoginResponse> Login(LoginRequest loginRequest)
+        {
+            Account account = await _unitOfWork.GetRepository<Account>().SingleOrDefaultAsync(predicate: x => x.UserName == loginRequest.UserName);
+            if (account == null || !BCryptNet.Verify(loginRequest.Password, account.Password))
+            {
+                return null;
+            }
+            var acc = mapper.Map<AccountResponse>(account);
+            return new LoginResponse
+            {
+                Token = JwtUtil.GenerateJwtToken(acc),
+                Role = acc.RoleName,
+                AccountId = acc.UserId
+            };
+
         }
     }
 }
