@@ -20,8 +20,8 @@ namespace SWallet.Repository.Services.Implements
         private readonly IEmailService _emailService;
         private readonly ICloudinaryService _cloudinaryService;
 
-        public AccountService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<AccountService> logger, IHttpContextAccessor httpContextAccessor, 
-            IEmailService emailService, ICloudinaryService cloudinaryService) : base(unitOfWork, logger, httpContextAccessor)
+        public AccountService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<AccountService> logger, 
+            IEmailService emailService, ICloudinaryService cloudinaryService) : base(unitOfWork, logger)
         {
             var config = new MapperConfiguration(cfg
                 =>
@@ -103,6 +103,7 @@ namespace SWallet.Repository.Services.Implements
         public async Task<AccountResponse> CreateStudentAccount(CreateStudentAccount accountCreation)
         {
             Account account = mapper.Map<Account>(accountCreation);
+            //insert account
             await _unitOfWork.GetRepository<Account>().InsertAsync(account);
 
             Student student = mapper.Map<Student>(accountCreation);
@@ -121,7 +122,7 @@ namespace SWallet.Repository.Services.Implements
                 student.StudentCardBack = uploadResult.Result.SecureUrl.AbsoluteUri;
                 student.FileNameBack = uploadResult.Result.PublicId;
             }
-
+            //insert student
             await _unitOfWork.GetRepository<Student>().InsertAsync(student);
 
             bool issuccessfull = await _unitOfWork.CommitAsync() > 0;

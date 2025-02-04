@@ -19,6 +19,11 @@ namespace SWallet.Repository.Services
             _logger = logger;
             _httpContextAccessor = httpContextAccessor;
         }
+        public BaseService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<T> logger)
+        {
+            _unitOfWork = unitOfWork;
+            _logger = logger;
+        }
 
         protected string GetUsernameFromJwt()
         {

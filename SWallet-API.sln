@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SWallet.Domain", "SWallet.D
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SWallet.Repository", "SWallet.Repository\SWallet.Repository.csproj", "{C1A1CCC5-7268-49A2-BD0D-39986E6DF110}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Swallet_UnitTest", "Swallet_UnitTest\Swallet_UnitTest.csproj", "{42B0C122-63E2-4652-909F-40BB60F15D97}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{C1A1CCC5-7268-49A2-BD0D-39986E6DF110}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C1A1CCC5-7268-49A2-BD0D-39986E6DF110}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C1A1CCC5-7268-49A2-BD0D-39986E6DF110}.Release|Any CPU.Build.0 = Release|Any CPU
+		{42B0C122-63E2-4652-909F-40BB60F15D97}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{42B0C122-63E2-4652-909F-40BB60F15D97}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{42B0C122-63E2-4652-909F-40BB60F15D97}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{42B0C122-63E2-4652-909F-40BB60F15D97}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
