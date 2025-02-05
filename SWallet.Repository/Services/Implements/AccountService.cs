@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using SWallet.Domain.Models;
 using SWallet.Repository.Enums;
 using SWallet.Repository.Interfaces;
+using SWallet.Repository.Payload.ExceptionModels;
 using SWallet.Repository.Payload.Request.Account;
 using SWallet.Repository.Payload.Request.Login;
 using SWallet.Repository.Payload.Response.Account;
@@ -25,7 +26,7 @@ namespace SWallet.Repository.Services.Implements
         private readonly IEmailService _emailService;
         private readonly ICloudinaryService _cloudinaryService;
 
-        public AccountService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<AccountService> logger, 
+        public AccountService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<AccountService> logger,
             IEmailService emailService, ICloudinaryService cloudinaryService) : base(unitOfWork, logger)
         {
             var config = new MapperConfiguration(cfg
@@ -115,13 +116,13 @@ namespace SWallet.Repository.Services.Implements
 
             student.AccountId = account.Id;
             //upload font-back student card images
-            if(accountCreation.StudentCardFront != null && accountCreation.StudentCardFront.Length > 0)
+            if (accountCreation.StudentCardFront != null && accountCreation.StudentCardFront.Length > 0)
             {
                 var uploadResult = _cloudinaryService.UploadImageAsync(accountCreation.StudentCardFront);
                 student.StudentCardFront = uploadResult.Result.SecureUrl.AbsoluteUri;
                 student.FileNameFront = uploadResult.Result.PublicId;
             }
-            if(accountCreation.StudentCardBack != null && accountCreation.StudentCardBack.Length > 0)
+            if (accountCreation.StudentCardBack != null && accountCreation.StudentCardBack.Length > 0)
             {
                 var uploadResult = _cloudinaryService.UploadImageAsync(accountCreation.StudentCardBack);
                 student.StudentCardBack = uploadResult.Result.SecureUrl.AbsoluteUri;
@@ -136,7 +137,7 @@ namespace SWallet.Repository.Services.Implements
                 _emailService.SendEmailStudentRegister(account.Email);
                 return mapper.Map<AccountResponse>(account);
             }
-            return null;
+            else throw new ApiException("Account Creation Fail", 400, "BAD_REQUEST");
         }
 
         public async Task<AccountResponse> GetAccountById(string id)
@@ -145,6 +146,6 @@ namespace SWallet.Repository.Services.Implements
             return mapper.Map<AccountResponse>(account);
         }
 
-        
+
     }
 }
