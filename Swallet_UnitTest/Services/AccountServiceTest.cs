@@ -2,17 +2,21 @@
 using CloudinaryDotNet.Actions;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.Extensions.Logging;
 using Moq;
 using SWallet.Domain.Models;
 using SWallet.Repository.Interfaces;
 using SWallet.Repository.Payload.Request.Account;
+using SWallet.Repository.Payload.Request.Login;
 using SWallet.Repository.Payload.Response.Account;
 using SWallet.Repository.Services.Implements;
 using SWallet.Repository.Services.Interfaces;
+using SWallet.Repository.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -23,7 +27,7 @@ namespace Swallet_UnitTest.Services
         private readonly Mock<IUnitOfWork<SwalletDbContext>> _unitOfWorkMock;
         private readonly Mock<ICloudinaryService> _cloudinaryServiceMock;
         private readonly Mock<IEmailService> _emailServiceMock;
-        private readonly AccountService _accountServiceMock;
+        private readonly AccountService _accountService;
         private readonly Mock<ILogger<AccountService>> _loggerMock;
         private readonly Mock<IMapper> _mapperMock;
 
@@ -35,7 +39,7 @@ namespace Swallet_UnitTest.Services
             _loggerMock = new Mock<ILogger<AccountService>>();
             _mapperMock = new Mock<IMapper>();
 
-            _accountServiceMock = new AccountService(
+            _accountService = new AccountService(
                 _unitOfWorkMock.Object, _loggerMock.Object,
                 _emailServiceMock.Object,
                 _cloudinaryServiceMock.Object
@@ -78,10 +82,11 @@ namespace Swallet_UnitTest.Services
             });
             _unitOfWorkMock.Setup(u => u.GetRepository<Account>().InsertAsync(account)).Returns(Task.CompletedTask);
             _unitOfWorkMock.Setup(u => u.GetRepository<Student>().InsertAsync(student)).Returns(Task.CompletedTask);
+            _emailServiceMock.Setup(e => e.SendEmailStudentRegister(It.IsAny<string>()));
             _unitOfWorkMock.Setup(u => u.CommitAsync()).ReturnsAsync(1);
 
             // Act
-            var result = await _accountServiceMock.CreateStudentAccount(accountCreation);
+            var result = await _accountService.CreateStudentAccount(accountCreation);
 
             // Assert
             result.Should().NotBeNull();
@@ -124,12 +129,13 @@ namespace Swallet_UnitTest.Services
             _unitOfWorkMock.Setup(u => u.CommitAsync()).ReturnsAsync(0); // Commit thất bại
 
             // Act
-            var result = await _accountServiceMock.CreateStudentAccount(accountCreation);
+            var result = await _accountService.CreateStudentAccount(accountCreation);
 
             // Assert
             Assert.Null(result);
             _emailServiceMock.Verify(e => e.SendEmailStudentRegister(It.IsAny<string>()), Times.Never);
         }
+
 
     }
 }

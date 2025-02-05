@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using SWallet.Domain.Models;
 using SWallet.Repository.Enums;
 using SWallet.Repository.Interfaces;
@@ -10,6 +12,9 @@ using SWallet.Repository.Payload.Response.Account;
 using SWallet.Repository.Payload.Response.Login;
 using SWallet.Repository.Services.Interfaces;
 using SWallet.Repository.Utils;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using BCryptNet = BCrypt.Net.BCrypt;
 
 namespace SWallet.Repository.Services.Implements
@@ -140,21 +145,6 @@ namespace SWallet.Repository.Services.Implements
             return mapper.Map<AccountResponse>(account);
         }
 
-        public async Task<LoginResponse> Login(LoginRequest loginRequest)
-        {
-            Account account = await _unitOfWork.GetRepository<Account>().SingleOrDefaultAsync(predicate: x => x.UserName == loginRequest.UserName);
-            if (account == null || !BCryptNet.Verify(loginRequest.Password, account.Password))
-            {
-                return null;
-            }
-            var acc = mapper.Map<AccountResponse>(account);
-            return new LoginResponse
-            {
-                Token = JwtUtil.GenerateJwtToken(acc),
-                Role = acc.RoleName,
-                AccountId = acc.UserId
-            };
-
-        }
+        
     }
 }

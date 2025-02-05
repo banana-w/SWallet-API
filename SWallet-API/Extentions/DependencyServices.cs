@@ -12,6 +12,10 @@ namespace SWallet_API.Extentions
         public static IServiceCollection AddServices(this IServiceCollection services, IConfiguration config)
         {
             services.AddScoped<IAccountService, AccountService>();
+            services.AddScoped<IJwtService, JwtService>();
+            services.AddScoped<IAuthenticationService, AuthenticationService>();
+            services.AddScoped<IEmailService, EmailService>();
+            services.AddScoped<ICloudinaryService, CloudinaryService>();
 
             return services;
         }

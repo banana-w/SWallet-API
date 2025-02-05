@@ -14,7 +14,5 @@ namespace SWallet.Repository.Services.Interfaces
     {
         Task<AccountResponse> CreateStudentAccount(CreateStudentAccount accountCreation);
         Task<AccountResponse> GetAccountById(string id);
-        Task<LoginResponse> Login(LoginRequest loginRequest);
-
     }
 }

@@ -1,6 +1,10 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using SWallet.Domain.Models;
+using SWallet.Repository.Interfaces;
 using SWallet.Repository.Payload.Response.Account;
+using SWallet.Repository.Services.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -9,18 +13,22 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SWallet.Repository.Utils
+namespace SWallet.Repository.Services.Implements
 {
-    public class JwtUtil
+    public class JwtService : BaseService<JwtService>, IJwtService
     {
-        public static string GenerateJwtToken(AccountResponse account)
+        private readonly IConfiguration _configuration;
+        public JwtService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<JwtService> logger, IConfiguration configuration) : base(unitOfWork, logger)
         {
-            IConfiguration configuration = new ConfigurationBuilder().Build();
+            _configuration = configuration;
+        }
 
-            var secrectKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]));
+        public string GenerateJwtToken(AccountResponse account)
+        {
+            var secrectKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
             var credentials = new SigningCredentials(secrectKey, SecurityAlgorithms.HmacSha256Signature);
-            var issuer = configuration["Jwt:Issuer"];
-            var audience = configuration["Jwt:Audience"];
+            var issuer = _configuration["Jwt:Issuer"];
+            var audience = _configuration["Jwt:Audience"];
             List<Claim> claims = new List<Claim>()
                 {
                     new Claim(ClaimTypes.Email, account.Email),
