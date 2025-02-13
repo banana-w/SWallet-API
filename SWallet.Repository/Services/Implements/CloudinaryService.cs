@@ -20,6 +20,19 @@ namespace SWallet.Repository.Services.Implements
             _cloudinary = cloudinary;
         }
 
+        public async Task<bool> RemoveImageAsync(string filename)
+        {
+            // Tạo `DeletionParams` với `publicId` (Cloudinary dùng filename làm publicId)
+            var deleteParams = new DeletionParams(filename);
+
+            // Gửi yêu cầu xóa hình ảnh đến Cloudinary
+            var deleteResult = await _cloudinary.DestroyAsync(deleteParams);
+
+            // Kiểm tra kết quả xóa, trả về `true` nếu thành công
+            return deleteResult.Result == "ok" || deleteResult.Result == "not found";
+        }
+
+
         public async Task<string> UploadImageAsync(IFormFile file, string? folder = null, string? publicId = null)
         {
             var uploadParams = new ImageUploadParams()
