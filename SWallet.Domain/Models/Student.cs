@@ -7,23 +7,23 @@ public partial class Student
 {
     public string Id { get; set; } = null!;
 
-    public string MajorId { get; set; } = null!;
+    public string? MajorId { get; set; }
 
-    public string CampusId { get; set; } = null!;
+    public string? CampusId { get; set; }
 
     public string AccountId { get; set; } = null!;
 
-    public string StudentCardFront { get; set; } = null!;
+    public string? StudentCardFront { get; set; }
 
-    public string FileNameFront { get; set; } = null!;
+    public string? FileNameFront { get; set; }
 
-    public string StudentCardBack { get; set; } = null!;
+    public string? StudentCardBack { get; set; }
 
-    public string FileNameBack { get; set; } = null!;
+    public string? FileNameBack { get; set; }
 
-    public string FullName { get; set; } = null!;
+    public string? FullName { get; set; }
 
-    public string Code { get; set; } = null!;
+    public string? Code { get; set; }
 
     public int? Gender { get; set; }
 
@@ -47,13 +47,13 @@ public partial class Student
 
     public virtual ICollection<Activity> Activities { get; set; } = new List<Activity>();
 
-    public virtual Campus Campus { get; set; } = null!;
+    public virtual Campus? Campus { get; set; }
 
     public virtual ICollection<Invitation> InvitationInvitees { get; set; } = new List<Invitation>();
 
     public virtual ICollection<Invitation> InvitationInviters { get; set; } = new List<Invitation>();
 
-    public virtual Major Major { get; set; } = null!;
+    public virtual Major? Major { get; set; }
 
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
 

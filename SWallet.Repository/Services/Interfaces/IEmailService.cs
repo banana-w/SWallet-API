@@ -9,17 +9,17 @@ namespace SWallet.Repository.Services.Interfaces
 {
     public interface IEmailService
     {
-        //bool SendEmailBrandRegister(string receiver);
+        bool SendEmailBrandRegister(string receiver);
 
-        //bool SendEmailCamapaignClose(List<string> receivers, string campaignName);
+        bool SendEmailCampaignClose(List<string> receivers, string campaignName);
 
-        bool SendEmailStudentRegister(string receiver);
+        Task<bool>SendEmailStudentRegister(string receiver);
 
         //bool SendEmailStudentRegisterApprove(string receiver);
 
         //bool SendEmailStudentRegisterReject(string receiver, string note);
 
-        //string SendEmailVerification(string receiver);
+        string SendEmailVerification(string receiver);
 
         //bool SendEmailAbortOrder(string receiver, string orderId, string note);
 

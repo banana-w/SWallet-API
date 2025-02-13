@@ -1,13 +1,21 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using SWallet.Domain.Models;
 using SWallet.Repository.Enums;
 using SWallet.Repository.Interfaces;
+using SWallet.Repository.Payload.ExceptionModels;
 using SWallet.Repository.Payload.Request.Account;
+using SWallet.Repository.Payload.Request.Login;
 using SWallet.Repository.Payload.Response.Account;
+using SWallet.Repository.Payload.Response.Login;
 using SWallet.Repository.Services.Interfaces;
 using SWallet.Repository.Utils;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using BCryptNet = BCrypt.Net.BCrypt;
 
 namespace SWallet.Repository.Services.Implements
@@ -16,8 +24,10 @@ namespace SWallet.Repository.Services.Implements
     {
         private readonly Mapper mapper;
         private readonly IEmailService _emailService;
+        private readonly ICloudinaryService _cloudinaryService;
 
-        public AccountService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<AccountService> logger, IHttpContextAccessor httpContextAccessor, IEmailService emailService) : base(unitOfWork, logger, httpContextAccessor)
+        public AccountService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<AccountService> logger,
+            IEmailService emailService, ICloudinaryService cloudinaryService) : base(unitOfWork, logger)
         {
             var config = new MapperConfiguration(cfg
                 =>
@@ -85,7 +95,7 @@ namespace SWallet.Repository.Services.Implements
            .ReverseMap()
            .ForMember(t => t.Id, opt => opt.MapFrom(src => Ulid.NewUlid()))
            .ForMember(t => t.Role, opt => opt.MapFrom(src => Role.Student))
-           .ForMember(t => t.Password, opt => opt.MapFrom(src => BCryptNet.HashPassword(src.Password)))
+           .ForMember(t => t.Password, opt => opt.MapFrom(src => BCryptNet.HashPassword(src.Password))) // HashPassword when create account
            .ForMember(t => t.IsVerify, opt => opt.MapFrom(src => true))
            .ForMember(t => t.DateCreated, opt => opt.MapFrom(src => DateTime.Now))
            .ForMember(t => t.DateUpdated, opt => opt.MapFrom(src => DateTime.Now))
@@ -93,27 +103,49 @@ namespace SWallet.Repository.Services.Implements
             });
             mapper ??= new Mapper(config);
             _emailService = emailService;
+            _cloudinaryService = cloudinaryService;
         }
 
         public async Task<AccountResponse> CreateStudentAccount(CreateStudentAccount accountCreation)
         {
             Account account = mapper.Map<Account>(accountCreation);
+            //insert account
             await _unitOfWork.GetRepository<Account>().InsertAsync(account);
 
             Student student = mapper.Map<Student>(accountCreation);
 
             student.AccountId = account.Id;
             //upload font-back student card images
-            //
+            if (accountCreation.StudentCardFront != null && accountCreation.StudentCardFront.Length > 0)
+            {
+                var uploadResult = _cloudinaryService.UploadImageAsync(accountCreation.StudentCardFront);
+                student.StudentCardFront = uploadResult.Result.SecureUrl.AbsoluteUri;
+                student.FileNameFront = uploadResult.Result.PublicId;
+            }
+            if (accountCreation.StudentCardBack != null && accountCreation.StudentCardBack.Length > 0)
+            {
+                var uploadResult = _cloudinaryService.UploadImageAsync(accountCreation.StudentCardBack);
+                student.StudentCardBack = uploadResult.Result.SecureUrl.AbsoluteUri;
+                student.FileNameBack = uploadResult.Result.PublicId;
+            }
+            //insert student
             await _unitOfWork.GetRepository<Student>().InsertAsync(student);
 
             bool issuccessfull = await _unitOfWork.CommitAsync() > 0;
             if (issuccessfull)
             {
-                _emailService.SendEmailStudentRegister(account.Email);
+                await _emailService.SendEmailStudentRegister(account.Email);
                 return mapper.Map<AccountResponse>(account);
             }
-            return null;
+            else throw new ApiException("Account Creation Fail", 400, "BAD_REQUEST");
         }
+
+        public async Task<AccountResponse> GetAccountById(string id)
+        {
+            Account account = await _unitOfWork.GetRepository<Account>().SingleOrDefaultAsync(predicate: x => x.Id == id);
+            return mapper.Map<AccountResponse>(account);
+        }
+
+
     }
 }

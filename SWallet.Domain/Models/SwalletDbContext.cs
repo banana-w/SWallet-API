@@ -99,7 +99,7 @@ public partial class SwalletDbContext : DbContext
     public virtual DbSet<Wishlist> Wishlists { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlServer(GetConnectionString());
+    => optionsBuilder.UseSqlServer(GetConnectionString());
 
     private string GetConnectionString()
     {
@@ -1380,7 +1380,7 @@ public partial class SwalletDbContext : DbContext
                 .HasColumnName("station_id");
             entity.Property(e => e.Status).HasColumnName("status");
 
-            entity.HasOne(d => d.Account).WithMany(p => p.Staff)
+            entity.HasOne(d => d.Account).WithMany(p => p.Staffs)
                 .HasForeignKey(d => d.AccountId)
                 .HasConstraintName("FK_tbl_staff_tbl_account_account_id");
 
@@ -1572,10 +1572,12 @@ public partial class SwalletDbContext : DbContext
 
             entity.HasOne(d => d.Campus).WithMany(p => p.Students)
                 .HasForeignKey(d => d.CampusId)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("FK_tbl_student_tbl_campus_campus_id");
 
             entity.HasOne(d => d.Major).WithMany(p => p.Students)
                 .HasForeignKey(d => d.MajorId)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("FK_tbl_student_tbl_major_major_id");
         });
 

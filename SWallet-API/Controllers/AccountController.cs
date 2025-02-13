@@ -1,0 +1,32 @@
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using SWallet.Repository.Payload.ExceptionModels;
+using SWallet.Repository.Payload.Request.Account;
+using SWallet.Repository.Payload.Response.Account;
+using SWallet.Repository.Services.Interfaces;
+
+namespace SWallet_API.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class AccountController : ControllerBase
+    {
+        private readonly IAccountService _accountService;
+        public AccountController(IAccountService accountService)
+        {
+            _accountService = accountService;
+        }
+        [HttpPost("/register")]
+        [ProducesResponseType(typeof(AccountResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> Register([FromBody] CreateStudentAccount registerRequest)
+        {
+            var result = await _accountService.CreateStudentAccount(registerRequest);
+            if (result == null)
+            {
+                throw new ApiException("Account creation failed.", StatusCodes.Status400BadRequest, "ACCOUNT_CREATION_FAILED");
+            }
+            return Ok(result);
+        }
+    }
+}

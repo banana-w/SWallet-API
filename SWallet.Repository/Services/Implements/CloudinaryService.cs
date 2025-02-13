@@ -33,17 +33,32 @@ namespace SWallet.Repository.Services.Implements
         }
 
 
-        public async Task<string> UploadImageAsync(IFormFile file, string? folder = null, string? publicId = null)
-        {
-            var uploadParams = new ImageUploadParams()
-            {
-                File = new FileDescription(file.FileName, file.OpenReadStream()),
-                Folder = folder,
-                PublicId = publicId
-            };
 
-            var uploadResult = await _cloudinary.UploadAsync(uploadParams);
-            return uploadResult.SecureUrl.AbsoluteUri;
-        }
+        public async Task<ImageUploadResult> UploadImageAsync(IFormFile file, string? folder = null, string? publicId = null)
+
+        {
+            try
+            {
+                var uploadParams = new ImageUploadParams()
+                {
+                    File = new FileDescription(file.FileName, file.OpenReadStream()),
+                    Folder = folder,
+                    PublicId = publicId
+                };
+
+                var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+
+                if(uploadResult.Error != null)
+                {
+                    throw new Exception(uploadResult.Error.Message);
+                }
+
+                return uploadResult;
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        } 
     }
 }

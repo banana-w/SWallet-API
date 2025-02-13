@@ -1,6 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using SWallet.Domain.Models;
+using SWallet.Repository.Implement;
+using SWallet.Repository.Interfaces;
 using SWallet.Repository.Services.Implements;
 using SWallet.Repository.Services.Interfaces;
 using System.Text;
@@ -11,7 +15,14 @@ namespace SWallet_API.Extentions
     {
         public static IServiceCollection AddServices(this IServiceCollection services, IConfiguration config)
         {
+            services.AddDbContext<SwalletDbContext>(options =>
+                             options.UseSqlServer(config.GetConnectionString("DefaultConnection")));
+            services.AddScoped<IUnitOfWork<SwalletDbContext>, UnitOfWork<SwalletDbContext>>();
             services.AddScoped<IAccountService, AccountService>();
+            services.AddScoped<IJwtService, JwtService>();
+            services.AddScoped<IAuthenticationService, AuthenticationService>();
+            services.AddScoped<IEmailService, EmailService>();
+            services.AddScoped<ICloudinaryService, CloudinaryService>();
 
             return services;
         }

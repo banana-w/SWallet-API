@@ -24,24 +24,24 @@ namespace SWallet.Repository.Payload.Request.Account
         [Compare(nameof(Password), ErrorMessage = "Xác nhận mật khẩu không phù hợp")]
         public string PasswordConfirmed { get; set; }
 
-        [Required(ErrorMessage = "Chuyên ngành là bắt buộc")]
+        //[Required(ErrorMessage = "Chuyên ngành là bắt buộc")]
         public string MajorId { get; set; }
 
-        [Required(ErrorMessage = "Cơ sở là bắt buộc")]
+        //[Required(ErrorMessage = "Cơ sở là bắt buộc")]
         public string CampusId { get; set; }
 
-        [Required(ErrorMessage = "Tên đầy đủ là bắt buộc")]
+        //[Required(ErrorMessage = "Tên đầy đủ là bắt buộc")]
         [StringLength(255, MinimumLength = 3,
                 ErrorMessage = "Độ dài của họ tên từ 3 đến 255 ký tự")]
         public string FullName { get; set; }
 
-        [Required(ErrorMessage = "Cần có ảnh mặt trước thẻ sinh viên")]
-        public IFormFile StudentCardFront { get; set; }
+        //[Required(ErrorMessage = "Cần có ảnh mặt trước thẻ sinh viên")]
+        public IFormFile? StudentCardFront { get; set; }
 
-        [Required(ErrorMessage = "Cần có ảnh mặt sau thẻ sinh viên")]
-        public IFormFile StudentCardBack { get; set; }
+        //[Required(ErrorMessage = "Cần có ảnh mặt sau thẻ sinh viên")]
+        public IFormFile? StudentCardBack { get; set; }
 
-        [Required(ErrorMessage = "Mã sinh viên là bắt buộc")]
+        //[Required(ErrorMessage = "Mã sinh viên là bắt buộc")]
         [StringLength(50, MinimumLength = 3,
             ErrorMessage = "Độ dài mã sinh viên từ 3 đến 50 ký tự")]
         public string Code { get; set; }
@@ -58,7 +58,7 @@ namespace SWallet.Repository.Payload.Request.Account
         [Required(ErrorMessage = "Email là bắt buộc")]
         public string Email { get; set; }
 
-        [Required(ErrorMessage = "Ngày sinh là bắt buộc")]
+        //[Required(ErrorMessage = "Ngày sinh là bắt buộc")]
         public DateOnly? DateOfBirth { get; set; }
 
         [Phone(ErrorMessage = "Số điện thoại không hợp lệ")]
