@@ -13,7 +13,7 @@ namespace SWallet.Repository.Services.Interfaces
 
         bool SendEmailCampaignClose(List<string> receivers, string campaignName);
 
-        bool SendEmailStudentRegister(string receiver);
+        Task<bool>SendEmailStudentRegister(string receiver);
 
         bool SendEmailStudentRegisterApprove(string receiver);
 
