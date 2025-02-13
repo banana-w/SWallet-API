@@ -6,12 +6,6 @@ using SWallet.Repository.Payload.ExceptionModels;
 using SWallet.Repository.Payload.Request.Area;
 using SWallet.Repository.Payload.Response.Area;
 using SWallet.Repository.Services.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace SWallet.Repository.Services.Implements
 {

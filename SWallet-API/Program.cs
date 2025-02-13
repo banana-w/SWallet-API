@@ -29,7 +29,7 @@ builder.Services.AddSingleton<Cloudinary>(sp =>
         cloudinarySettings.ApiKey,
         cloudinarySettings.ApiSecret));
 });
-
+builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 

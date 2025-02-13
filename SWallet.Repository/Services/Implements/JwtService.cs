@@ -31,9 +31,8 @@ namespace SWallet.Repository.Services.Implements
             var audience = _configuration["Jwt:Audience"];
             List<Claim> claims = new List<Claim>()
                 {
-                    new Claim(ClaimTypes.Email, account.Email),
                     new Claim("Role", account.RoleName.ToString()),
-                    new Claim(ClaimTypes.NameIdentifier, account.UserId.ToString())
+                    new Claim(ClaimTypes.NameIdentifier, account.Id.ToString())
                 };
 
             var preparedToken = new JwtSecurityToken(

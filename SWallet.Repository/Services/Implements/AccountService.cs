@@ -134,7 +134,7 @@ namespace SWallet.Repository.Services.Implements
             bool issuccessfull = await _unitOfWork.CommitAsync() > 0;
             if (issuccessfull)
             {
-                _emailService.SendEmailStudentRegister(account.Email);
+                await _emailService.SendEmailStudentRegister(account.Email);
                 return mapper.Map<AccountResponse>(account);
             }
             else throw new ApiException("Account Creation Fail", 400, "BAD_REQUEST");
