@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using SWallet.Domain.Models;
 using SWallet.Repository.Interfaces;
+using SWallet.Repository.Payload.ExceptionModels;
 using SWallet.Repository.Payload.Request.Account;
 using SWallet.Repository.Payload.Request.Login;
 using SWallet.Repository.Payload.Response.Account;
@@ -94,7 +95,7 @@ namespace Swallet_UnitTest.Services
             _emailServiceMock.Verify(e => e.SendEmailStudentRegister("testuser@example.com"), Times.Once);
         }
         [Fact]
-        public async Task CreateStudentAccount_ShouldReturnNull_WhenCommitFails()
+        public async Task CreateStudentAccount_ShouldThrowException_WhenCommitFails()
         {
             // Arrange
             var accountCreation = new CreateStudentAccount
@@ -128,11 +129,12 @@ namespace Swallet_UnitTest.Services
             _unitOfWorkMock.Setup(u => u.GetRepository<Student>().InsertAsync(student)).Returns(Task.CompletedTask);
             _unitOfWorkMock.Setup(u => u.CommitAsync()).ReturnsAsync(0); // Commit thất bại
 
-            // Act
-            var result = await _accountService.CreateStudentAccount(accountCreation);
+            // Act & Assert
+            await Assert.ThrowsAsync<ApiException>(async () =>
+                await _accountService.CreateStudentAccount(accountCreation)
+            );
 
             // Assert
-            Assert.Null(result);
             _emailServiceMock.Verify(e => e.SendEmailStudentRegister(It.IsAny<string>()), Times.Never);
         }
 
