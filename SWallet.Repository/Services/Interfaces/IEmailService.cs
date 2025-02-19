@@ -15,7 +15,7 @@ namespace SWallet.Repository.Services.Interfaces
 
         Task<bool>SendEmailStudentRegister(string receiver);
 
-        bool SendEmailStudentRegisterApprove(string receiver);
+        //bool SendEmailStudentRegisterApprove(string receiver);
 
         //bool SendEmailStudentRegisterReject(string receiver, string note);
 
