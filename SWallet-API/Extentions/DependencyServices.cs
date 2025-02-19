@@ -23,6 +23,7 @@ namespace SWallet_API.Extentions
             services.AddScoped<IAuthenticationService, AuthenticationService>();
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<ICloudinaryService, CloudinaryService>();
+            services.AddScoped<IAreaService, AreaService>();
 
             return services;
         }

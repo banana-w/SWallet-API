@@ -128,17 +128,20 @@ namespace SWallet.Repository.Services.Implements
                 student.StudentCardBack = uploadResult.Result.SecureUrl.AbsoluteUri;
                 student.FileNameBack = uploadResult.Result.PublicId;
             }
-            //insert student
+            //insert student _service
             await _unitOfWork.GetRepository<Student>().InsertAsync(student);
 
             bool issuccessfull = await _unitOfWork.CommitAsync() > 0;
             if (issuccessfull)
             {
-                await _emailService.SendEmailStudentRegister(account.Email);
+                if(account.Email != null)
+                    await _emailService.SendEmailStudentRegister(account.Email);
                 return mapper.Map<AccountResponse>(account);
             }
             else throw new ApiException("Account Creation Fail", 400, "BAD_REQUEST");
         }
+
+
 
         public async Task<AccountResponse> GetAccountById(string id)
         {
