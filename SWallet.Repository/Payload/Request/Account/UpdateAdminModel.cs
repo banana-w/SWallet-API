@@ -17,8 +17,6 @@ namespace SWallet.Repository.Payload.Request.Account
 
         public IFormFile Avatar { get; set; }
 
-        public string Description { get; set; }
-
         [Required(ErrorMessage = "Trạng thái là bắt buộc")]
         public bool? State { get; set; }
     }

@@ -11,8 +11,6 @@ namespace SWallet.Repository.Services.Interfaces
     public interface ICloudinaryService
     {
 
-        Task<string> UploadImageAsync(IFormFile file, string? folder = null, string? publicId = null);
-
         Task<bool> RemoveImageAsync(string publicId);
 
         Task<ImageUploadResult> UploadImageAsync(IFormFile file, string? folder = null, string? publicId = null);

@@ -2,15 +2,18 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using SWallet.Domain.Models;
+using SWallet.Domain.Paginate;
 using SWallet.Repository.Enums;
 using SWallet.Repository.Interfaces;
+using SWallet.Repository.Payload.ExceptionModels;
+using SWallet.Repository.Payload.Request.Area;
 using SWallet.Repository.Payload.Request.Brand;
+using SWallet.Repository.Payload.Response.Area;
 using SWallet.Repository.Payload.Response.Brand;
 using SWallet.Repository.Services.Interfaces;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.IO.Enumeration;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using BCryptNet = BCrypt.Net.BCrypt;
 
@@ -19,92 +22,218 @@ namespace SWallet.Repository.Services.Implements
     public class BrandService : BaseService<BrandService>, IBrandService
     {
         private readonly Mapper mapper;
-
-        public BrandService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<BrandService> logger, IHttpContextAccessor httpContextAccessor) : base(unitOfWork, logger, httpContextAccessor)
+        private readonly ICloudinaryService _cloudinaryService;
+        public BrandService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<BrandService> logger, ICloudinaryService cloudinaryService) : base(unitOfWork, logger)
         {
-            var config = new MapperConfiguration(cfg =>
+            _cloudinaryService = cloudinaryService;
+            var config = new MapperConfiguration(cfg
+                =>
             {
-                cfg.CreateMap<Brand, BrandResponse>()
-    .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
-    .ForMember(dest => dest.AccountId, opt => opt.MapFrom(src => src.AccountId))
-    .ForMember(dest => dest.BrandName, opt => opt.MapFrom(src => src.BrandName))
-    .ForMember(dest => dest.Acronym, opt => opt.MapFrom(src => src.Acronym))
-    .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.Address))
-    .ForMember(dest => dest.CoverPhoto, opt => opt.MapFrom(src => src.CoverPhoto))
-    .ForMember(dest => dest.CoverFileName, opt => opt.MapFrom(src => src.CoverFileName))
-    .ForMember(dest => dest.Link, opt => opt.MapFrom(src => src.Link))
-    .ForMember(dest => dest.OpeningHours, opt => opt.MapFrom(src => src.OpeningHours))
-    .ForMember(dest => dest.ClosingHours, opt => opt.MapFrom(src => src.ClosingHours))
-    .ForMember(dest => dest.TotalIncome, opt => opt.MapFrom(src => src.TotalIncome))
-    .ForMember(dest => dest.TotalSpending, opt => opt.MapFrom(src => src.TotalSpending))
-    .ForMember(dest => dest.DateCreated, opt => opt.MapFrom(src => src.DateCreated))
-    .ForMember(dest => dest.DateUpdated, opt => opt.MapFrom(src => src.DateUpdated))
-    .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Description))
-    .ForMember(dest => dest.State, opt => opt.MapFrom(src => src.State))
-    .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status));
-
-
-                cfg.CreateMap<Brand, CreateBrandModel>()
-.ReverseMap()
-.ForMember(p => p.Id, opt => opt.MapFrom(src => Ulid.NewUlid()))
-.ForMember(p => p.TotalIncome, opt => opt.MapFrom(src => 0))
-.ForMember(p => p.TotalSpending, opt => opt.MapFrom(src => 0))
-.ForMember(p => p.DateCreated, opt => opt.MapFrom(src => DateTime.Now))
-.ForMember(p => p.DateUpdated, opt => opt.MapFrom(src => DateTime.Now))
-.ForMember(p => p.Status, opt => opt.MapFrom(src => true));
                 cfg.CreateMap<Account, CreateBrandModel>()
-                .ReverseMap()
-                .ForMember(p => p.Id, opt => opt.MapFrom(src => Ulid.NewUlid()))
-                .ForMember(p => p.Role, opt => opt.MapFrom(src => Role.Brand))
-                .ForMember(p => p.Password, opt => opt.MapFrom(src => BCryptNet.HashPassword(src.Password)))
-                .ForMember(p => p.IsVerify, opt => opt.MapFrom(src => true))
-                .ForMember(p => p.DateCreated, opt => opt.MapFrom(src => DateTime.Now))
-                .ForMember(p => p.DateUpdated, opt => opt.MapFrom(src => DateTime.Now))
-                .ForMember(p => p.DateVerified, opt => opt.MapFrom(src => DateTime.Now))
-                .ForMember(p => p.Status, opt => opt.MapFrom(src => true));
+            .ReverseMap()
+            .ForMember(p => p.Id, opt => opt.MapFrom(src => Ulid.NewUlid()))
+            .ForMember(p => p.Role, opt => opt.MapFrom(src => Role.Brand))
+            .ForMember(p => p.Password, opt => opt.MapFrom(src => BCryptNet.HashPassword(src.Password)))
+            .ForMember(p => p.IsVerify, opt => opt.MapFrom(src => true))
+            .ForMember(p => p.DateCreated, opt => opt.MapFrom(src => DateTime.Now))
+            .ForMember(p => p.DateUpdated, opt => opt.MapFrom(src => DateTime.Now))
+            .ForMember(p => p.DateVerified, opt => opt.MapFrom(src => DateTime.Now))
+            .ForMember(p => p.Status, opt => opt.MapFrom(src => true));
             });
             mapper = new Mapper(config);
-            //this.brandRepository = brandRepository;
-            //this.fireBaseService = fireBaseService;
-            //this.accountRepository = accountRepository;
-            //this.campaignService = campaignService;
-            //this.storeService = storeService;
-            //this.voucherService = voucherService;
-            //this.emailService = emailService;
-            //this.transactionService = transactionService;
         }
 
-        public Task<BrandResponse> Add(CreateBrandModel creation)
-        {
-            Account account = mapper.Map<Account>(creation);
 
-            //Upload logo
-            if (creation.Logo != null && creation.Logo.Length > 0)
+            public async Task<BrandResponse> CreateBrand(CreateBrandModel brand)
             {
-                FireBaseFile f = await fireBaseService.UploadFileAsync(creation.Logo, ACCOUNT_FOLDER_NAME);
-                account.Avatar = f.URL;
-                account.FileName = f.FileName;
+                var existingAccount = await _unitOfWork.GetRepository<Account>().SingleOrDefaultAsync(
+                predicate: b => b.UserName == brand.UserName);
+
+                if (existingAccount != null)
+                {
+                    throw new ApiException("Username already exists", 400, "BAD_REQUEST");
+                }
+            var imageUri = string.Empty;
+            if (brand.CoverPhoto != null && brand.CoverPhoto.Length > 0)
+            {
+                var uploadResult = await _cloudinaryService.UploadImageAsync(brand.CoverPhoto);
+                imageUri = uploadResult.SecureUrl.AbsoluteUri;
             }
 
-            account = accountRepository.Add(account);
-            emailService.SendEmailBrandRegister(account.Email);
-            Brand brand = mapper.Map<Brand>(creation);
-            brand.AccountId = account.Id;
+            Account account = mapper.Map<Account>(brand);
+            account.Avatar = imageUri;
+            await _unitOfWork.GetRepository<Account>().InsertAsync(account);
+            await _unitOfWork.CommitAsync();
 
-            //Upload cover photo
-            if (creation.CoverPhoto != null && creation.CoverPhoto.Length > 0)
+            
+   
+            var newBrand = new Brand
             {
-                FireBaseFile f = await fireBaseService.UploadFileAsync(creation.CoverPhoto, FOLDER_NAME);
-                brand.CoverPhoto = f.URL;
-                brand.CoverFileName = f.FileName;
-            }
+                Id = Ulid.NewUlid().ToString(),
+                BrandName = brand.BrandName,
+                Acronym = brand.Acronym,
+                Address = brand.Address,
+                CoverPhoto = imageUri,
+                CoverFileName = !string.IsNullOrEmpty(imageUri)
+                          ? imageUri.Split('/')[imageUri.Split('/').Length - 1]
+                          : "default_cover.jpg",
+                Link = brand.Link,
+                OpeningHours = brand.OpeningHours,
+                ClosingHours = brand.ClosingHours,
+                DateCreated = DateTime.Now,
+                Description = brand.Description,
+                State = brand.State,
+                AccountId = account.Id,
+                Status = account.Status
 
-            return mapper.Map<BrandExtraModel>(brandRepository.Add(brand));
-        }
+
+            };
+
+            await _unitOfWork.GetRepository<Brand>().InsertAsync(newBrand);
+                var isSuccess = await _unitOfWork.CommitAsync() > 0;
+
+                if (isSuccess)
+                {
+                    return new BrandResponse
+                    {
+                        Id = newBrand.Id,
+                        AccountId = newBrand.AccountId,
+                        BrandName = newBrand.BrandName,
+                        Acronym = newBrand.Acronym,
+                        Address = newBrand.Address,
+                        CoverPhoto = newBrand.CoverPhoto,
+                        CoverFileName = newBrand.CoverFileName,
+                        Link = newBrand.Link,
+                        OpeningHours = newBrand.OpeningHours,
+                        ClosingHours = newBrand.ClosingHours,
+                        DateCreated = newBrand.DateCreated,
+                        Description = newBrand.Description,
+                        State = newBrand.State,
+                        Status = newBrand.Status
+
+                    };
+                }
+                throw new ApiException("Create Brand Fail", 400, "BAD_REQUEST");
+            }
 
         public void Delete(string id)
         {
-            throw new NotImplementedException();
+            
+        }
+
+        public async Task<BrandResponse> GetBrandById(string id)
+        {
+            var area = await _unitOfWork.GetRepository<Brand>().SingleOrDefaultAsync(
+                selector: x => new BrandResponse
+                {
+                    Id = x.Id,
+                    AccountId = x.AccountId,
+                    BrandName = x.BrandName,
+                    Acronym = x.Acronym,
+                    Address = x.Address,
+                    CoverPhoto = x.CoverPhoto,
+                    CoverFileName = x.CoverFileName,
+                    Link = x.Link,
+                    OpeningHours = x.OpeningHours,
+                    ClosingHours = x.ClosingHours,
+                    TotalIncome = x.TotalIncome,
+                    TotalSpending = x.TotalSpending,
+                    DateCreated = x.DateCreated,
+                    DateUpdated = x.DateUpdated,
+                    Description = x.Description,
+                    State = x.State,
+                    Status = x.Status
+                },
+                predicate: x => x.Id == id);
+            return area;
+        }
+
+        public async Task<IPaginate<BrandResponse>> GetBrands(string? searchName, int page, int size)
+        {
+            Expression<Func<Brand, bool>> filterQuery;
+            if (string.IsNullOrEmpty(searchName))
+            {
+                filterQuery = p => true;
+            }
+            else
+            {
+                filterQuery = p => p.BrandName.Contains(searchName);
+            }
+
+            var areas = await _unitOfWork.GetRepository<Brand>().GetPagingListAsync(
+                selector: x => new BrandResponse
+                {
+                    Id = x.Id,
+                    AccountId = x.AccountId,
+                    BrandName = x.BrandName,
+                    Acronym = x.Acronym,
+                    Address = x.Address,
+                    CoverPhoto = x.CoverPhoto,
+                    CoverFileName = x.CoverFileName,
+                    Link = x.Link,
+                    OpeningHours = x.OpeningHours,
+                    ClosingHours = x.ClosingHours,
+                    TotalIncome = x.TotalIncome,
+                    TotalSpending = x.TotalSpending,
+                    DateCreated = x.DateCreated,
+                    DateUpdated = x.DateUpdated,
+                    Description = x.Description,
+                    State = x.State,
+                    Status = x.Status
+
+                },
+                predicate: filterQuery,
+                page: page,
+                size: size);
+            return areas;
+        }
+
+        public async Task<BrandResponse> UpdateBrand(string id, UpdateBrandModel brand)
+        {
+            var updateBrand = await _unitOfWork.GetRepository<Brand>().SingleOrDefaultAsync(predicate: x => x.Id == id);
+            if (updateBrand == null)
+            {
+                throw new ApiException("Brand not found", 404, "NOT_FOUND");
+            }
+            if (brand.CoverPhoto != null && brand.CoverPhoto.Length > 0)
+            {
+
+                var f = await _cloudinaryService.UploadImageAsync(brand.CoverPhoto);
+               
+            }
+            updateBrand.BrandName = brand.BrandName;
+            updateBrand.Acronym = brand.Acronym;    
+            updateBrand.Address = brand.Address;
+            updateBrand.Link = brand.Link;
+            updateBrand.OpeningHours = brand.OpeningHours;
+            updateBrand.ClosingHours = brand.ClosingHours;
+            updateBrand.Description = brand.Description;
+            updateBrand.State = brand.State;    
+            updateBrand.DateUpdated = DateTime.Now;
+            _unitOfWork.GetRepository<Brand>().UpdateAsync(updateBrand);
+            var isSuccess = await _unitOfWork.CommitAsync() > 0;
+            if (isSuccess)
+            {
+                return new BrandResponse
+                {
+                    Id = updateBrand.Id,
+                    AccountId = updateBrand.AccountId,
+                    BrandName = updateBrand.BrandName,
+                    Acronym = updateBrand.Acronym,
+                    Address = updateBrand.Address,
+                    CoverPhoto = updateBrand.CoverPhoto,
+                    CoverFileName = updateBrand.CoverFileName,
+                    Link = updateBrand.Link,
+                    OpeningHours = updateBrand.OpeningHours,
+                    ClosingHours = updateBrand.ClosingHours,
+                    DateCreated = updateBrand.DateCreated,
+                    DateUpdated = updateBrand.DateUpdated,
+                    Description = updateBrand.Description,
+                    State = updateBrand.State,
+                    Status = updateBrand.Status
+                };
+            }
+            throw new ApiException("Update Brand Fail", 400, "BAD_REQUEST");
         }
     }
 }

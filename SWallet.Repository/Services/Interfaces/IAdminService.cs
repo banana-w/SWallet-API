@@ -14,12 +14,10 @@ namespace SWallet.Repository.Services.Interfaces
     {
         Task<AdminResponse> Add(CreateAdminModel creation);
 
-        Task Delete(string id);
-
-        Task<IPaginate<AdminResponse>> GetAll(int page, int size);
+        Task<IPaginate<AdminResponse>> GetAll(string searchName, int page, int size);
 
         Task<AdminResponse> GetById(string id);
 
-        Task<AdminResponse> Update(string id, Admin update);
+        Task<AdminResponse> Update(string id, UpdateAdminModel update);
     }
 }
