@@ -10,6 +10,7 @@ using SWallet.Repository.Services.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -100,6 +101,14 @@ namespace SWallet.Repository.Services.Implements
 
         public async Task<IPaginate<VoucherResponse>> GetVouchers(string search, bool? isAsc, bool? state, int page, int size)
         {
+            Expression<Func<Voucher, bool>> filterQuery = x =>
+                x.Status == true &&
+                x.State == state &&
+                (x.VoucherName.Contains(search) ||
+                 x.Brand.BrandName.Contains(search) ||
+                 x.Type.TypeName.Contains(search) ||
+                 x.Condition.Contains(search));
+
             var vouchers = await _unitOfWork.GetRepository<Voucher>().GetPagingListAsync(
                 selector: x => new VoucherResponse
                 {
@@ -124,8 +133,7 @@ namespace SWallet.Repository.Services.Implements
                     NumberOfItemsAvailable = x.VoucherItems.Where(i => !(bool)i.IsLocked && !(bool)i.IsBought && !(bool)i.IsUsed && i.CampaignDetailId.IsNullOrEmpty()).Count(),
                     NumberOfItems = x.VoucherItems.Count()
                 },
-                predicate: x => x.Status == true && x.State == state 
-                && (x.VoucherName.Contains(search) || x.Brand.BrandName.Contains(search) || x.Type.TypeName.Contains(search) || x.Condition.Contains(search)),
+                predicate: filterQuery,
                 page: page,
                 size: size,
                 orderBy: x => isAsc.HasValue && isAsc.Value ? x.OrderBy(v => v.DateCreated) : x.OrderByDescending(v => v.DateCreated)
