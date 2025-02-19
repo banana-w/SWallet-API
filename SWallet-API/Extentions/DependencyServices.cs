@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -23,6 +24,9 @@ namespace SWallet_API.Extentions
             services.AddScoped<IAuthenticationService, AuthenticationService>();
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<ICloudinaryService, CloudinaryService>();
+            services.AddScoped<IAdminService, AdminService>();
+            services.AddScoped<IBrandService, BrandService>();
+            
 
             return services;
         }

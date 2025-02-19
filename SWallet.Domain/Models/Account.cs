@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SWallet.Domain.Models;
 
+[Table("account")]
 public partial class Account
 {
     public string Id { get; set; } = null!;
