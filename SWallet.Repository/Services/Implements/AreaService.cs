@@ -6,6 +6,7 @@ using SWallet.Repository.Payload.ExceptionModels;
 using SWallet.Repository.Payload.Request.Area;
 using SWallet.Repository.Payload.Response.Area;
 using SWallet.Repository.Services.Interfaces;
+using System.Linq.Expressions;
 
 namespace SWallet.Repository.Services.Implements
 {
@@ -17,8 +18,18 @@ namespace SWallet.Repository.Services.Implements
             _cloudinaryService = cloudinaryService;
         }
 
-        public async Task<IPaginate<AreaResponse>> GetAreas(string searchName, int page, int size)
+        public async Task<IPaginate<AreaResponse>> GetAreas(string? searchName, int page, int size)
         {
+            Expression<Func<Area, bool>> filterQuery;
+            if (string.IsNullOrEmpty(searchName))
+            {
+                filterQuery = p => true;
+            }
+            else
+            {
+                filterQuery = p => p.AreaName.Contains(searchName);
+            }
+
             var areas = await _unitOfWork.GetRepository<Area>().GetPagingListAsync(
                 selector: x => new AreaResponse
                 {
@@ -33,8 +44,8 @@ namespace SWallet.Repository.Services.Implements
                     State = x.State,
                     Status = x.Status
                 },
-                predicate: x => x.AreaName == searchName, 
-                page: page, 
+                predicate: filterQuery,
+                page: page,
                 size: size);
             return areas;
         }
@@ -65,22 +76,26 @@ namespace SWallet.Repository.Services.Implements
             if (areaRequest.Image != null && areaRequest.Image.Length > 0)
             {
                 var uploadResult = await _cloudinaryService.UploadImageAsync(areaRequest.Image);
-                imageUri = uploadResult.SecureUrl.AbsoluteUri;
+                if (uploadResult != null && uploadResult.SecureUrl != null)
+                {
+                    imageUri = uploadResult.SecureUrl.AbsoluteUri;
+                }
             }
 
-                var newArea = new Area
+            var newArea = new Area
             {
+                Id = Ulid.NewUlid().ToString(),
                 AreaName = areaRequest.AreaName,
                 Image = imageUri,
-                FileName = areaRequest.Image.FileName,
-                Address = areaRequest.Address,
-                Description = areaRequest.Description,
+                FileName = areaRequest.Image?.FileName ?? string.Empty,
+                Address = areaRequest.Address ?? string.Empty,
+                Description = areaRequest.Description ?? string.Empty,
                 State = areaRequest.State,
                 Status = true
             };
             await _unitOfWork.GetRepository<Area>().InsertAsync(newArea);
             var isSuccess = await _unitOfWork.CommitAsync() > 0;
-            
+
             if (isSuccess)
             {
                 return new AreaResponse
@@ -97,7 +112,7 @@ namespace SWallet.Repository.Services.Implements
                     Status = newArea.Status
                 };
             }
-            throw new ApiException("Create Area Fail", 400, "BAD_REQUEST");
+            throw new ApiException("Create Area Fail", 400, "AREA_CREATION_FAILED");
         }
 
         public async Task<AreaResponse> UpdateArea(string id, AreaRequest areaRequest)
@@ -122,7 +137,7 @@ namespace SWallet.Repository.Services.Implements
             area.Description = areaRequest.Description;
             area.State = areaRequest.State;
             area.DateUpdated = DateTime.Now;
-             _unitOfWork.GetRepository<Area>().UpdateAsync(area);
+            _unitOfWork.GetRepository<Area>().UpdateAsync(area);
             var isSuccess = await _unitOfWork.CommitAsync() > 0;
             if (isSuccess)
             {
