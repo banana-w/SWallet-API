@@ -33,6 +33,7 @@ namespace SWallet.Repository.Services.Implements
                 {
                     var voucher = new Voucher
                     {
+                        Id = Ulid.NewUlid().ToString(),
                         BrandId = request.BrandId,
                         TypeId = request.TypeId,
                         Price = request.Price,
@@ -41,6 +42,8 @@ namespace SWallet.Repository.Services.Implements
                         VoucherName = request.VoucherName,
                         Description = request.Description,
                         Image = image.SecureUrl.AbsoluteUri,
+                        File = "Null",
+                        FileName = "Null",
                         ImageName = image.PublicId,
                         State = request.State,
                         DateCreated = DateTime.Now,
@@ -88,7 +91,8 @@ namespace SWallet.Repository.Services.Implements
                     Description = v.Description,
                     State = v.State,
                     Status = v.Status,
-                    NumberOfItemsAvailable = v.VoucherItems.Where(i => !(bool)i.IsLocked && !(bool)i.IsBought && !(bool)i.IsUsed && i.CampaignDetailId.IsNullOrEmpty()).Count(),
+                    NumberOfItemsAvailable = null,
+                    //v.VoucherItems.Where(i => !(bool)i.IsLocked && !(bool)i.IsBought && !(bool)i.IsUsed && i.CampaignDetailId.IsNullOrEmpty()).Count(),
                     NumberOfItems = v.VoucherItems.Count()
                 },
                 predicate: x => x.Id == id);
@@ -99,15 +103,18 @@ namespace SWallet.Repository.Services.Implements
             throw new ApiException("Voucher not found", 404, "NOT_FOUND");
         }
 
-        public async Task<IPaginate<VoucherResponse>> GetVouchers(string search, bool? isAsc, bool? state, int page, int size)
+        public async Task<IPaginate<VoucherResponse>> GetVouchers(string? search, bool? isAsc, bool? state, int page, int size)
         {
+
             Expression<Func<Voucher, bool>> filterQuery = x =>
-                x.Status == true &&
-                x.State == state &&
-                (x.VoucherName.Contains(search) ||
-                 x.Brand.BrandName.Contains(search) ||
-                 x.Type.TypeName.Contains(search) ||
-                 x.Condition.Contains(search));
+                            x.Status == true &&
+                            x.State == state &&
+                            (string.IsNullOrEmpty(search) || // search null
+                            x.VoucherName.Contains(search) ||
+                            x.Brand.BrandName.Contains(search) ||
+                            x.Type.TypeName.Contains(search) ||
+                            x.Condition.Contains(search));
+
 
             var vouchers = await _unitOfWork.GetRepository<Voucher>().GetPagingListAsync(
                 selector: x => new VoucherResponse
@@ -130,7 +137,8 @@ namespace SWallet.Repository.Services.Implements
                     Description = x.Description,
                     State = x.State,
                     Status = x.Status,
-                    NumberOfItemsAvailable = x.VoucherItems.Where(i => !(bool)i.IsLocked && !(bool)i.IsBought && !(bool)i.IsUsed && i.CampaignDetailId.IsNullOrEmpty()).Count(),
+                    NumberOfItemsAvailable = null,
+                    //x.VoucherItems.Where(i => !(bool)i.IsLocked && !(bool)i.IsBought && !(bool)i.IsUsed && i.CampaignDetailId.IsNullOrEmpty()).Count(),
                     NumberOfItems = x.VoucherItems.Count()
                 },
                 predicate: filterQuery,

@@ -15,6 +15,6 @@ namespace SWallet.Repository.Services.Interfaces
         Task<bool> UpdateVoucher(VoucherRequest request);
         Task<bool> DeleteVoucher(string id);
         Task<VoucherResponse> GetVoucherById(string id);
-        Task<IPaginate<VoucherResponse>> GetVouchers(string search, bool? state, bool? isAsc, int page, int size);
+        Task<IPaginate<VoucherResponse>> GetVouchers(string? search, bool? state, bool? isAsc, int page, int size);
     }
 }
