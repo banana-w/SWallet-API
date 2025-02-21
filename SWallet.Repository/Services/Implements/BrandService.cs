@@ -116,6 +116,70 @@ namespace SWallet.Repository.Services.Implements
                 throw new ApiException("Create Brand Fail", 400, "BAD_REQUEST");
             }
 
+        public async Task<BrandResponse> CreateBrandAsync(string accountId, CreateBrandByAccountId brand)
+        {
+            var existingAccount = await _unitOfWork.GetRepository<Account>().SingleOrDefaultAsync(
+                predicate: b => b.Id == accountId);
+
+            if (existingAccount == null)
+            {
+                throw new ApiException("Account not found", 404, "NOT_FOUND");
+            }
+
+            var imageUri = string.Empty;
+            if (brand.CoverPhoto != null && brand.CoverPhoto.Length > 0)
+            {
+                var uploadResult = await _cloudinaryService.UploadImageAsync(brand.CoverPhoto);
+                imageUri = uploadResult.SecureUrl.AbsoluteUri;
+            }
+
+            var newBrand = new Brand
+            {
+                Id = Ulid.NewUlid().ToString(),
+                BrandName = brand.BrandName,
+                Acronym = brand.Acronym,
+                Address = brand.Address,
+                CoverPhoto = imageUri,
+                CoverFileName = !string.IsNullOrEmpty(imageUri)
+                    ? imageUri.Split('/')[imageUri.Split('/').Length - 1]
+                    : "default_cover.jpg",
+                Link = brand.Link,
+                OpeningHours = brand.OpeningHours,
+                ClosingHours = brand.ClosingHours,
+                DateCreated = DateTime.Now,
+                Description = brand.Description,
+                State = brand.State,
+                AccountId = accountId, // Use the provided accountId
+                Status = existingAccount.Status // Inherit status from the existing account
+            };
+
+            await _unitOfWork.GetRepository<Brand>().InsertAsync(newBrand);
+            var isSuccess = await _unitOfWork.CommitAsync() > 0;
+
+            if (isSuccess)
+            {
+                return new BrandResponse
+                {
+                    Id = newBrand.Id,
+                    AccountId = newBrand.AccountId,
+                    BrandName = newBrand.BrandName,
+                    Acronym = newBrand.Acronym,
+                    Address = newBrand.Address,
+                    CoverPhoto = newBrand.CoverPhoto,
+                    CoverFileName = newBrand.CoverFileName,
+                    Link = newBrand.Link,
+                    OpeningHours = newBrand.OpeningHours,
+                    ClosingHours = newBrand.ClosingHours,
+                    DateCreated = newBrand.DateCreated,
+                    Description = newBrand.Description,
+                    State = newBrand.State,
+                    Status = newBrand.Status
+                };
+            }
+
+            throw new ApiException("Create Brand Fail", 400, "BAD_REQUEST");
+        }
+
         public void Delete(string id)
         {
             

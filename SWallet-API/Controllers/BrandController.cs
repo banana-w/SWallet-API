@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SWallet.Domain.Paginate;
+using SWallet.Repository.Payload.ExceptionModels;
 using SWallet.Repository.Payload.Request.Account;
 using SWallet.Repository.Payload.Request.Brand;
 using SWallet.Repository.Payload.Response.Admin;
@@ -40,6 +41,8 @@ namespace SWallet.API.Controllers
             }
         }
 
+       
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetBrandById(string id)
         {
@@ -66,6 +69,30 @@ namespace SWallet.API.Controllers
             }
         }
 
+        [HttpPost("existingAccount")] // New route to distinguish it
+        public async Task<ActionResult<BrandResponse>> CreateBrandAsync([FromQuery] string accountId, CreateBrandByAccountId creation)
+        {
+            if (string.IsNullOrEmpty(accountId))
+            {
+                return BadRequest("Account ID is required"); // Validate accountId
+            }
+
+            try
+            {
+                var brandResponse = await _brandService.CreateBrandAsync(accountId, creation);
+                return Ok(brandResponse);
+            }
+            catch (ApiException ex) // Catch your custom ApiException
+            {
+                _logger.LogError(ex, $"Error creating brand for account ID: {accountId}");
+                return StatusCode(ex.StatusCode, ex.Message); // Return custom error response
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error creating brand for account ID: {accountId}");
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error creating brand");
+            }
+        }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateBrand(string id, UpdateBrandModel update)
