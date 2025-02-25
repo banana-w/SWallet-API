@@ -30,13 +30,9 @@ public partial class SwalletDbContext : DbContext
 
     public virtual DbSet<Campaign> Campaigns { get; set; }
 
-    public virtual DbSet<CampaignActivity> CampaignActivities { get; set; }
-
     public virtual DbSet<CampaignCampus> CampaignCampuses { get; set; }
 
     public virtual DbSet<CampaignDetail> CampaignDetails { get; set; }
-
-    public virtual DbSet<CampaignMajor> CampaignMajors { get; set; }
 
     public virtual DbSet<CampaignStore> CampaignStores { get; set; }
 
@@ -52,11 +48,9 @@ public partial class SwalletDbContext : DbContext
 
     public virtual DbSet<ChallengeTransaction> ChallengeTransactions { get; set; }
 
-    public virtual DbSet<Image> Images { get; set; }
-
     public virtual DbSet<Invitation> Invitations { get; set; }
 
-    public virtual DbSet<Major> Majors { get; set; }
+    public virtual DbSet<Lecturer> Lecturers { get; set; }
 
     public virtual DbSet<Order> Orders { get; set; }
 
@@ -76,8 +70,6 @@ public partial class SwalletDbContext : DbContext
 
     public virtual DbSet<RewardTransaction> RewardTransactions { get; set; }
 
-    public virtual DbSet<Staff> Staff { get; set; }
-
     public virtual DbSet<Station> Stations { get; set; }
 
     public virtual DbSet<Store> Stores { get; set; }
@@ -85,8 +77,6 @@ public partial class SwalletDbContext : DbContext
     public virtual DbSet<Student> Students { get; set; }
 
     public virtual DbSet<StudentChallenge> StudentChallenges { get; set; }
-
-    public virtual DbSet<University> Universities { get; set; }
 
     public virtual DbSet<Voucher> Vouchers { get; set; }
 
@@ -96,10 +86,8 @@ public partial class SwalletDbContext : DbContext
 
     public virtual DbSet<Wallet> Wallets { get; set; }
 
-    public virtual DbSet<Wishlist> Wishlists { get; set; }
-
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    => optionsBuilder.UseSqlServer(GetConnectionString());
+        => optionsBuilder.UseSqlServer(GetConnectionString());
 
     private string GetConnectionString()
     {
@@ -409,34 +397,6 @@ public partial class SwalletDbContext : DbContext
                 .HasConstraintName("FK_tbl_campaign_tbl_campaign_type_type_id");
         });
 
-        modelBuilder.Entity<CampaignActivity>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("PK_tbl_campaign_activity");
-
-            entity.ToTable("campaign_activity");
-
-            entity.HasIndex(e => e.CampaignId, "IX_tbl_campaign_activity_campaign_id");
-
-            entity.Property(e => e.Id)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("id");
-            entity.Property(e => e.CampaignId)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("campaign_id");
-            entity.Property(e => e.DateCreated).HasColumnName("date_created");
-            entity.Property(e => e.Description).HasColumnName("description");
-            entity.Property(e => e.State).HasColumnName("state");
-            entity.Property(e => e.Status).HasColumnName("status");
-
-            entity.HasOne(d => d.Campaign).WithMany(p => p.CampaignActivities)
-                .HasForeignKey(d => d.CampaignId)
-                .HasConstraintName("FK_tbl_campaign_activity_tbl_campaign_campaign_id");
-        });
-
         modelBuilder.Entity<CampaignCampus>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK_tbl_campaign_campus");
@@ -523,44 +483,6 @@ public partial class SwalletDbContext : DbContext
                 .HasForeignKey(d => d.VoucherId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_tbl_campaign_detail_tbl_voucher_voucher_id");
-        });
-
-        modelBuilder.Entity<CampaignMajor>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("PK_tbl_campaign_major");
-
-            entity.ToTable("campaign_major");
-
-            entity.HasIndex(e => e.CampaignId, "IX_tbl_campaign_major_campaign_id");
-
-            entity.HasIndex(e => e.MajorId, "IX_tbl_campaign_major_major_id");
-
-            entity.Property(e => e.Id)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("id");
-            entity.Property(e => e.CampaignId)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("campaign_id");
-            entity.Property(e => e.Description).HasColumnName("description");
-            entity.Property(e => e.MajorId)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("major_id");
-            entity.Property(e => e.State).HasColumnName("state");
-            entity.Property(e => e.Status).HasColumnName("status");
-
-            entity.HasOne(d => d.Campaign).WithMany(p => p.CampaignMajors)
-                .HasForeignKey(d => d.CampaignId)
-                .HasConstraintName("FK_tbl_campaign_major_tbl_campaign_campaign_id");
-
-            entity.HasOne(d => d.Major).WithMany(p => p.CampaignMajors)
-                .HasForeignKey(d => d.MajorId)
-                .HasConstraintName("FK_tbl_campaign_major_tbl_major_major_id");
         });
 
         modelBuilder.Entity<CampaignStore>(entity =>
@@ -679,8 +601,6 @@ public partial class SwalletDbContext : DbContext
 
             entity.HasIndex(e => e.AreaId, "IX_tbl_campus_area_id");
 
-            entity.HasIndex(e => e.UniversityId, "IX_tbl_campus_university_id");
-
             entity.Property(e => e.Id)
                 .HasMaxLength(26)
                 .IsUnicode(false)
@@ -695,7 +615,6 @@ public partial class SwalletDbContext : DbContext
             entity.Property(e => e.CampusName)
                 .HasMaxLength(255)
                 .HasColumnName("campus_name");
-            entity.Property(e => e.ClosingHours).HasColumnName("closing_hours");
             entity.Property(e => e.DateCreated).HasColumnName("date_created");
             entity.Property(e => e.DateUpdated).HasColumnName("date_updated");
             entity.Property(e => e.Description).HasColumnName("description");
@@ -704,8 +623,7 @@ public partial class SwalletDbContext : DbContext
                 .HasColumnName("email");
             entity.Property(e => e.FileName).HasColumnName("file_name");
             entity.Property(e => e.Image).HasColumnName("image");
-            entity.Property(e => e.Link).HasColumnName("link");
-            entity.Property(e => e.OpeningHours).HasColumnName("opening_hours");
+            entity.Property(e => e.LinkWebsite).HasColumnName("link_website");
             entity.Property(e => e.Phone)
                 .HasMaxLength(20)
                 .IsUnicode(false)
@@ -713,19 +631,10 @@ public partial class SwalletDbContext : DbContext
                 .HasColumnName("phone");
             entity.Property(e => e.State).HasColumnName("state");
             entity.Property(e => e.Status).HasColumnName("status");
-            entity.Property(e => e.UniversityId)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("university_id");
 
             entity.HasOne(d => d.Area).WithMany(p => p.Campuses)
                 .HasForeignKey(d => d.AreaId)
                 .HasConstraintName("FK_tbl_campus_tbl_area_area_id");
-
-            entity.HasOne(d => d.University).WithMany(p => p.Campuses)
-                .HasForeignKey(d => d.UniversityId)
-                .HasConstraintName("FK_tbl_campus_tbl_university_university_id");
         });
 
         modelBuilder.Entity<Category>(entity =>
@@ -839,43 +748,6 @@ public partial class SwalletDbContext : DbContext
                 .HasConstraintName("FK_tbl_challenge_transaction_tbl_wallet_wallet_id");
         });
 
-        modelBuilder.Entity<Image>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("PK_tbl_image");
-
-            entity.ToTable("image");
-
-            entity.HasIndex(e => e.ProductId, "IX_tbl_image_product_id");
-
-            entity.Property(e => e.Id)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("id");
-            entity.Property(e => e.DateCreated).HasColumnName("date_created");
-            entity.Property(e => e.Description)
-                .HasColumnType("text")
-                .HasColumnName("description");
-            entity.Property(e => e.FileName)
-                .HasColumnType("text")
-                .HasColumnName("file_name");
-            entity.Property(e => e.IsCover).HasColumnName("is_cover");
-            entity.Property(e => e.ProductId)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("product_id");
-            entity.Property(e => e.State).HasColumnName("state");
-            entity.Property(e => e.Status).HasColumnName("status");
-            entity.Property(e => e.Url)
-                .HasColumnType("text")
-                .HasColumnName("url");
-
-            entity.HasOne(d => d.Product).WithMany(p => p.Images)
-                .HasForeignKey(d => d.ProductId)
-                .HasConstraintName("FK_tbl_image_tbl_product_product_id");
-        });
-
         modelBuilder.Entity<Invitation>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK_tbl_invitation");
@@ -918,33 +790,35 @@ public partial class SwalletDbContext : DbContext
                 .HasConstraintName("FK_tbl_invitation_tbl_student_inviter_id");
         });
 
-        modelBuilder.Entity<Major>(entity =>
+        modelBuilder.Entity<Lecturer>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK_tbl_major");
+            entity.HasKey(e => e.Id).HasName("PK_tbl_staff");
 
-            entity.ToTable("major");
+            entity.ToTable("lecturer");
+
+            entity.HasIndex(e => e.AccountId, "IX_tbl_staff_account_id");
 
             entity.Property(e => e.Id)
                 .HasMaxLength(26)
                 .IsUnicode(false)
                 .IsFixedLength()
                 .HasColumnName("id");
+            entity.Property(e => e.AccountId)
+                .HasMaxLength(26)
+                .IsUnicode(false)
+                .IsFixedLength()
+                .HasColumnName("account_id");
             entity.Property(e => e.DateCreated).HasColumnName("date_created");
             entity.Property(e => e.DateUpdated).HasColumnName("date_updated");
-            entity.Property(e => e.Description)
-                .HasColumnType("text")
-                .HasColumnName("description");
-            entity.Property(e => e.FileName)
-                .HasColumnType("text")
-                .HasColumnName("file_name");
-            entity.Property(e => e.Image)
-                .HasColumnType("text")
-                .HasColumnName("image");
-            entity.Property(e => e.MajorName)
+            entity.Property(e => e.FullName)
                 .HasMaxLength(255)
-                .HasColumnName("major_name");
+                .HasColumnName("full_name");
             entity.Property(e => e.State).HasColumnName("state");
             entity.Property(e => e.Status).HasColumnName("status");
+
+            entity.HasOne(d => d.Account).WithMany(p => p.Lecturers)
+                .HasForeignKey(d => d.AccountId)
+                .HasConstraintName("FK_tbl_staff_tbl_account_account_id");
         });
 
         modelBuilder.Entity<Order>(entity =>
@@ -1347,48 +1221,6 @@ public partial class SwalletDbContext : DbContext
                 .HasConstraintName("FK_tbl_bonus_transaction_tbl_wallet_wallet_id");
         });
 
-        modelBuilder.Entity<Staff>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("PK_tbl_staff");
-
-            entity.ToTable("staff");
-
-            entity.HasIndex(e => e.AccountId, "IX_tbl_staff_account_id");
-
-            entity.HasIndex(e => e.StationId, "IX_tbl_staff_station_id");
-
-            entity.Property(e => e.Id)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("id");
-            entity.Property(e => e.AccountId)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("account_id");
-            entity.Property(e => e.DateCreated).HasColumnName("date_created");
-            entity.Property(e => e.DateUpdated).HasColumnName("date_updated");
-            entity.Property(e => e.FullName)
-                .HasMaxLength(255)
-                .HasColumnName("full_name");
-            entity.Property(e => e.State).HasColumnName("state");
-            entity.Property(e => e.StationId)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("station_id");
-            entity.Property(e => e.Status).HasColumnName("status");
-
-            entity.HasOne(d => d.Account).WithMany(p => p.Staffs)
-                .HasForeignKey(d => d.AccountId)
-                .HasConstraintName("FK_tbl_staff_tbl_account_account_id");
-
-            entity.HasOne(d => d.Station).WithMany(p => p.Staff)
-                .HasForeignKey(d => d.StationId)
-                .HasConstraintName("FK_tbl_staff_tbl_station_station_id");
-        });
-
         modelBuilder.Entity<Station>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK_tbl_station");
@@ -1510,8 +1342,6 @@ public partial class SwalletDbContext : DbContext
 
             entity.HasIndex(e => e.CampusId, "IX_tbl_student_campus_id");
 
-            entity.HasIndex(e => e.MajorId, "IX_tbl_student_major_id");
-
             entity.Property(e => e.Id)
                 .HasMaxLength(26)
                 .IsUnicode(false)
@@ -1546,11 +1376,6 @@ public partial class SwalletDbContext : DbContext
                 .HasMaxLength(255)
                 .HasColumnName("full_name");
             entity.Property(e => e.Gender).HasColumnName("gender");
-            entity.Property(e => e.MajorId)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("major_id");
             entity.Property(e => e.State).HasColumnName("state");
             entity.Property(e => e.Status).HasColumnName("status");
             entity.Property(e => e.StudentCardBack)
@@ -1574,11 +1399,6 @@ public partial class SwalletDbContext : DbContext
                 .HasForeignKey(d => d.CampusId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("FK_tbl_student_tbl_campus_campus_id");
-
-            entity.HasOne(d => d.Major).WithMany(p => p.Students)
-                .HasForeignKey(d => d.MajorId)
-                .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("FK_tbl_student_tbl_major_major_id");
         });
 
         modelBuilder.Entity<StudentChallenge>(entity =>
@@ -1631,46 +1451,6 @@ public partial class SwalletDbContext : DbContext
             entity.HasOne(d => d.Student).WithMany(p => p.StudentChallenges)
                 .HasForeignKey(d => d.StudentId)
                 .HasConstraintName("FK_tbl_student_challenge_tbl_student_student_id");
-        });
-
-        modelBuilder.Entity<University>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("PK_tbl_university");
-
-            entity.ToTable("university");
-
-            entity.Property(e => e.Id)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("id");
-            entity.Property(e => e.DateCreated).HasColumnName("date_created");
-            entity.Property(e => e.DateUpdated).HasColumnName("date_updated");
-            entity.Property(e => e.Description)
-                .HasColumnType("text")
-                .HasColumnName("description");
-            entity.Property(e => e.Email)
-                .HasMaxLength(320)
-                .HasColumnName("email");
-            entity.Property(e => e.FileName)
-                .HasColumnType("text")
-                .HasColumnName("file_name");
-            entity.Property(e => e.Image)
-                .HasColumnType("text")
-                .HasColumnName("image");
-            entity.Property(e => e.Link)
-                .HasColumnType("text")
-                .HasColumnName("link");
-            entity.Property(e => e.Phone)
-                .HasMaxLength(20)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("phone");
-            entity.Property(e => e.State).HasColumnName("state");
-            entity.Property(e => e.Status).HasColumnName("status");
-            entity.Property(e => e.UniversityName)
-                .HasMaxLength(255)
-                .HasColumnName("university_name");
         });
 
         modelBuilder.Entity<Voucher>(entity =>
@@ -1874,47 +1654,6 @@ public partial class SwalletDbContext : DbContext
                 .HasForeignKey(d => d.StudentId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_tbl_wallet_tbl_student_student_id");
-        });
-
-        modelBuilder.Entity<Wishlist>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("PK_tbl_wishlist");
-
-            entity.ToTable("wishlist");
-
-            entity.HasIndex(e => e.BrandId, "IX_tbl_wishlist_brand_id");
-
-            entity.HasIndex(e => e.StudentId, "IX_tbl_wishlist_student_id");
-
-            entity.Property(e => e.Id)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("id");
-            entity.Property(e => e.BrandId)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("brand_id");
-            entity.Property(e => e.Description)
-                .HasColumnType("text")
-                .HasColumnName("description");
-            entity.Property(e => e.State).HasColumnName("state");
-            entity.Property(e => e.Status).HasColumnName("status");
-            entity.Property(e => e.StudentId)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("student_id");
-
-            entity.HasOne(d => d.Brand).WithMany(p => p.Wishlists)
-                .HasForeignKey(d => d.BrandId)
-                .HasConstraintName("FK_tbl_wishlist_tbl_brand_brand_id");
-
-            entity.HasOne(d => d.Student).WithMany(p => p.Wishlists)
-                .HasForeignKey(d => d.StudentId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_tbl_wishlist_tbl_student_student_id");
         });
 
         OnModelCreatingPartial(modelBuilder);

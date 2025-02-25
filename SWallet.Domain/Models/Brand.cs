@@ -52,6 +52,4 @@ public partial class Brand
     public virtual ICollection<Voucher> Vouchers { get; set; } = new List<Voucher>();
 
     public virtual ICollection<Wallet> Wallets { get; set; } = new List<Wallet>();
-
-    public virtual ICollection<Wishlist> Wishlists { get; set; } = new List<Wishlist>();
 }
