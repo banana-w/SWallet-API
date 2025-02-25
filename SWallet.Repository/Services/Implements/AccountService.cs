@@ -8,6 +8,7 @@ using SWallet.Repository.Enums;
 using SWallet.Repository.Interfaces;
 using SWallet.Repository.Payload.ExceptionModels;
 using SWallet.Repository.Payload.Request.Account;
+using SWallet.Repository.Payload.Request.Brand;
 using SWallet.Repository.Payload.Request.Login;
 using SWallet.Repository.Payload.Response.Account;
 using SWallet.Repository.Payload.Response.Login;
@@ -25,9 +26,10 @@ namespace SWallet.Repository.Services.Implements
         private readonly Mapper mapper;
         private readonly IEmailService _emailService;
         private readonly ICloudinaryService _cloudinaryService;
+        private readonly IBrandService _brandService;
 
         public AccountService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<AccountService> logger,
-            IEmailService emailService, ICloudinaryService cloudinaryService) : base(unitOfWork, logger)
+            IEmailService emailService, ICloudinaryService cloudinaryService, IBrandService brandService) : base(unitOfWork, logger)
         {
             var config = new MapperConfiguration(cfg
                 =>
@@ -100,10 +102,47 @@ namespace SWallet.Repository.Services.Implements
            .ForMember(t => t.DateCreated, opt => opt.MapFrom(src => DateTime.Now))
            .ForMember(t => t.DateUpdated, opt => opt.MapFrom(src => DateTime.Now))
            .ForMember(t => t.Status, opt => opt.MapFrom(src => true));
+                cfg.CreateMap<Account, AccountRequest>()
+            .ReverseMap()
+            .ForMember(t => t.Id, opt => opt.MapFrom(src => Ulid.NewUlid()))
+            .ForMember(t => t.Role, opt => opt.MapFrom(src => Role.Student))
+            .ForMember(t => t.Password, opt => opt.MapFrom(src => BCryptNet.HashPassword(src.Password))) // HashPassword when create account
+            .ForMember(t => t.IsVerify, opt => opt.MapFrom(src => true))
+            .ForMember(t => t.DateCreated, opt => opt.MapFrom(src => DateTime.Now))
+            .ForMember(t => t.DateUpdated, opt => opt.MapFrom(src => DateTime.Now))
+            .ForMember(t => t.Status, opt => opt.MapFrom(src => true));
             });
             mapper ??= new Mapper(config);
             _emailService = emailService;
             _cloudinaryService = cloudinaryService;
+            _brandService = brandService;
+        }
+
+        public async Task<AccountResponse> CreateBrandAccount(AccountRequest accountRequest, CreateBrandByAccountId brandRequest)
+        {
+            var account = await _unitOfWork.GetRepository<Account>().SingleOrDefaultAsync(predicate: x => x.UserName == accountRequest.UserName);
+            if (account != null)
+            {
+                throw new ApiException("Account already exists", 400, "BAD_REQUEST");
+            }
+
+            Account ac = mapper.Map<Account>(accountRequest);
+
+            await _unitOfWork.GetRepository<Account>().InsertAsync(ac);
+
+            await _brandService.CreateBrandAsync(ac.Id, brandRequest);
+
+            bool isSuccess = await _unitOfWork.CommitAsync() > 0;
+            if (isSuccess)
+            {
+                //if (ac.Email != null)
+                    //await _emailService.SendEmailBrandRegister(ac.Email);
+                return mapper.Map<AccountResponse>(ac);
+            }
+            else
+            {
+                throw new ApiException("Brand Account Creation Failed", 400, "BAD_REQUEST");
+            }
         }
 
         public async Task<AccountResponse> CreateStudentAccount(CreateStudentAccount accountCreation)
@@ -134,7 +173,7 @@ namespace SWallet.Repository.Services.Implements
             bool issuccessfull = await _unitOfWork.CommitAsync() > 0;
             if (issuccessfull)
             {
-                if(account.Email != null)
+                if (account.Email != null)
                     await _emailService.SendEmailStudentRegister(account.Email);
                 return mapper.Map<AccountResponse>(account);
             }

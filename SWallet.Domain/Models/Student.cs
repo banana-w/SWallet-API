@@ -7,8 +7,6 @@ public partial class Student
 {
     public string Id { get; set; } = null!;
 
-    public string? MajorId { get; set; }
-
     public string? CampusId { get; set; }
 
     public string AccountId { get; set; } = null!;
@@ -53,8 +51,6 @@ public partial class Student
 
     public virtual ICollection<Invitation> InvitationInviters { get; set; } = new List<Invitation>();
 
-    public virtual Major? Major { get; set; }
-
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
 
     public virtual ICollection<Reward> Rewards { get; set; } = new List<Reward>();
@@ -62,6 +58,4 @@ public partial class Student
     public virtual ICollection<StudentChallenge> StudentChallenges { get; set; } = new List<StudentChallenge>();
 
     public virtual ICollection<Wallet> Wallets { get; set; } = new List<Wallet>();
-
-    public virtual ICollection<Wishlist> Wishlists { get; set; } = new List<Wishlist>();
 }

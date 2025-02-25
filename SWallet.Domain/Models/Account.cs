@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SWallet.Domain.Models;
 
-[Table("account")]
 public partial class Account
 {
     public string Id { get; set; } = null!;
@@ -41,7 +39,7 @@ public partial class Account
 
     public virtual ICollection<Brand> Brands { get; set; } = new List<Brand>();
 
-    public virtual ICollection<Staff> Staffs { get; set; } = new List<Staff>();
+    public virtual ICollection<Lecturer> Lecturers { get; set; } = new List<Lecturer>();
 
     public virtual ICollection<Store> Stores { get; set; } = new List<Store>();
 
