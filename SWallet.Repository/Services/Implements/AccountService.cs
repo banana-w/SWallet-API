@@ -44,7 +44,7 @@ namespace SWallet.Repository.Services.Implements
                         return src.Role switch
                         {
                             (int)Role.Admin => src.Admins?.FirstOrDefault()?.Id,
-                            (int)Role.Staff => src.Staffs?.FirstOrDefault()?.Id,
+                            (int)Role.Lecturer => src.Lecturers?.FirstOrDefault()?.Id,
                             (int)Role.Brand => src.Brands?.FirstOrDefault()?.Id,
                             (int)Role.Store => src.Stores?.FirstOrDefault()?.Id,
                             (int)Role.Student => src.Students?.FirstOrDefault()?.Id,
@@ -60,7 +60,7 @@ namespace SWallet.Repository.Services.Implements
                         return src.Role switch
                         {
                             (int)Role.Admin => src.Admins?.FirstOrDefault()?.FullName,
-                            (int)Role.Staff => src.Staffs?.FirstOrDefault()?.FullName,
+                            (int)Role.Lecturer => src.Lecturers?.FirstOrDefault()?.FullName,
                             (int)Role.Brand => src.Brands?.FirstOrDefault()?.BrandName,
                             (int)Role.Store => src.Stores?.FirstOrDefault()?.StoreName,
                             (int)Role.Student => src.Students?.FirstOrDefault()?.FullName,
