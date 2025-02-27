@@ -30,6 +30,10 @@ namespace SWallet.Repository.Implement
             }
             return await query.AsNoTracking().CountAsync();
         }
+        public async Task<bool> AnyAsync(Expression<Func<T, bool>> predicate)
+        {
+            return await _dbContext.Set<T>().AnyAsync(predicate);
+        }
 
         #region Gett Async
 

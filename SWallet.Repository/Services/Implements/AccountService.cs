@@ -105,11 +105,11 @@ namespace SWallet.Repository.Services.Implements
                 cfg.CreateMap<Account, AccountRequest>()
             .ReverseMap()
             .ForMember(t => t.Id, opt => opt.MapFrom(src => Ulid.NewUlid()))
-            .ForMember(t => t.Role, opt => opt.MapFrom(src => Role.Student))
             .ForMember(t => t.Password, opt => opt.MapFrom(src => BCryptNet.HashPassword(src.Password))) // HashPassword when create account
             .ForMember(t => t.IsVerify, opt => opt.MapFrom(src => true))
             .ForMember(t => t.DateCreated, opt => opt.MapFrom(src => DateTime.Now))
             .ForMember(t => t.DateUpdated, opt => opt.MapFrom(src => DateTime.Now))
+            .ForMember(t => t.Description, opt => opt.MapFrom(src => "Student Account"))
             .ForMember(t => t.Status, opt => opt.MapFrom(src => true));
             });
             mapper ??= new Mapper(config);
@@ -120,29 +120,25 @@ namespace SWallet.Repository.Services.Implements
 
         public async Task<AccountResponse> CreateBrandAccount(AccountRequest accountRequest, CreateBrandByAccountId brandRequest)
         {
-            var account = await _unitOfWork.GetRepository<Account>().SingleOrDefaultAsync(predicate: x => x.UserName == accountRequest.UserName);
-            if (account != null)
+            var account = await _unitOfWork.GetRepository<Account>().AnyAsync(x => x.UserName == accountRequest.UserName);
+            if (account)
             {
                 throw new ApiException("Account already exists", 400, "BAD_REQUEST");
             }
-
             Account ac = mapper.Map<Account>(accountRequest);
+            ac.Role = (int)Role.Brand;
 
             await _unitOfWork.GetRepository<Account>().InsertAsync(ac);
-
-            await _brandService.CreateBrandAsync(ac.Id, brandRequest);
 
             bool isSuccess = await _unitOfWork.CommitAsync() > 0;
             if (isSuccess)
             {
                 //if (ac.Email != null)
-                    //await _emailService.SendEmailBrandRegister(ac.Email);
+                //await _emailService.SendEmailBrandRegister(ac.Email);
+                await _brandService.CreateBrandAsync(ac.Id, brandRequest);
                 return mapper.Map<AccountResponse>(ac);
             }
-            else
-            {
-                throw new ApiException("Brand Account Creation Failed", 400, "BAD_REQUEST");
-            }
+            throw new ApiException("Brand Account Creation Failed", 400, "BAD_REQUEST");
         }
 
         public async Task<AccountResponse> CreateStudentAccount(CreateStudentAccount accountCreation)
