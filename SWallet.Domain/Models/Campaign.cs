@@ -45,13 +45,9 @@ public partial class Campaign
 
     public virtual Brand Brand { get; set; } = null!;
 
-    public virtual ICollection<CampaignActivity> CampaignActivities { get; set; } = new List<CampaignActivity>();
-
     public virtual ICollection<CampaignCampus> CampaignCampuses { get; set; } = new List<CampaignCampus>();
 
     public virtual ICollection<CampaignDetail> CampaignDetails { get; set; } = new List<CampaignDetail>();
-
-    public virtual ICollection<CampaignMajor> CampaignMajors { get; set; } = new List<CampaignMajor>();
 
     public virtual ICollection<CampaignStore> CampaignStores { get; set; } = new List<CampaignStore>();
 

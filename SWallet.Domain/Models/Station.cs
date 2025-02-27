@@ -34,6 +34,4 @@ public partial class Station
     public bool? Status { get; set; }
 
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
-
-    public virtual ICollection<Staff> Staff { get; set; } = new List<Staff>();
 }

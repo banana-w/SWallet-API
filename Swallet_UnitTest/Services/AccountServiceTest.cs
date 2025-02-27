@@ -31,6 +31,7 @@ namespace Swallet_UnitTest.Services
         private readonly AccountService _accountService;
         private readonly Mock<ILogger<AccountService>> _loggerMock;
         private readonly Mock<IMapper> _mapperMock;
+        private readonly Mock<IBrandService> _brandServiceMock;
 
         public AccountServiceTest()
         {
@@ -39,11 +40,14 @@ namespace Swallet_UnitTest.Services
             _emailServiceMock = new Mock<IEmailService>();
             _loggerMock = new Mock<ILogger<AccountService>>();
             _mapperMock = new Mock<IMapper>();
+            _brandServiceMock = new Mock<IBrandService>();
 
             _accountService = new AccountService(
                 _unitOfWorkMock.Object, _loggerMock.Object,
                 _emailServiceMock.Object,
-                _cloudinaryServiceMock.Object
+                _cloudinaryServiceMock.Object,
+                _brandServiceMock.Object
+
                 );
         }
 

@@ -28,7 +28,9 @@ namespace SWallet_API.Extentions
             services.AddScoped<IBrandService, BrandService>();
             services.AddScoped<ICategoryService, CategoryService>();
             services.AddScoped<IStoreService, StoreService>();
-            
+            services.AddScoped<IVoucherTypeService, VoucherTypeService>();
+            services.AddScoped<IVoucherService, VoucherService>();
+            services.AddScoped<IAreaService, AreaService>();
 
             return services;
         }
