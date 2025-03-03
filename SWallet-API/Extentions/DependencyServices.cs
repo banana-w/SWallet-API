@@ -31,6 +31,7 @@ namespace SWallet_API.Extentions
             services.AddScoped<IVoucherTypeService, VoucherTypeService>();
             services.AddScoped<IVoucherService, VoucherService>();
             services.AddScoped<IAreaService, AreaService>();
+            services.AddScoped<IStudentService, StudentService>();
 
             return services;
         }

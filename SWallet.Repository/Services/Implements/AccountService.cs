@@ -159,8 +159,8 @@ namespace SWallet.Repository.Services.Implements
             bool issuccessfull = await _unitOfWork.CommitAsync() > 0;
             if (issuccessfull)
             {
-                if (ac.Email != null)
-                    await _emailService.SendEmailStudentRegister(ac.Email);
+                //if (ac.Email != null)
+                //    await _emailService.SendEmailStudentRegister(ac.Email);
                 await _studentService.CreateStudentAsync(ac.Id, studentRequest);
                 return mapper.Map<AccountResponse>(ac);
             }

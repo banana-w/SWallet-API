@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using FluentAssertions;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -57,9 +56,9 @@ namespace Swallet_UnitTest.Services
             var result = await _authService.Login(loginRequest);
 
             // Assert
-            result.Should().NotBeNull();
-            result.Role.Should().BeEquivalentTo("Quản trị viên");
-            result.Token.Should().NotBeNullOrEmpty();
+            Assert.NotNull(result);
+            Assert.Equal("Quản trị viên", result.Role);
+            Assert.False(string.IsNullOrEmpty(result.Token));
         }
 
 
