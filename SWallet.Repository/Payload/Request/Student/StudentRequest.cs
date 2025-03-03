@@ -7,8 +7,6 @@ namespace SWallet.Repository.Payload.Request.Student
     {
         public string? CampusId { get; set; }
 
-        public string AccountId { get; set; } = null!;
-
         public IFormFile? StudentCardFront { get; set; }
 
         public string? FullName { get; set; }

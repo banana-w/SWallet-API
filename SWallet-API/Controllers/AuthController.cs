@@ -17,7 +17,7 @@ namespace SWallet_API.Controllers
         {
             _authService = authService;
         }
-        [HttpPost("/login")]
+        [HttpPost("login")]
         [ProducesResponseType( typeof(LoginResponse),StatusCodes.Status200OK)]
         public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest)
         {

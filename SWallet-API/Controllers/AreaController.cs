@@ -17,7 +17,7 @@ namespace SWallet_API.Controllers
         {
             _areaService = areaService;
         }
-        [HttpGet("/areas")]
+        [HttpGet("areas")]
         [ProducesResponseType(typeof(AreaResponse), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAreas(string? searchName, int page, int size)
         {
@@ -28,7 +28,7 @@ namespace SWallet_API.Controllers
             }
             return Ok(result);
         }
-        [HttpGet("/areas/{id}")]
+        [HttpGet("areas/{id}")]
         [ProducesResponseType(typeof(AreaResponse), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAreaById(string id)
         {
@@ -40,7 +40,7 @@ namespace SWallet_API.Controllers
             return Ok(result);
         }
 
-        [HttpPost("/areas")]
+        [HttpPost("areas")]
         [ProducesResponseType(typeof(AreaResponse), StatusCodes.Status200OK)]
         public async Task<IActionResult> CreateArea([FromBody] AreaRequest area)
         {
@@ -48,7 +48,7 @@ namespace SWallet_API.Controllers
             return Ok(result);
         }
 
-        [HttpPut("/areas/{id}")]
+        [HttpPut("areas/{id}")]
         [ProducesResponseType(typeof(AreaResponse), StatusCodes.Status200OK)]
         public async Task<IActionResult> UpdateArea(string id, [FromBody] AreaRequest area)
         {

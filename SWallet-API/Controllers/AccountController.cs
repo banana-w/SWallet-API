@@ -10,6 +10,7 @@ using SWallet.Repository.Services.Interfaces;
 namespace SWallet_API.Controllers
 {
     [Route("api/[controller]")]
+    [Tags("🧑🏻‍💼Account API")]
     [ApiController]
     public class AccountController : ControllerBase
     {
@@ -18,7 +19,7 @@ namespace SWallet_API.Controllers
         {
             _accountService = accountService;
         }
-        [HttpPost("/studentRegister")]
+        [HttpPost("studentRegister")]
         [ProducesResponseType(typeof(AccountResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
         [Consumes("multipart/form-data")]
@@ -32,17 +33,14 @@ namespace SWallet_API.Controllers
             return Ok(result);
         }
 
-        [HttpPost("/brandRegister")]
+        [HttpPost("brandRegister")]
         [ProducesResponseType(typeof(AccountResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> BrandRegister([FromForm] AccountRequest accountRequest, [FromForm] CreateBrandByAccountId brandRequest)
         {
-            var result = await _accountService.CreateBrandAccount(accountRequest, brandRequest);
-            if (result == null)
-            {
-                throw new ApiException("Account creation failed.", StatusCodes.Status400BadRequest, "ACCOUNT_CREATION_FAILED");
-            }
+            var result = await _accountService.CreateBrandAccount(accountRequest, brandRequest)
+                ?? throw new ApiException("Account creation failed.", StatusCodes.Status400BadRequest, "ACCOUNT_CREATION_FAILED");
             return Ok(result);
         }
     }

@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using CloudinaryDotNet.Actions;
-using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.Extensions.Logging;
@@ -14,13 +13,7 @@ using SWallet.Repository.Payload.Request.Student;
 using SWallet.Repository.Payload.Response.Account;
 using SWallet.Repository.Services.Implements;
 using SWallet.Repository.Services.Interfaces;
-using SWallet.Repository.Utils;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace Swallet_UnitTest.Services
 {
@@ -96,8 +89,8 @@ namespace Swallet_UnitTest.Services
             var result = await _accountService.CreateStudentAccount(accountRequest, studentRequest);
 
             // Assert
-            result.Should().NotBeNull();
-            result.Email.Should().BeEquivalentTo("testuser@example.com");
+            Assert.NotNull(result);
+            Assert.Equal("testuser@example.com", result.Email);
             _emailServiceMock.Verify(e => e.SendEmailStudentRegister("testuser@example.com"), Times.Once);
         }
         [Fact]

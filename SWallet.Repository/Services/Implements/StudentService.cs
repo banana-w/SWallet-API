@@ -6,13 +6,7 @@ using SWallet.Repository.Interfaces;
 using SWallet.Repository.Payload.Request.Student;
 using SWallet.Repository.Payload.Response.Student;
 using SWallet.Repository.Services.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
-using static Org.BouncyCastle.Asn1.Cmp.Challenge;
 
 namespace SWallet.Repository.Services.Implements
 {
@@ -38,7 +32,7 @@ namespace SWallet.Repository.Services.Implements
 
             var student = new Student
             {
-                Id = Guid.NewGuid().ToString(),
+                Id = Ulid.NewUlid().ToString(),
                 CampusId = studentRequest.CampusId,
                 AccountId = accountId,
                 StudentCardFront = imageUri,

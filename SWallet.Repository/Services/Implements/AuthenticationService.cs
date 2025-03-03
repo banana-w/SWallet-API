@@ -90,7 +90,7 @@ namespace SWallet.Repository.Services.Implements
             {
                 Token = _jwtService.GenerateJwtToken(acc),
                 Role = acc.RoleName,
-                AccountId = acc.UserId
+                AccountId = acc.Id
             };
         }
     }
