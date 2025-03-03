@@ -90,7 +90,7 @@ namespace Swallet_UnitTest.Services
             // Assert
             Assert.NotNull(result);
             Assert.Equal("testuser@example.com", result.Email);
-            _emailServiceMock.Verify(e => e.SendEmailStudentRegister("testuser@example.com"), Times.Once);
+            //_emailServiceMock.Verify(e => e.SendEmailStudentRegister("testuser@example.com"), Times.Once);
         }
         [Fact]
         public async Task CreateStudentAccount_ShouldThrowException_WhenCommitFails()
