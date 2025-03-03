@@ -1,0 +1,6 @@
+services:
+  swallet-api:
+    image: ${DOCKER_REGISTRY-}swalletapi
+    build:
+      context: .
+      dockerfile: SWallet-API/Dockerfile
