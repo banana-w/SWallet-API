@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SWallet.Repository", "SWall
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Swallet_UnitTest", "Swallet_UnitTest\Swallet_UnitTest.csproj", "{42B0C122-63E2-4652-909F-40BB60F15D97}"
 EndProject
+Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{43D11F61-B954-4E26-9CDB-643E1E05AF32}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{42B0C122-63E2-4652-909F-40BB60F15D97}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{42B0C122-63E2-4652-909F-40BB60F15D97}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{42B0C122-63E2-4652-909F-40BB60F15D97}.Release|Any CPU.Build.0 = Release|Any CPU
+		{43D11F61-B954-4E26-9CDB-643E1E05AF32}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{43D11F61-B954-4E26-9CDB-643E1E05AF32}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{43D11F61-B954-4E26-9CDB-643E1E05AF32}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{43D11F61-B954-4E26-9CDB-643E1E05AF32}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
