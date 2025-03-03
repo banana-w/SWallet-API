@@ -18,7 +18,11 @@ builder.Services
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddConfigSwagger();
-
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: "MyDefaultPolicy",
+        policy => { policy.WithOrigins("*").AllowAnyHeader().AllowAnyMethod(); });
+});
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("Cloudinary"));
 
 builder.Services.AddSingleton<Cloudinary>(sp =>
@@ -41,6 +45,8 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction() || app.Env
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors("MyDefaultPolicy");
 
 app.UseCustomExceptionHandler();
 
