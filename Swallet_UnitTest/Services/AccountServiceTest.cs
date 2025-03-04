@@ -8,7 +8,6 @@ using SWallet.Domain.Models;
 using SWallet.Repository.Interfaces;
 using SWallet.Repository.Payload.ExceptionModels;
 using SWallet.Repository.Payload.Request.Account;
-using SWallet.Repository.Payload.Request.Login;
 using SWallet.Repository.Payload.Request.Student;
 using SWallet.Repository.Payload.Response.Account;
 using SWallet.Repository.Services.Implements;
@@ -27,6 +26,7 @@ namespace Swallet_UnitTest.Services
         private readonly Mock<IMapper> _mapperMock;
         private readonly Mock<IBrandService> _brandServiceMock;
         private readonly Mock<IStudentService> _studentServiceMock;
+        private readonly Mock<IRedisService> _redisServiceMock;
         public AccountServiceTest()
         {
             _unitOfWorkMock = new Mock<IUnitOfWork<SwalletDbContext>>();
@@ -36,14 +36,14 @@ namespace Swallet_UnitTest.Services
             _mapperMock = new Mock<IMapper>();
             _brandServiceMock = new Mock<IBrandService>();
             _studentServiceMock = new Mock<IStudentService>();
+            _redisServiceMock = new Mock<IRedisService>();
 
             _accountService = new AccountService(
                 _unitOfWorkMock.Object, _loggerMock.Object,
                 _emailServiceMock.Object,
-                _cloudinaryServiceMock.Object,
                 _brandServiceMock.Object,
-                _studentServiceMock.Object
-
+                _studentServiceMock.Object,
+                _redisServiceMock.Object
                 );
         }
 

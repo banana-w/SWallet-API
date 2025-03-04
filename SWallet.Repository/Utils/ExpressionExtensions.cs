@@ -1,6 +1,6 @@
 ﻿using System.Linq.Expressions;
 
-namespace SWallet_API.Extentions;
+namespace SWallet.Repository.Utils;
 
 public static class ExpressionExtensions
 {

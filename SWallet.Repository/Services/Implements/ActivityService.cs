@@ -5,7 +5,7 @@ using SWallet.Repository.Interfaces;
 using SWallet.Repository.Payload.Request.Activity;
 using SWallet.Repository.Payload.Response.Activity;
 using SWallet.Repository.Services.Interfaces;
-using SWallet_API.Extentions;
+using SWallet.Repository.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;

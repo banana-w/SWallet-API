@@ -14,8 +14,8 @@ namespace SWallet.Repository.Enums
         [Description("Quản trị viên của hệ thống")]
         Admin = 1,
 
-        [Display(Name = "Nhân viên")]
-        [Description("Nhân viên quản lí trạm")]
+        [Display(Name = "Giáo viên")]
+        [Description("Giáo viên/Giảng viên")]
         Lecturer = 2,
 
         [Display(Name = "Thương hiệu")]
