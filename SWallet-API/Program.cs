@@ -10,10 +10,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
-
 builder.Services
     .AddServices(builder.Configuration)
     .AddJwtValidation(builder.Configuration);
+
+builder.Services.AddRedisServices(builder.Configuration);
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -33,6 +34,7 @@ builder.Services.AddSingleton<Cloudinary>(sp =>
         cloudinarySettings.ApiKey,
         cloudinarySettings.ApiSecret));
 });
+
 builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();

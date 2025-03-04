@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SWallet.Repository.Payload.Request.Login
+namespace SWallet.Repository.Payload.Request.Authentication
 {
     public class LoginRequest
     {

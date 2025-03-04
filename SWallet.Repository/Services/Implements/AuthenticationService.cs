@@ -4,9 +4,9 @@ using Microsoft.Extensions.Logging;
 using SWallet.Domain.Models;
 using SWallet.Repository.Enums;
 using SWallet.Repository.Interfaces;
-using SWallet.Repository.Payload.Request.Login;
+using SWallet.Repository.Payload.Request.Authentication;
 using SWallet.Repository.Payload.Response.Account;
-using SWallet.Repository.Payload.Response.Login;
+using SWallet.Repository.Payload.Response.Authentication;
 using SWallet.Repository.Services.Interfaces;
 using SWallet.Repository.Utils;
 using BCryptNet = BCrypt.Net.BCrypt;
@@ -17,9 +17,10 @@ namespace SWallet.Repository.Services.Implements
     public class AuthenticationService : BaseService<AuthenticationService>, IAuthenticationService
     {
         private readonly IJwtService _jwtService;
+        private readonly IRedisService redisService;
         private readonly Mapper mapper;
 
-        public AuthenticationService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<AuthenticationService> logger, IJwtService jwtService) : base(unitOfWork, logger)
+        public AuthenticationService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<AuthenticationService> logger, IJwtService jwtService, IRedisService redisService) : base(unitOfWork, logger)
         {
             var config = new MapperConfiguration(cfg
                 =>
@@ -75,7 +76,7 @@ namespace SWallet.Repository.Services.Implements
             });
             mapper ??= new Mapper(config);
             _jwtService = jwtService;
-
+            this.redisService = redisService;
         }
 
         public async Task<LoginResponse> Login(LoginRequest loginRequest)
@@ -92,6 +93,11 @@ namespace SWallet.Repository.Services.Implements
                 Role = acc.RoleName,
                 AccountId = acc.Id
             };
+        }
+
+        public async Task<bool> VerifyEmail(string email, string userInput)
+        {
+            return await redisService.VerifyCodeAsync(email, userInput);
         }
     }
 }

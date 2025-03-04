@@ -1,23 +1,15 @@
 ﻿using AutoMapper;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
 using SWallet.Domain.Models;
 using SWallet.Repository.Enums;
 using SWallet.Repository.Interfaces;
 using SWallet.Repository.Payload.ExceptionModels;
 using SWallet.Repository.Payload.Request.Account;
 using SWallet.Repository.Payload.Request.Brand;
-using SWallet.Repository.Payload.Request.Login;
 using SWallet.Repository.Payload.Request.Student;
 using SWallet.Repository.Payload.Response.Account;
-using SWallet.Repository.Payload.Response.Login;
 using SWallet.Repository.Services.Interfaces;
 using SWallet.Repository.Utils;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 using BCryptNet = BCrypt.Net.BCrypt;
 
 namespace SWallet.Repository.Services.Implements
@@ -26,12 +18,12 @@ namespace SWallet.Repository.Services.Implements
     {
         private readonly Mapper mapper;
         private readonly IEmailService _emailService;
-        private readonly ICloudinaryService _cloudinaryService;
         private readonly IBrandService _brandService;
         private readonly IStudentService _studentService;
+        private readonly IRedisService _redisService;
 
         public AccountService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<AccountService> logger,
-            IEmailService emailService, ICloudinaryService cloudinaryService, IBrandService brandService, IStudentService studentService) : base(unitOfWork, logger)
+            IEmailService emailService, IBrandService brandService, IStudentService studentService, IRedisService redisService) : base(unitOfWork, logger)
         {
             var config = new MapperConfiguration(cfg
                 =>
@@ -116,9 +108,9 @@ namespace SWallet.Repository.Services.Implements
             });
             mapper ??= new Mapper(config);
             _emailService = emailService;
-            _cloudinaryService = cloudinaryService;
             _brandService = brandService;
             _studentService = studentService;
+            _redisService = redisService;
         }
 
         public async Task<AccountResponse> CreateBrandAccount(AccountRequest accountRequest, CreateBrandByAccountId brandRequest)
@@ -155,12 +147,16 @@ namespace SWallet.Repository.Services.Implements
             ac.Role = (int)Role.Student;
 
             await _unitOfWork.GetRepository<Account>().InsertAsync(ac);
-            
+
             bool issuccessfull = await _unitOfWork.CommitAsync() > 0;
             if (issuccessfull)
             {
-                //if (ac.Email != null)
-                //    await _emailService.SendEmailStudentRegister(ac.Email);
+                if (ac.Email != null)
+                {
+                    var code = await _emailService.SendEmailVerification(ac.Email);
+                    await _redisService.SaveVerificationCodeAsync(ac.Email, code);
+                }
+
                 await _studentService.CreateStudentAsync(ac.Id, studentRequest);
                 return mapper.Map<AccountResponse>(ac);
             }
