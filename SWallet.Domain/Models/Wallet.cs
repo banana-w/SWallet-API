@@ -7,11 +7,13 @@ public partial class Wallet
 {
     public string Id { get; set; } = null!;
 
-    public string CampaignId { get; set; } = null!;
+    public string? LecturerId { get; set; }
 
-    public string StudentId { get; set; } = null!;
+    public string? CampaignId { get; set; }
 
-    public string BrandId { get; set; } = null!;
+    public string? StudentId { get; set; }
+
+    public string? BrandId { get; set; }
 
     public int? Type { get; set; }
 
@@ -29,13 +31,15 @@ public partial class Wallet
 
     public virtual ICollection<ActivityTransaction> ActivityTransactions { get; set; } = new List<ActivityTransaction>();
 
-    public virtual Brand Brand { get; set; } = null!;
+    public virtual Brand? Brand { get; set; }
 
-    public virtual Campaign Campaign { get; set; } = null!;
+    public virtual Campaign? Campaign { get; set; }
 
     public virtual ICollection<CampaignTransaction> CampaignTransactions { get; set; } = new List<CampaignTransaction>();
 
     public virtual ICollection<ChallengeTransaction> ChallengeTransactions { get; set; } = new List<ChallengeTransaction>();
+
+    public virtual Lecturer? Lecturer { get; set; }
 
     public virtual ICollection<OrderTransaction> OrderTransactions { get; set; } = new List<OrderTransaction>();
 
@@ -43,5 +47,5 @@ public partial class Wallet
 
     public virtual ICollection<RewardTransaction> RewardTransactions { get; set; } = new List<RewardTransaction>();
 
-    public virtual Student Student { get; set; } = null!;
+    public virtual Student? Student { get; set; }
 }

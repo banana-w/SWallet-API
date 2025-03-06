@@ -20,4 +20,6 @@ public partial class Lecturer
     public bool? Status { get; set; }
 
     public virtual Account Account { get; set; } = null!;
+
+    public virtual ICollection<Wallet> Wallets { get; set; } = new List<Wallet>();
 }

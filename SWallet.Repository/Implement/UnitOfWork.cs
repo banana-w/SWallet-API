@@ -22,7 +22,7 @@ public class UnitOfWork<TContext> : IUnitOfWork<TContext> where TContext : DbCon
             return (IGenericRepository<TEntity>)repository;
         }
 
-        repository = new GenericRepository<TEntity>(Context);
+        repository ??= new GenericRepository<TEntity>(Context);
         _repositories.Add(typeof(TEntity), repository);
         return (IGenericRepository<TEntity>)repository;
     }

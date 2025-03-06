@@ -11,11 +11,11 @@ namespace SWallet.Repository.Payload.Request.Wallet
 {
     public class WalletRequest
     {
-        public string CampaignId { get; set; }
+        public string? CampaignId { get; set; }
 
-        public string StudentId { get; set; }
+        public string? StudentId { get; set; }
 
-        public string BrandId { get; set; }
+        public string? BrandId { get; set; }
 
         /// <summary>
         /// Green = 1, Red = 2

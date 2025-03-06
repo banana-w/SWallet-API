@@ -1,4 +1,5 @@
 ﻿using CloudinaryDotNet;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using SWallet.Repository.Payload;
@@ -25,6 +26,10 @@ builder.Services.AddCors(options =>
         policy => { policy.WithOrigins("*").AllowAnyHeader().AllowAnyMethod(); });
 });
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("Cloudinary"));
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.SuppressModelStateInvalidFilter = true;
+});
 
 builder.Services.AddSingleton<Cloudinary>(sp =>
 {
