@@ -44,7 +44,7 @@ namespace SWallet.Repository.Services.Implements
                 DateCreated = DateTime.Now,
                 DateUpdated = DateTime.Now,
                 Gender = studentRequest.Gender,
-                State = (int?)StudentState.Active,
+                State = (int?)StudentState.Pending,
                 Status = true,
                 TotalIncome = 0,
                 TotalSpending = 0,

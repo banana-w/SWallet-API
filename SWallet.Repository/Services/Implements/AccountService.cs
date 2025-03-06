@@ -153,7 +153,7 @@ namespace SWallet.Repository.Services.Implements
             {
                 if (ac.Email != null)
                 {
-                    var code = await _emailService.SendEmailVerification(ac.Email);
+                    var code = await _emailService.SendVerificationEmail(ac.Email);
                     await _redisService.SaveVerificationCodeAsync(ac.Email, code);
                 }
 
@@ -163,14 +163,11 @@ namespace SWallet.Repository.Services.Implements
             else throw new ApiException("Student Account Creation Fail", 400, "BAD_REQUEST");
         }
 
-
-
         public async Task<AccountResponse> GetAccountById(string id)
         {
             Account account = await _unitOfWork.GetRepository<Account>().SingleOrDefaultAsync(predicate: x => x.Id == id);
             return mapper.Map<AccountResponse>(account);
         }
-
 
     }
 }

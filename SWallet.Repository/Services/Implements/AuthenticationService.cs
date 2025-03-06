@@ -99,5 +99,21 @@ namespace SWallet.Repository.Services.Implements
         {
             return await redisService.VerifyCodeAsync(email, userInput);
         }
+        public async Task<bool> VerifyStudent(string email, string userInput, string studentId)
+        {
+            var student = await _unitOfWork.GetRepository<Student>().SingleOrDefaultAsync(predicate: x => x.Id == studentId);
+
+            if (student != null)
+            {
+                var result = await redisService.VerifyCodeAsync(email, userInput);
+                if (result)
+                {
+                    student.State = (int)StudentState.Active;
+                    _unitOfWork.GetRepository<Student>().UpdateAsync(student);
+                    return await _unitOfWork.CommitAsync() > 0;
+                }
+            }
+            return false;
+        }
     }
 }

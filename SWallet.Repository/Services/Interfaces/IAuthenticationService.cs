@@ -7,5 +7,6 @@ namespace SWallet.Repository.Services.Interfaces
     {
         Task<LoginResponse> Login(LoginRequest loginRequest);
         Task<bool> VerifyEmail(string email, string userInput);
+        Task<bool> VerifyStudent(string email, string userInput, string studentId);
     }
 }
