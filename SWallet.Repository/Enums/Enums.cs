@@ -48,4 +48,24 @@ namespace SWallet.Repository.Enums
         [Description("Từ chối xác nhận tài khoản")]
         Rejected = 4,
     }
+    public enum WalletType
+    {
+        [Display(Name = "Ví xanh")]
+        [Description("Ví xanh dành cho sinh viên")]
+        Green = 1,
+        [Display(Name = "Ví đỏ")]
+        [Description("Ví đỏ dành cho giáo viên")]
+        Red = 2
+    }
+
+    public enum ActivityType
+    {
+        [Display(Name = "Mua")]
+        [Description("Mua khuyến mãi")]
+        Buy = 1,
+
+        [Display(Name = "Sử dụng")]
+        [Description("Sử dụng khuyến mãi")]
+        Use = 2,
+    }
 }

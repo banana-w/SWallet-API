@@ -109,7 +109,7 @@ namespace SWallet.Repository.Services.Implements
             return voucherTypes;
         }
 
-        public Task<bool> UpdateVoucherType(VoucherTypeRequest request)
+        public Task<bool> UpdateVoucherType(string id, VoucherTypeRequest request)
         {
             throw new NotImplementedException();
         }
