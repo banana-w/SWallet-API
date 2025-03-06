@@ -18,7 +18,7 @@ namespace SWallet_API.Controllers
 
         [HttpPut("{id}")]
         [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
-        public async Task<IActionResult> RedeemVoucher(int id)
+        public async Task<IActionResult> RedeemVoucher(string id)
         {
             var result = await _voucherItemService.RedeemVoucherAsync(id);
             return Ok(result);
