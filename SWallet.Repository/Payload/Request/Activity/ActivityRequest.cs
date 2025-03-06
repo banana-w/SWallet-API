@@ -22,7 +22,8 @@ namespace SWallet.Repository.Payload.Request.Activity
         /// Buy = 1, Use = 2
         /// </summary>
         [Required(ErrorMessage = "Loại hoạt động là bắt buộc")]
-        public Type? Type { get; set; }
+        public ActivityType? Type { get; set; }
+        public decimal? Cost { get; set; }
 
         public string Description { get; set; }
 

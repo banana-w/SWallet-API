@@ -1,6 +1,8 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using SWallet.Domain.Models;
 using SWallet.Domain.Paginate;
+using SWallet.Repository.Enums;
 using SWallet.Repository.Interfaces;
 using SWallet.Repository.Payload.Request.Activity;
 using SWallet.Repository.Payload.Response.Activity;
@@ -17,32 +19,71 @@ namespace SWallet.Repository.Services.Implements
 {
     public class ActivityService : BaseService<ActivityService>, IActivityService
     {
-        public ActivityService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<ActivityService> logger) : base(unitOfWork, logger)
+        private readonly IWalletService _walletService;
+        private readonly IVoucherItemService _voucherItemService;
+        public ActivityService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<ActivityService> logger, IWalletService walletService, IVoucherItemService voucherItemService) : base(unitOfWork, logger)
         {
+            _walletService = walletService;
+            _voucherItemService = voucherItemService;
         }
 
-        public async Task<bool> CreateActivityAsync(ActivityRequest activityRequest)
+        public async Task<bool> RedeemVoucherActivityAsync(ActivityRequest activityRequest)
         {
-            if (activityRequest == null)
+            await _unitOfWork.BeginTransactionAsync();
+            try
             {
-                throw new ArgumentNullException(nameof(activityRequest));
-            }
+                var wallet = await _walletService.GetWalletByStudentId(activityRequest.StudentId, (int)WalletType.Green);
+                if (wallet == null || wallet.Balance < activityRequest.Cost)
+                {
+                    return false;
+                }
 
-            var activity = new Activity
+                var activity = new Activity
+                {
+                    Id = Ulid.NewUlid().ToString(),
+                    StoreId = activityRequest.StoreId,
+                    StudentId = activityRequest.StudentId,
+                    VoucherItemId = activityRequest.VoucherItemId,
+                    Type = (int)activityRequest.Type,
+                    Description = activityRequest.Description,
+                    State = true,
+                    Status = true
+                };
+
+                await _unitOfWork.GetRepository<Activity>().InsertAsync(activity);
+                await _unitOfWork.CommitAsync();
+
+                //tru diem
+                await _walletService.UpdateWallet(wallet.Id, (decimal)activityRequest.Cost);
+                await _voucherItemService.RedeemVoucherAsync(activityRequest.VoucherItemId);
+
+                //add transaction
+                await AddActivityTransactionAsync(activity.Id, wallet.Id, (decimal)activityRequest.Cost, "Redeem voucher");
+
+                await _unitOfWork.CommitTransactionAsync();
+                return true;
+            }
+            catch (Exception ex)
             {
-                Id = Ulid.NewUlid().ToString(),
-                StoreId = activityRequest.StoreId,
-                StudentId = activityRequest.StudentId,
-                VoucherItemId = activityRequest.VoucherItemId,
-                Description = activityRequest.Description,
-                State = true, // Default state
-                Status = true // Default status
+                await _unitOfWork.RollbackTransactionAsync();
+                throw ex;
+            }
+        }
+        public async Task<ActivityTransaction> AddActivityTransactionAsync(string activityId, string walletId, decimal amount, string description)
+        {
+            var transaction = new ActivityTransaction
+            {
+                Id = Guid.NewGuid().ToString(),
+                ActivityId = activityId,
+                WalletId = walletId,
+                Amount = amount,
+                Description = description,
+                State = true
             };
 
-            await _unitOfWork.GetRepository<Activity>().InsertAsync(activity);
-            var result = await _unitOfWork.CommitAsync();
-
-            return result > 0;
+            await _unitOfWork.GetRepository<ActivityTransaction>().InsertAsync(transaction);
+            await _unitOfWork.CommitAsync();
+            return transaction;
         }
 
         public Task<bool> DeleteActivityAsync()
