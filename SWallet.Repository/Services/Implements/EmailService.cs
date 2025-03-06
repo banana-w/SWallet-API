@@ -53,7 +53,7 @@ namespace SWallet.Repository.Services.Implements
             }  
         }
 
-        public async Task<string> SendEmailVerification(string receiver)
+        public async Task<string> SendVerificationEmail(string receiver)
         {
             Random random = new();
             string randomNumber = random.Next(100000, 999999).ToString();

@@ -19,7 +19,7 @@ namespace SWallet.Repository.Services.Interfaces
 
         //bool SendEmailStudentRegisterReject(string receiver, string note);
 
-        Task<string> SendEmailVerification(string receiver);
+        Task<string> SendVerificationEmail(string receiver);
 
         //bool SendEmailAbortOrder(string receiver, string orderId, string note);
 

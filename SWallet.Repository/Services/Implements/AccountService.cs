@@ -153,7 +153,7 @@ namespace SWallet.Repository.Services.Implements
             {
                 if (ac.Email != null)
                 {
-                    var code = await _emailService.SendEmailVerification(ac.Email);
+                    var code = await _emailService.SendVerificationEmail(ac.Email);
                     await _redisService.SaveVerificationCodeAsync(ac.Email, code);
                 }
 
