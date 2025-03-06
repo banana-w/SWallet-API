@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
+using SWallet.Domain.Models;
 using SWallet.Repository.Interfaces;
 
 namespace SWallet.Repository.Implement;
@@ -8,6 +9,8 @@ public class UnitOfWork<TContext> : IUnitOfWork<TContext> where TContext : DbCon
 {
     public TContext Context { get; }
     private Dictionary<Type, object> _repositories;
+    private readonly SwalletDbContext swalletDb;
+
 
     public UnitOfWork(TContext context)
     {

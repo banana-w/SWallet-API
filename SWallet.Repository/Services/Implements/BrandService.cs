@@ -118,14 +118,6 @@ namespace SWallet.Repository.Services.Implements
 
         public async Task<BrandResponse> CreateBrandAsync(string accountId, CreateBrandByAccountId brand)
         {
-            //var existingAccount = await _unitOfWork.GetRepository<Account>().SingleOrDefaultAsync(
-            //    predicate: b => b.Id == accountId);
-
-            //if (existingAccount == null)
-            //{
-            //    throw new ApiException("Account not found", 404, "NOT_FOUND");
-            //}
-
             var imageUri = string.Empty;
             if (brand.CoverPhoto != null && brand.CoverPhoto.Length > 0)
             {

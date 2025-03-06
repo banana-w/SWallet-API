@@ -213,10 +213,19 @@ namespace SWallet.Repository.Services.Implements
                     DateUpdated = x.DateUpdated,
                     Description = x.Description,
                     State = x.State,
-                    Status = x.Status
+                    Status = x.Account.Status,
+                    UserName = x.Account.UserName,
+                    Email = x.Account.Email,
+                    Phone = x.Account.Phone,
+                    Avatar = x.Account.Avatar,
+                    AvatarFileName = x.Account.FileName,
+                    
+                    
+                    
 
                 },
                 predicate: filterQuery,
+                include: x => x.Include(a => a.Account),
                 page: page,
                 size: size);
             return areas;
