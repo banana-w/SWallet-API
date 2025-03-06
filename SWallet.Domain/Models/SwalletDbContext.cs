@@ -1632,6 +1632,11 @@ public partial class SwalletDbContext : DbContext
             entity.Property(e => e.Description)
                 .HasColumnType("text")
                 .HasColumnName("description");
+            entity.Property(e => e.LecturerId)
+                .HasMaxLength(26)
+                .IsUnicode(false)
+                .IsFixedLength()
+                .HasColumnName("lecturer_id");
             entity.Property(e => e.State).HasColumnName("state");
             entity.Property(e => e.Status).HasColumnName("status");
             entity.Property(e => e.StudentId)
@@ -1643,16 +1648,19 @@ public partial class SwalletDbContext : DbContext
 
             entity.HasOne(d => d.Brand).WithMany(p => p.Wallets)
                 .HasForeignKey(d => d.BrandId)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("FK_tbl_wallet_tbl_brand_brand_id");
 
             entity.HasOne(d => d.Campaign).WithMany(p => p.Wallets)
                 .HasForeignKey(d => d.CampaignId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_tbl_wallet_tbl_campaign_campaign_id");
+
+            entity.HasOne(d => d.Lecturer).WithMany(p => p.Wallets)
+                .HasForeignKey(d => d.LecturerId)
+                .HasConstraintName("FK_wallet_lecturer");
 
             entity.HasOne(d => d.Student).WithMany(p => p.Wallets)
                 .HasForeignKey(d => d.StudentId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_tbl_wallet_tbl_student_student_id");
         });
 
