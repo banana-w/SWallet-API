@@ -13,4 +13,5 @@ namespace SWallet.Repository.Interfaces
     {
         TContext Context { get; }
     }
+
 }

@@ -1,7 +1,9 @@
 ﻿using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
+using SWallet.Domain.Models;
 using SWallet.Domain.Paginate;
+using SWallet.Repository.Implement;
 
 namespace SWallet.Repository.Interfaces
 {
@@ -68,6 +70,5 @@ namespace SWallet.Repository.Interfaces
         void DeleteRangeAsync(IEnumerable<T> entities);
         Task<int> CountAsync(Expression<Func<T, bool>> filter = null);
         Task<bool> AnyAsync(Expression<Func<T, bool>> predicate);
-        
     }
 }

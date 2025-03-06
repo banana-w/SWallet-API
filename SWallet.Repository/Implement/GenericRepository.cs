@@ -1,6 +1,7 @@
 ﻿using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
+using SWallet.Domain.Models;
 using SWallet.Domain.Paginate;
 using SWallet.Repository.Interfaces;
 
@@ -146,6 +147,10 @@ namespace SWallet.Repository.Implement
             _dbSet.RemoveRange(entities);
         }
 
+
+
         #endregion
     }
+        
 }
+
