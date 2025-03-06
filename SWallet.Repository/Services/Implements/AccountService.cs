@@ -163,14 +163,11 @@ namespace SWallet.Repository.Services.Implements
             else throw new ApiException("Student Account Creation Fail", 400, "BAD_REQUEST");
         }
 
-
-
         public async Task<AccountResponse> GetAccountById(string id)
         {
             Account account = await _unitOfWork.GetRepository<Account>().SingleOrDefaultAsync(predicate: x => x.Id == id);
             return mapper.Map<AccountResponse>(account);
         }
-
 
     }
 }

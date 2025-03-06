@@ -43,5 +43,18 @@ namespace SWallet_API.Controllers
                 ?? throw new ApiException("Account creation failed.", StatusCodes.Status400BadRequest, "ACCOUNT_CREATION_FAILED");
             return Ok(result);
         }
+
+        [HttpGet("{id}")]
+        [ProducesResponseType(typeof(AccountResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetAccountById(string id)
+        {
+            var result = await _accountService.GetAccountById(id);
+            if (result == null)
+            {
+                throw new ApiException("Account not found.", StatusCodes.Status400BadRequest, "ACCOUNT_NOT_FOUND");
+            }
+            return Ok(result);
+        }
     }
 }

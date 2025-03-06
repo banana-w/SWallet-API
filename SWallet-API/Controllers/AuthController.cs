@@ -41,5 +41,17 @@ namespace SWallet_API.Controllers
             return Ok(result);
         }
 
+        [HttpPost("verify-student")]
+        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+        public async Task<IActionResult> VerifyStudent([FromBody] VerifyStudentRequest verifyStudentRequest)
+        {
+            var result = await _authService.VerifyStudent(verifyStudentRequest.Email, verifyStudentRequest.Code, verifyStudentRequest.StudentId);
+            if (!result)
+            {
+                throw new ApiException("Invalid student", StatusCodes.Status400BadRequest, "INVALID_STUDENT");
+            }
+            return Ok(result);
+        }
+
     }
 }
