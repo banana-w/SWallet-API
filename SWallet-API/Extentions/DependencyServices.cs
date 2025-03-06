@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using StackExchange.Redis;
 using SWallet.Domain.Models;
 using SWallet.Repository.Implement;
 using SWallet.Repository.Interfaces;
@@ -37,7 +38,17 @@ namespace SWallet_API.Extentions
             services.AddScoped<ICampaignTypeService, CampaignTypeService>();
             services.AddScoped<ICampaignDetailService, CampaignDetailService>();
             services.AddScoped<ICampaignService, CampaignService>();
+            services.AddScoped<IStudentService, StudentService>();
+            services.AddScoped<IActivityService, ActivityService>();
+            services.AddScoped<IWalletService, WalletService>();
+
             return services;
+        }
+        public static void AddRedisServices(this IServiceCollection services, IConfiguration configuration)
+        {
+            var redisConfig = configuration.GetValue<string>("Redis:ConnectionString");
+            services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConfig));
+            services.AddScoped<IRedisService, RedisService>();
         }
 
         public static IServiceCollection AddConfigSwagger(this IServiceCollection services)

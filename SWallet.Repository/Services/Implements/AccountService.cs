@@ -1,22 +1,15 @@
 ﻿using AutoMapper;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
 using SWallet.Domain.Models;
 using SWallet.Repository.Enums;
 using SWallet.Repository.Interfaces;
 using SWallet.Repository.Payload.ExceptionModels;
 using SWallet.Repository.Payload.Request.Account;
 using SWallet.Repository.Payload.Request.Brand;
-using SWallet.Repository.Payload.Request.Login;
+using SWallet.Repository.Payload.Request.Student;
 using SWallet.Repository.Payload.Response.Account;
-using SWallet.Repository.Payload.Response.Login;
 using SWallet.Repository.Services.Interfaces;
 using SWallet.Repository.Utils;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 using BCryptNet = BCrypt.Net.BCrypt;
 
 namespace SWallet.Repository.Services.Implements
@@ -25,11 +18,12 @@ namespace SWallet.Repository.Services.Implements
     {
         private readonly Mapper mapper;
         private readonly IEmailService _emailService;
-        private readonly ICloudinaryService _cloudinaryService;
         private readonly IBrandService _brandService;
+        private readonly IStudentService _studentService;
+        private readonly IRedisService _redisService;
 
         public AccountService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<AccountService> logger,
-            IEmailService emailService, ICloudinaryService cloudinaryService, IBrandService brandService) : base(unitOfWork, logger)
+            IEmailService emailService, IBrandService brandService, IStudentService studentService, IRedisService redisService) : base(unitOfWork, logger)
         {
             var config = new MapperConfiguration(cfg
                 =>
@@ -114,8 +108,9 @@ namespace SWallet.Repository.Services.Implements
             });
             mapper ??= new Mapper(config);
             _emailService = emailService;
-            _cloudinaryService = cloudinaryService;
             _brandService = brandService;
+            _studentService = studentService;
+            _redisService = redisService;
         }
 
         public async Task<AccountResponse> CreateBrandAccount(AccountRequest accountRequest, CreateBrandByAccountId brandRequest)
@@ -141,49 +136,38 @@ namespace SWallet.Repository.Services.Implements
             throw new ApiException("Brand Account Creation Failed", 400, "BAD_REQUEST");
         }
 
-        public async Task<AccountResponse> CreateStudentAccount(CreateStudentAccount accountCreation)
+        public async Task<AccountResponse> CreateStudentAccount(AccountRequest accountRequest, StudentRequest studentRequest)
         {
-            Account account = mapper.Map<Account>(accountCreation);
-            //insert account
-            await _unitOfWork.GetRepository<Account>().InsertAsync(account);
-
-            Student student = mapper.Map<Student>(accountCreation);
-
-            student.AccountId = account.Id;
-            //upload font-back student card images
-            if (accountCreation.StudentCardFront != null && accountCreation.StudentCardFront.Length > 0)
+            var account = await _unitOfWork.GetRepository<Account>().AnyAsync(x => x.UserName == accountRequest.UserName);
+            if (account)
             {
-                var uploadResult = _cloudinaryService.UploadImageAsync(accountCreation.StudentCardFront);
-                student.StudentCardFront = uploadResult.Result.SecureUrl.AbsoluteUri;
-                student.FileNameFront = uploadResult.Result.PublicId;
+                throw new ApiException("Account already exists", 400, "BAD_REQUEST");
             }
-            if (accountCreation.StudentCardBack != null && accountCreation.StudentCardBack.Length > 0)
-            {
-                var uploadResult = _cloudinaryService.UploadImageAsync(accountCreation.StudentCardBack);
-                student.StudentCardBack = uploadResult.Result.SecureUrl.AbsoluteUri;
-                student.FileNameBack = uploadResult.Result.PublicId;
-            }
-            //insert student _service
-            await _unitOfWork.GetRepository<Student>().InsertAsync(student);
+            Account ac = mapper.Map<Account>(accountRequest);
+            ac.Role = (int)Role.Student;
+
+            await _unitOfWork.GetRepository<Account>().InsertAsync(ac);
 
             bool issuccessfull = await _unitOfWork.CommitAsync() > 0;
             if (issuccessfull)
             {
-                if (account.Email != null)
-                    await _emailService.SendEmailStudentRegister(account.Email);
-                return mapper.Map<AccountResponse>(account);
+                if (ac.Email != null)
+                {
+                    var code = await _emailService.SendVerificationEmail(ac.Email);
+                    await _redisService.SaveVerificationCodeAsync(ac.Email, code);
+                }
+
+                await _studentService.CreateStudentAsync(ac.Id, studentRequest);
+                return mapper.Map<AccountResponse>(ac);
             }
-            else throw new ApiException("Account Creation Fail", 400, "BAD_REQUEST");
+            else throw new ApiException("Student Account Creation Fail", 400, "BAD_REQUEST");
         }
-
-
 
         public async Task<AccountResponse> GetAccountById(string id)
         {
             Account account = await _unitOfWork.GetRepository<Account>().SingleOrDefaultAsync(predicate: x => x.Id == id);
             return mapper.Map<AccountResponse>(account);
         }
-
 
     }
 }

@@ -1,20 +1,15 @@
 ﻿using AutoMapper;
-using FluentAssertions;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.Extensions.Logging;
 using Moq;
 using SWallet.Domain.Models;
 using SWallet.Repository.Interfaces;
-using SWallet.Repository.Payload.Request.Login;
+using SWallet.Repository.Payload.Request.Authentication;
 using SWallet.Repository.Payload.Response.Account;
 using SWallet.Repository.Services.Implements;
 using SWallet.Repository.Services.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace Swallet_UnitTest.Services
 {
@@ -25,6 +20,7 @@ namespace Swallet_UnitTest.Services
         private readonly Mock<IJwtService> _jwtServiceMock;
         private readonly Mock<IMapper> _mapperMock;
         private readonly AuthenticationService _authService;
+        private readonly Mock<IRedisService> _redisServiceMock;
 
         public AuthServiceTest()
         {
@@ -32,7 +28,8 @@ namespace Swallet_UnitTest.Services
             _loggerMock = new Mock<ILogger<AuthenticationService>>();
             _jwtServiceMock = new Mock<IJwtService>();
             _mapperMock = new Mock<IMapper>();
-            _authService = new AuthenticationService(_unitOfWorkMock.Object, _loggerMock.Object, _jwtServiceMock.Object);
+            _redisServiceMock = new Mock<IRedisService>();
+            _authService = new AuthenticationService(_unitOfWorkMock.Object, _loggerMock.Object, _jwtServiceMock.Object, _redisServiceMock.Object);
         }
 
         [Fact]
@@ -57,9 +54,9 @@ namespace Swallet_UnitTest.Services
             var result = await _authService.Login(loginRequest);
 
             // Assert
-            result.Should().NotBeNull();
-            result.Role.Should().BeEquivalentTo("Quản trị viên");
-            result.Token.Should().NotBeNullOrEmpty();
+            Assert.NotNull(result);
+            Assert.Equal("Quản trị viên", result.Role);
+            Assert.False(string.IsNullOrEmpty(result.Token));
         }
 
 

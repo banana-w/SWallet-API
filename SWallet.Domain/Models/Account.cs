@@ -29,7 +29,7 @@ public partial class Account
 
     public DateTime? DateVerified { get; set; }
 
-    public string Description { get; set; } = null!;
+    public string? Description { get; set; }
 
     public bool? State { get; set; }
 

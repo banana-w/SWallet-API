@@ -1,0 +1,170 @@
+﻿using Microsoft.Extensions.Logging;
+using SWallet.Domain.Models;
+using SWallet.Domain.Paginate;
+using SWallet.Repository.Enums;
+using SWallet.Repository.Interfaces;
+using SWallet.Repository.Payload.Request.Student;
+using SWallet.Repository.Payload.Response.Student;
+using SWallet.Repository.Services.Interfaces;
+using System.Linq.Expressions;
+
+namespace SWallet.Repository.Services.Implements
+{
+    public class StudentService : BaseService<StudentService>, IStudentService
+    {
+        private readonly ICloudinaryService _cloudinaryService;
+        public StudentService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<StudentService> logger, ICloudinaryService cloudinaryService) : base(unitOfWork, logger)
+        {
+            _cloudinaryService = cloudinaryService;
+        }
+        public async Task<bool> CreateStudentAsync(string accountId, StudentRequest studentRequest)
+        {
+            if (string.IsNullOrEmpty(accountId) || studentRequest == null)
+            {
+                throw new ArgumentException("Invalid accountId or studentRequest");
+            }
+            var imageUri = string.Empty;
+            if (studentRequest.StudentCardFront != null && studentRequest.StudentCardFront.Length > 0)
+            {
+                var uploadResult = await _cloudinaryService.UploadImageAsync(studentRequest.StudentCardFront);
+                imageUri = uploadResult.SecureUrl.AbsoluteUri;
+            }
+
+            var student = new Student
+            {
+                Id = Ulid.NewUlid().ToString(),
+                CampusId = studentRequest.CampusId,
+                AccountId = accountId,
+                StudentCardFront = imageUri,
+                StudentCardBack = null,
+                Address = studentRequest.Address,
+                DateOfBirth = studentRequest.DateOfBirth,
+                Code = studentRequest.Code,
+                FullName = studentRequest.FullName,
+                DateCreated = DateTime.Now,
+                DateUpdated = DateTime.Now,
+                Gender = studentRequest.Gender,
+                State = (int?)StudentState.Pending,
+                Status = true,
+                TotalIncome = 0,
+                TotalSpending = 0,
+
+            };
+
+            await _unitOfWork.GetRepository<Student>().InsertAsync(student);
+            var result = await _unitOfWork.CommitAsync();
+
+            return result > 0;
+        }
+
+        public async Task<StudentResponse> GetStudentAsync(string accountId, string studentId)
+        {
+            if (string.IsNullOrEmpty(accountId) || string.IsNullOrEmpty(studentId))
+            {
+                throw new ArgumentException("Invalid accountId or studentId");
+            }
+
+            var student = await _unitOfWork.GetRepository<Student>().SingleOrDefaultAsync(
+                selector: x => new StudentResponse
+                {
+                    Id = x.Id,
+                    CampusId = x.CampusId,
+                    AccountId = x.AccountId,
+                    StudentCardFront = x.StudentCardFront,
+                    StudentCardBack = x.StudentCardBack,
+                    Address = x.Address,
+                    DateOfBirth = x.DateOfBirth,
+                    Code = x.Code,
+                    FullName = x.FullName,
+                    DateCreated = x.DateCreated,
+                    DateUpdated = x.DateUpdated,
+                    Gender = x.Gender,
+                    State = x.State,
+                    Status = x.Status,
+                    TotalIncome = x.TotalIncome,
+                    TotalSpending = x.TotalSpending,
+                    
+                },
+                    predicate: x => x.Id == studentId);
+            if (student == null || student.AccountId != accountId)
+            {
+                return null;
+            }
+            return student;
+        }
+
+        public async Task<IPaginate<StudentResponse>> GetStudentsAsync(string search, bool? isAsc, int pageIndex, int pageSize)
+        {
+            Expression<Func<Student, bool>> filterQuery = x =>
+                string.IsNullOrEmpty(search) || x.FullName.Contains(search) || x.Code.Contains(search);
+
+            var students = await _unitOfWork.GetRepository<Student>().GetPagingListAsync(
+                selector: x => new StudentResponse
+                {
+                    Id = x.Id,
+                    CampusId = x.CampusId,
+                    AccountId = x.AccountId,
+                    StudentCardFront = x.StudentCardFront,
+                    StudentCardBack = x.StudentCardBack,
+                    Address = x.Address,
+                    DateOfBirth = x.DateOfBirth,
+                    Code = x.Code,
+                    FullName = x.FullName,
+                    DateCreated = x.DateCreated,
+                    DateUpdated = x.DateUpdated,
+                    Gender = x.Gender,
+                    State = x.State,
+                    Status = x.Status,
+                    TotalIncome = x.TotalIncome,
+                    TotalSpending = x.TotalSpending,
+                },
+                predicate: filterQuery,
+                page: pageIndex,
+                size: pageSize,
+                orderBy: x => isAsc.HasValue && isAsc.Value ? x.OrderBy(v => v.DateCreated) : x.OrderByDescending(v => v.DateCreated)
+                );
+
+            return students;
+        }
+
+        public async Task<bool> UpdateStudentAsync(string accountId, StudentRequest studentRequest)
+        {
+            if (string.IsNullOrEmpty(accountId) || studentRequest == null)
+            {
+                throw new ArgumentException("Invalid accountId or studentRequest");
+            }
+
+            var student = await _unitOfWork.GetRepository<Student>().SingleOrDefaultAsync(predicate: x => x.AccountId == accountId);
+            if (student == null)
+            {
+                return false;
+            }
+
+            var imageUri = student.StudentCardFront;
+            if (studentRequest.StudentCardFront != null && studentRequest.StudentCardFront.Length > 0)
+            {
+                if (!string.IsNullOrEmpty(student.StudentCardFront))
+                {
+                    await _cloudinaryService.RemoveImageAsync(student.StudentCardFront);
+                }
+                var uploadResult = await _cloudinaryService.UploadImageAsync(studentRequest.StudentCardFront);
+                imageUri = uploadResult.SecureUrl.AbsoluteUri;
+            }
+
+            student.CampusId = studentRequest.CampusId;
+            student.StudentCardFront = imageUri;
+            student.Address = studentRequest.Address;
+            student.DateOfBirth = studentRequest.DateOfBirth;
+            student.Code = studentRequest.Code;
+            student.FullName = studentRequest.FullName;
+            student.DateUpdated = DateTime.Now;
+            student.Gender = studentRequest.Gender;
+            student.State = (int?)StudentState.Active;
+
+            _unitOfWork.GetRepository<Student>().UpdateAsync(student);
+            var result = await _unitOfWork.CommitAsync();
+
+            return result > 0;
+        }
+    }
+}

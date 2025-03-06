@@ -1,4 +1,5 @@
 ﻿using CloudinaryDotNet;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using SWallet.Repository.Payload;
@@ -10,16 +11,25 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
-
 builder.Services
     .AddServices(builder.Configuration)
     .AddJwtValidation(builder.Configuration);
 
+builder.Services.AddRedisServices(builder.Configuration);
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddConfigSwagger();
-
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: "MyDefaultPolicy",
+        policy => { policy.WithOrigins("*").AllowAnyHeader().AllowAnyMethod(); });
+});
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("Cloudinary"));
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.SuppressModelStateInvalidFilter = true;
+});
 
 builder.Services.AddSingleton<Cloudinary>(sp =>
 {
@@ -29,18 +39,21 @@ builder.Services.AddSingleton<Cloudinary>(sp =>
         cloudinarySettings.ApiKey,
         cloudinarySettings.ApiSecret));
 });
+
 builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Environment.IsProduction() || app.Environment.IsStaging())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors("MyDefaultPolicy");
 
 app.UseCustomExceptionHandler();
 

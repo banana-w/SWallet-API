@@ -40,9 +40,9 @@ namespace SWallet.Repository.Services.Implements
                 email.Body = new TextPart(TextFormat.Html) { Text = body };
 
                 using var smtp = new SmtpClient();
-                await smtp.ConnectAsync(_configuration["EmailConfig:Host"], 587, SecureSocketOptions.StartTls);
-                await smtp.AuthenticateAsync(_configuration["EmailConfig:Username"], _configuration["EmailConfig:Password"]);
-                await smtp.SendAsync(email);
+                smtp.Connect(_configuration["EmailConfig:Host"], 587, SecureSocketOptions.StartTls);
+                smtp.Authenticate(_configuration["EmailConfig:Username"], _configuration["EmailConfig:Password"]);
+                smtp.Send(email);
                 await smtp.DisconnectAsync(true);
 
                 return true;
@@ -53,7 +53,7 @@ namespace SWallet.Repository.Services.Implements
             }  
         }
 
-        public string SendEmailVerification(string receiver)
+        public async Task<string> SendVerificationEmail(string receiver)
         {
             Random random = new();
             string randomNumber = random.Next(100000, 999999).ToString();
@@ -74,7 +74,7 @@ namespace SWallet.Repository.Services.Implements
                 smtp.Connect(_configuration["EmailConfig:Host"], 587, SecureSocketOptions.StartTls);
                 smtp.Authenticate(_configuration["EmailConfig:Username"], _configuration["EmailConfig:Password"]);
                 smtp.Send(email);
-                smtp.DisconnectAsync(true);
+                await smtp.DisconnectAsync(true);
 
                 return BCryptNet.HashPassword(randomNumber);
             }
