@@ -10,6 +10,6 @@ namespace SWallet.Repository.Services.Interfaces
     public interface IVoucherItemService
     {
         Task<bool> GenerateVoucherItemsAsync(VoucherItemRequest voucherItemRequest);
-        Task<bool> RedeemVoucherAsync(int voucherId, int studentId);
+        Task<bool> RedeemVoucherAsync(int voucherId);
     }
 }
