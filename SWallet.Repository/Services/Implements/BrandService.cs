@@ -43,7 +43,6 @@ namespace SWallet.Repository.Services.Implements
             mapper = new Mapper(config);
         }
 
-
             public async Task<BrandResponse> CreateBrand(CreateBrandModel brand)
             {
                 var existingAccount = await _unitOfWork.GetRepository<Account>().SingleOrDefaultAsync(

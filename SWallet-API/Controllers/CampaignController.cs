@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Org.BouncyCastle.Security;
+using SWallet.Domain.Paginate;
 using SWallet.Repository.Payload.Request.Brand;
 using SWallet.Repository.Payload.Request.Campaign;
 using SWallet.Repository.Payload.Response.Brand;
@@ -17,12 +18,39 @@ namespace SWallet_API.Controllers
         private readonly ICampaignService _campaignService;
         private readonly ILogger<CampaignController> _logger; 
 
-        private readonly IJwtService jwtService;
-
-        public CampaignController(
-            ICampaignService campaignService)
+        public CampaignController(ICampaignService campaignService, ILogger<CampaignController> logger)
         {
             _campaignService = campaignService;
+            _logger = logger;
+        }
+
+        [HttpGet("details")]
+        public async Task<IActionResult> GetAllCampaignDetails()
+        {
+            try
+            {
+                var campaignDetails = await _campaignService.GetAllCampaignDetails();
+                return Ok(campaignDetails);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<IPaginate<CampaignResponse>>> GetAllCampaigns(string searchName = "", int page = 1, int size = 10) // Pagination parameters
+        {
+            try
+            {
+                var campaignRespone = await _campaignService.GetCampaigns(searchName, page, size);
+                return Ok(campaignRespone);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting campaigns"); // Log the error
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error getting campaigns");
+            }
         }
 
         [HttpPost]
@@ -39,5 +67,7 @@ namespace SWallet_API.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, "Error creating campaign"); // Return 500 Internal Server Error
             }
         }
+
+
     }
 }
