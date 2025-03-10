@@ -27,6 +27,7 @@ namespace Swallet_UnitTest.Services
         private readonly Mock<IBrandService> _brandServiceMock;
         private readonly Mock<IStudentService> _studentServiceMock;
         private readonly Mock<IRedisService> _redisServiceMock;
+        private readonly Mock<IStoreService> _storeServiceMock;
         public AccountServiceTest()
         {
             _unitOfWorkMock = new Mock<IUnitOfWork<SwalletDbContext>>();
@@ -37,13 +38,15 @@ namespace Swallet_UnitTest.Services
             _brandServiceMock = new Mock<IBrandService>();
             _studentServiceMock = new Mock<IStudentService>();
             _redisServiceMock = new Mock<IRedisService>();
+            _storeServiceMock = new Mock<IStoreService>();
 
             _accountService = new AccountService(
                 _unitOfWorkMock.Object, _loggerMock.Object,
                 _emailServiceMock.Object,
                 _brandServiceMock.Object,
                 _studentServiceMock.Object,
-                _redisServiceMock.Object
+                _redisServiceMock.Object,
+                _storeServiceMock.Object
                 );
         }
 
