@@ -103,15 +103,14 @@ namespace SWallet.Repository.Services.Implements
             throw new ApiException("Voucher not found", 404, "NOT_FOUND");
         }
 
-        public async Task<IPaginate<VoucherResponse>> GetVouchers(string? search, bool? isAsc, bool? state, int page, int size)
+        public async Task<IPaginate<VoucherResponse>> GetVouchers(string brandId, string? search, bool? isAsc, bool? state, int page, int size)
         {
 
             Expression<Func<Voucher, bool>> filterQuery = x =>
                             x.Status == true &&
-                            x.State == state &&
+                            x.State == state && x.BrandId == brandId &&
                             (string.IsNullOrEmpty(search) || // search null
                             x.VoucherName.Contains(search) ||
-                            x.Brand.BrandName.Contains(search) ||
                             x.Type.TypeName.Contains(search) ||
                             x.Condition.Contains(search));
 

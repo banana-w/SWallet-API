@@ -43,9 +43,9 @@ namespace SWallet_API.Controllers
         }
         [HttpGet]
         [ProducesResponseType(typeof(IPaginate<VoucherResponse>), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetVouchers(string? search, bool? state, bool? isAsc, int page, int size)
+        public async Task<IActionResult> GetVouchers(string brandId, string? search, bool? state, bool? isAsc, int page, int size)
         {
-            var result = await _voucherService.GetVouchers(search, state, isAsc, page, size);
+            var result = await _voucherService.GetVouchers(brandId, search, state, isAsc, page, size);
             if (result != null)
             {
                 return Ok(result);
