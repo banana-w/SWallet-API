@@ -7,6 +7,7 @@ using SWallet.Repository.Services.Interfaces;
 namespace SWallet_API.Controllers
 {
     [Route("api/[controller]")]
+    [Tags("Voucher Type API")]
     [ApiController]
     public class VoucherTypeController : ControllerBase
     {
