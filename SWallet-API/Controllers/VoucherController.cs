@@ -52,5 +52,6 @@ namespace SWallet_API.Controllers
             }
             throw new ApiException("Voucher not found.", StatusCodes.Status404NotFound, "VOUCHER_NOT_FOUND");
         }
+
     }
 }
