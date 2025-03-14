@@ -11,7 +11,7 @@ namespace SWallet.Repository.Services.Interfaces
 {
     public interface IActivityService
     {
-        Task<bool> CreateActivityAsync(ActivityRequest activityRequest);
+        Task<bool> RedeemVoucherActivityAsync(ActivityRequest activityRequest);
         Task<bool> UpdateActivityAsync(string id, ActivityRequest activityRequest);
         Task<IPaginate<ActivityResponse>> GetActivityAsync(string search, bool? isAsc, int page, int size);
         Task<bool> DeleteActivityAsync();

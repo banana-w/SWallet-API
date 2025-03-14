@@ -6,6 +6,7 @@ using SWallet.Repository.Interfaces;
 using SWallet.Repository.Payload.ExceptionModels;
 using SWallet.Repository.Payload.Request.Account;
 using SWallet.Repository.Payload.Request.Brand;
+using SWallet.Repository.Payload.Request.Store;
 using SWallet.Repository.Payload.Request.Student;
 using SWallet.Repository.Payload.Response.Account;
 using SWallet.Repository.Services.Interfaces;
@@ -20,10 +21,11 @@ namespace SWallet.Repository.Services.Implements
         private readonly IEmailService _emailService;
         private readonly IBrandService _brandService;
         private readonly IStudentService _studentService;
+        private readonly IStoreService _storeService;
         private readonly IRedisService _redisService;
 
         public AccountService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<AccountService> logger,
-            IEmailService emailService, IBrandService brandService, IStudentService studentService, IRedisService redisService) : base(unitOfWork, logger)
+            IEmailService emailService, IBrandService brandService, IStudentService studentService, IRedisService redisService, IStoreService storeService) : base(unitOfWork, logger)
         {
             var config = new MapperConfiguration(cfg
                 =>
@@ -111,6 +113,7 @@ namespace SWallet.Repository.Services.Implements
             _brandService = brandService;
             _studentService = studentService;
             _redisService = redisService;
+            _storeService = storeService;
         }
 
         public async Task<AccountResponse> CreateBrandAccount(AccountRequest accountRequest, CreateBrandByAccountId brandRequest)
@@ -134,6 +137,29 @@ namespace SWallet.Repository.Services.Implements
                 return mapper.Map<AccountResponse>(ac);
             }
             throw new ApiException("Brand Account Creation Failed", 400, "BAD_REQUEST");
+        }
+
+        public async Task<AccountResponse> CreateStoreAccount(AccountRequest accountRequest, CreateStoreModel storeRequest)
+        {
+            var account = await _unitOfWork.GetRepository<Account>().AnyAsync(x => x.UserName == accountRequest.UserName);
+            if (account)
+            {
+                throw new ApiException("Account already exists", 400, "BAD_REQUEST");
+            }
+            Account ac = mapper.Map<Account>(accountRequest);
+            ac.Role = (int)Role.Store;
+
+            await _unitOfWork.GetRepository<Account>().InsertAsync(ac);
+
+            bool isSuccess = await _unitOfWork.CommitAsync() > 0;
+            if (isSuccess)
+            {
+                //if (ac.Email != null)
+                //await _emailService.SendEmailStoreRegister(ac.Email);
+                await _storeService.CreateStore(ac.Id, storeRequest);
+                return mapper.Map<AccountResponse>(ac);
+            }
+            throw new ApiException("Store Account Creation Failed", 400, "BAD_REQUEST");
         }
 
         public async Task<AccountResponse> CreateStudentAccount(AccountRequest accountRequest, StudentRequest studentRequest)

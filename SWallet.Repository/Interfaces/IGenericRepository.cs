@@ -1,7 +1,7 @@
 ﻿using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
-using SWallet.Domain.Models;
+using Microsoft.EntityFrameworkCore.Storage;
 using SWallet.Domain.Paginate;
 using SWallet.Repository.Implement;
 

@@ -42,7 +42,7 @@ namespace SWallet_API.Controllers
 
         [HttpPost("areas")]
         [ProducesResponseType(typeof(AreaResponse), StatusCodes.Status200OK)]
-        public async Task<IActionResult> CreateArea([FromBody] AreaRequest area)
+        public async Task<IActionResult> CreateArea([FromForm] AreaRequest area)
         {
             var result = await _areaService.CreateArea(area);
             return Ok(result);
@@ -50,7 +50,7 @@ namespace SWallet_API.Controllers
 
         [HttpPut("areas/{id}")]
         [ProducesResponseType(typeof(AreaResponse), StatusCodes.Status200OK)]
-        public async Task<IActionResult> UpdateArea(string id, [FromBody] AreaRequest area)
+        public async Task<IActionResult> UpdateArea(string id, [FromForm] AreaRequest area)
         {
             var result = await _areaService.UpdateArea(id, area);
             if (result == null)

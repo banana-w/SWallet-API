@@ -109,9 +109,37 @@ namespace SWallet.Repository.Services.Implements
             return voucherTypes;
         }
 
-        public Task<bool> UpdateVoucherType(VoucherTypeRequest request)
+        public async Task<bool> UpdateVoucherType(string id, VoucherTypeRequest request)
         {
-            throw new NotImplementedException();
+            var voucherType = await _unitOfWork.GetRepository<VoucherType>().SingleOrDefaultAsync(predicate: x => x.Id == id);
+            if (voucherType == null)
+            {
+                throw new ApiException("Voucher type not found", 404, "VOUCHER_TYPE_NOT_FOUND");
+            }
+            voucherType.TypeName = request.TypeName;
+            voucherType.DateUpdated = DateTime.Now;
+            voucherType.Description = request.Description;
+            voucherType.State = request.State;
+            if (request.Image != null && request.Image.Length > 0)
+            {
+                if (!string.IsNullOrEmpty(voucherType.Image))
+                {
+                    await _cloudinaryService.RemoveImageAsync(voucherType.Image);
+                }
+                var image = await _cloudinaryService.UploadImageAsync(request.Image);
+                if (image != null)
+                {
+                    voucherType.Image = image.SecureUrl.AbsoluteUri;
+                    voucherType.FileName = image.PublicId;
+                }
+            }
+            _unitOfWork.GetRepository<VoucherType>().UpdateAsync(voucherType);
+            var result = await _unitOfWork.CommitAsync() > 0;
+            if (result)
+            {
+                return true;
+            }
+            throw new ApiException("Update voucher type fail", 400, "VOUCHER_TYPE_UPDATE_FAIL");
         }
     }
 }

@@ -57,11 +57,11 @@ namespace SWallet.Repository.Services.Implements
             return result > 0;
         }
 
-        public async Task<StudentResponse> GetStudentAsync(string accountId, string studentId)
+        public async Task<StudentResponse> GetStudentAsync(string studentId)
         {
-            if (string.IsNullOrEmpty(accountId) || string.IsNullOrEmpty(studentId))
+            if (string.IsNullOrEmpty(studentId))
             {
-                throw new ArgumentException("Invalid accountId or studentId");
+                throw new ArgumentException("Invalid studentId");
             }
 
             var student = await _unitOfWork.GetRepository<Student>().SingleOrDefaultAsync(
@@ -86,11 +86,48 @@ namespace SWallet.Repository.Services.Implements
                     
                 },
                     predicate: x => x.Id == studentId);
-            if (student == null || student.AccountId != accountId)
+            if (student == null)
             {
                 return null;
             }
             return student;
+        }
+
+        public async Task<StudentResponse> GetStudentByAccountIdAsync(string accountId)
+        {
+            if (string.IsNullOrEmpty(accountId))
+            {
+                throw new ArgumentException("Invalid Id");
+            }
+
+            var student = await _unitOfWork.GetRepository<Student>().SingleOrDefaultAsync(
+                selector: x => new StudentResponse
+                {
+                    Id = x.Id,
+                    CampusId = x.CampusId,
+                    AccountId = x.AccountId,
+                    StudentCardFront = x.StudentCardFront,
+                    StudentCardBack = x.StudentCardBack,
+                    Address = x.Address,
+                    DateOfBirth = x.DateOfBirth,
+                    Code = x.Code,
+                    FullName = x.FullName,
+                    DateCreated = x.DateCreated,
+                    DateUpdated = x.DateUpdated,
+                    Gender = x.Gender,
+                    State = x.State,
+                    Status = x.Status,
+                    TotalIncome = x.TotalIncome,
+                    TotalSpending = x.TotalSpending,
+
+                },
+                    predicate: x => x.AccountId == accountId);
+            if (student == null)
+            {
+                return null;
+            }
+            return student;
+
         }
 
         public async Task<IPaginate<StudentResponse>> GetStudentsAsync(string search, bool? isAsc, int pageIndex, int pageSize)

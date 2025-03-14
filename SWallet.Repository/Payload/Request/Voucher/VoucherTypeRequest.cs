@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace SWallet.Repository.Payload.Request.Voucher
 {
-    public interface VoucherTypeRequest
+    public class VoucherTypeRequest
     {
         [Required(ErrorMessage = "Tên loại khuyến mãi là bắt buộc")]
         [StringLength(255, MinimumLength = 3,
