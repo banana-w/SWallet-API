@@ -46,17 +46,25 @@ namespace SWallet.Repository.Services.Implements
             return result;
         }
 
-        public async Task<bool> RedeemVoucherAsync(int voucherId)
+        public Task<VoucherItem> GetVoucherItemByIdAsync(string voucherId)
+        {
+            var result = _unitOfWork.GetRepository<VoucherItem>().SingleOrDefaultAsync(predicate: x => x.VoucherId.Equals(voucherId));
+            return result;
+        }
+
+        public async Task<bool> RedeemVoucherAsync(string voucherId)
         {
             var voucherItem = await _unitOfWork.GetRepository<VoucherItem>().SingleOrDefaultAsync(predicate: x => x.VoucherId.Equals(voucherId));
             if (voucherItem == null || (bool)voucherItem.IsBought)
             {
-                return false; 
+                throw new ApiException("Voucher not found or already redeemed", 400);
             }
 
             voucherItem.IsBought = true;
              _unitOfWork.GetRepository<VoucherItem>().UpdateAsync(voucherItem);
             var result = await _unitOfWork.CommitAsync() > 0;
+            if (!result)
+                throw new ApiException("Redeem voucher failed", 500);
             return result;
         }
     }

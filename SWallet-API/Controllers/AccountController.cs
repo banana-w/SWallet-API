@@ -44,6 +44,8 @@ namespace SWallet_API.Controllers
             return Ok(result);
         }
 
+
+
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(AccountResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]

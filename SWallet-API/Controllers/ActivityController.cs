@@ -57,7 +57,7 @@ namespace SWallet_API.Controllers
         {
             try
             {
-                var newActivity = await _activityService.CreateActivityAsync(activity);
+                var newActivity = await _activityService.RedeemVoucherActivityAsync(activity);
                 if (newActivity)
                 return Ok(newActivity);
                 throw new ApiException("Create activity fail", StatusCodes.Status400BadRequest, "ACTIVITY_FAIL");
