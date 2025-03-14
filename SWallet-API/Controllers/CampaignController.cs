@@ -53,12 +53,31 @@ namespace SWallet_API.Controllers
             }
         }
 
-        [HttpPost]
-        public async Task<ActionResult<CampaignResponse>> CreateCampaign(CreateCampaignModel creation)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateCampaign(string id, UpdateCampaignModel update)
         {
             try
             {
-                var campaignResponse = await _campaignService.CreateCampaign(creation);
+                var campaignResponse = await _campaignService.UpdateCampaign(id, update);
+                if (campaignResponse == null)
+                {
+                    return NotFound();
+                }
+                return Ok(campaignResponse);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error updating campaign by ID: {id}");
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error updating campaign");
+            }
+        }
+
+        [HttpPost]
+        public async Task<ActionResult<CampaignResponse>> CreateCampaign(CreateCampaignModel creation, List<CreateCampaignDetailModel> campaignDetails)
+        {
+            try
+            {
+                var campaignResponse = await _campaignService.CreateCampaign(creation, campaignDetails);
                 return Ok(campaignResponse); // Return 201 Created with location header
             }
             catch (Exception ex)
@@ -68,6 +87,17 @@ namespace SWallet_API.Controllers
             }
         }
 
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetCampaignById(string id)
+        {
+            var typeResponse = await _campaignService.GetCampaignById(id);
+            if (typeResponse == null)
+            {
+                return NotFound();
+            }
+            return Ok(typeResponse);
+        }
 
     }
 }

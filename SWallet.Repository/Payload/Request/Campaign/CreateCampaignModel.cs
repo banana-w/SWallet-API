@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 
 using Newtonsoft.Json;
+using SWallet.Domain.Models;
 using System.ComponentModel.DataAnnotations;
 
 
@@ -45,11 +46,8 @@ public class CreateCampaignModel
 
 
     [Required(ErrorMessage = "Danh sách cửa hàng là bắt buộc")]
-    public ICollection<CreateCampaignStoreModel> CampaignStores { get; set; }
+    public List<string> StoreIds { get; set; }
 
-    [Required(ErrorMessage = "Danh sách cơ sở là bắt buộc")]
-    public ICollection<CreateCampaignCampusModel> CampaignCampuses { get; set; }
+    
 
-    [Required(ErrorMessage = "Chi tiết chiến dịch là bắt buộc")]
-    public ICollection<CreateCampaignDetailModel> CampaignDetails { get; set; }
 }

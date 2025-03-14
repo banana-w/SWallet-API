@@ -15,7 +15,7 @@ namespace SWallet.Repository.Services.Interfaces
     {
         Task<IPaginate<CampaignResponse>> GetCampaigns(string searchName, int page, int size);
         Task<CampaignResponse> GetCampaignById(string id);
-        Task<CampaignResponse> CreateCampaign(CreateCampaignModel campaign);
+        Task<CampaignResponse> CreateCampaign(CreateCampaignModel campaign, List<CreateCampaignDetailModel> campaignDetails);
         Task<CampaignResponse> UpdateCampaign(string id, UpdateCampaignModel campaign);
 
         Task<IEnumerable<CampaignDetailResponse>> GetAllCampaignDetails();

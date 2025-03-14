@@ -80,6 +80,7 @@ namespace SWallet.Repository.Services.Implements
                 OpeningHours = brand.OpeningHours,
                 ClosingHours = brand.ClosingHours,
                 DateCreated = DateTime.Now,
+                DateUpdated = DateTime.Now,
                 Description = brand.Description,
                 State = brand.State,
                 AccountId = account.Id,
@@ -138,6 +139,7 @@ namespace SWallet.Repository.Services.Implements
                 OpeningHours = brand.OpeningHours,
                 ClosingHours = brand.ClosingHours,
                 DateCreated = DateTime.Now,
+                DateUpdated = DateTime.Now,
                 Description = brand.Description,
                 State = brand.State,
                 AccountId = accountId, // Use the provided accountId

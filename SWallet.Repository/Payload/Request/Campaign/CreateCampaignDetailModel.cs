@@ -16,6 +16,10 @@ public class CreateCampaignDetailModel
     [Range(minimum: 0, maximum: int.MaxValue, ErrorMessage = "Số lượng phải không âm")]
     public int? FromIndex { get; set; }
 
+    //[Required(ErrorMessage = "Chỉ mục là bắt buộc")]
+    //[Range(minimum: 0, maximum: int.MaxValue, ErrorMessage = "Số lượng phải không âm")]
+    //public int? ToIndex { get; set; }
+
     public string Description { get; set; }
 
     [Required(ErrorMessage = "Trạng thái là bắt buộc")]
