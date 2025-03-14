@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Org.BouncyCastle.Security;
+using SWallet.Domain.Paginate;
 using SWallet.Repository.Payload.Request.Brand;
 using SWallet.Repository.Payload.Request.Campaign;
 using SWallet.Repository.Payload.Response.Brand;
@@ -17,20 +18,66 @@ namespace SWallet_API.Controllers
         private readonly ICampaignService _campaignService;
         private readonly ILogger<CampaignController> _logger; 
 
-        private readonly IJwtService jwtService;
-
-        public CampaignController(
-            ICampaignService campaignService)
+        public CampaignController(ICampaignService campaignService, ILogger<CampaignController> logger)
         {
             _campaignService = campaignService;
+            _logger = logger;
         }
 
-        [HttpPost]
-        public async Task<ActionResult<CampaignResponse>> CreateCampaign(CreateCampaignModel creation)
+        [HttpGet("details")]
+        public async Task<IActionResult> GetAllCampaignDetails()
         {
             try
             {
-                var campaignResponse = await _campaignService.CreateCampaign(creation);
+                var campaignDetails = await _campaignService.GetAllCampaignDetails();
+                return Ok(campaignDetails);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<IPaginate<CampaignResponse>>> GetAllCampaigns(string searchName = "", int page = 1, int size = 10) // Pagination parameters
+        {
+            try
+            {
+                var campaignRespone = await _campaignService.GetCampaigns(searchName, page, size);
+                return Ok(campaignRespone);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting campaigns"); // Log the error
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error getting campaigns");
+            }
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateCampaign(string id, UpdateCampaignModel update)
+        {
+            try
+            {
+                var campaignResponse = await _campaignService.UpdateCampaign(id, update);
+                if (campaignResponse == null)
+                {
+                    return NotFound();
+                }
+                return Ok(campaignResponse);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error updating campaign by ID: {id}");
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error updating campaign");
+            }
+        }
+
+        [HttpPost]
+        public async Task<ActionResult<CampaignResponse>> CreateCampaign(CreateCampaignModel creation, List<CreateCampaignDetailModel> campaignDetails)
+        {
+            try
+            {
+                var campaignResponse = await _campaignService.CreateCampaign(creation, campaignDetails);
                 return Ok(campaignResponse); // Return 201 Created with location header
             }
             catch (Exception ex)
@@ -39,5 +86,18 @@ namespace SWallet_API.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, "Error creating campaign"); // Return 500 Internal Server Error
             }
         }
+
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetCampaignById(string id)
+        {
+            var typeResponse = await _campaignService.GetCampaignById(id);
+            if (typeResponse == null)
+            {
+                return NotFound();
+            }
+            return Ok(typeResponse);
+        }
+
     }
 }

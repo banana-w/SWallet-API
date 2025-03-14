@@ -70,5 +70,7 @@ namespace SWallet.Repository.Interfaces
         void DeleteRangeAsync(IEnumerable<T> entities);
         Task<int> CountAsync(Expression<Func<T, bool>> filter = null);
         Task<bool> AnyAsync(Expression<Func<T, bool>> predicate);
+
+        IQueryable<T> GetQueryable();
     }
 }

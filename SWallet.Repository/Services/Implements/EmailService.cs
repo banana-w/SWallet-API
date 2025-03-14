@@ -174,7 +174,6 @@ namespace SWallet.Repository.Services.Implements
         #region Send Email Campaign 
 
 
-
         public bool SendEmailCampaignClose(List<string> receivers, string campaignName)
         {
             DateTime now = DateTime.Now;

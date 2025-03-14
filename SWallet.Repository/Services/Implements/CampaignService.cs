@@ -1,21 +1,25 @@
 ﻿using AutoMapper;
 using CloudinaryDotNet.Core;
 using Microsoft.AspNetCore.Builder.Extensions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SWallet.Domain.Models;
 using SWallet.Domain.Paginate;
 using SWallet.Repository.Interfaces;
 using SWallet.Repository.Payload.ExceptionModels;
+using SWallet.Repository.Payload.Request.Brand;
 using SWallet.Repository.Payload.Request.Campaign;
+using SWallet.Repository.Payload.Request.Voucher;
 using SWallet.Repository.Payload.Response.Brand;
 using SWallet.Repository.Payload.Response.Campaign;
+using SWallet.Repository.Payload.Response.Voucher;
 using SWallet.Repository.Services.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
-using static Org.BouncyCastle.Asn1.Cmp.Challenge;
 
 namespace SWallet.Repository.Services.Implements
 {
@@ -23,142 +27,417 @@ namespace SWallet.Repository.Services.Implements
     {
         private readonly Mapper mapper;
         private readonly ICloudinaryService _cloudinaryService;
+        private readonly IVoucherItemService _voucherItemService;
 
-        public CampaignService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<CampaignService> logger, ICloudinaryService cloudinaryService) : base(unitOfWork, logger)
+        public record ItemIndex
         {
-            _cloudinaryService = cloudinaryService;
-
-            var config = new MapperConfiguration(cfg
-                =>
-            {
-                cfg.CreateMap<Campaign, CreateCampaignModel>()
-                .ReverseMap()
-                .ForMember(c => c.Id, opt => opt.MapFrom(src => Ulid.NewUlid()))
-                .ForMember(c => c.Duration, opt => opt.MapFrom(src
-                    => ((DateOnly)src.EndOn).DayNumber - ((DateOnly)src.StartOn).DayNumber + 1))
-                .ForMember(c => c.TotalSpending, opt => opt.MapFrom(src => 0))
-                .ForMember(c => c.DateCreated, opt => opt.MapFrom(src => DateTime.Now))
-                .ForMember(c => c.DateUpdated, opt => opt.MapFrom(src => DateTime.Now))
-                .ForMember(c => c.Status, opt => opt.MapFrom(src => true));
-            });
-
+            public int? FromIndex { get; set; }
+            public int? ToIndex { get; set; }
         }
 
-        public async Task<CampaignResponse> CreateCampaign(CreateCampaignModel campaign)
+        public CampaignService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<CampaignService> logger, ICloudinaryService cloudinaryService, IVoucherItemService voucherItemService) : base(unitOfWork, logger)
         {
-            var imageUri = string.Empty;
-            if (campaign.Image != null && campaign.Image.Length > 0)
+            _cloudinaryService = cloudinaryService;
+            _voucherItemService = voucherItemService;
+
+            var config = new MapperConfiguration(cfg =>
             {
-                var uploadResult = await _cloudinaryService.UploadImageAsync(campaign.Image);
-                imageUri = uploadResult.SecureUrl.AbsoluteUri;
+                cfg.CreateMap<CreateCampaignModel, Campaign>()
+                    .ForMember(dest => dest.Id, opt => opt.MapFrom(src => Ulid.NewUlid().ToString()))
+                    .ForMember(dest => dest.Duration, opt => opt.MapFrom(src => ((DateOnly)src.EndOn).DayNumber - ((DateOnly)src.StartOn).DayNumber + 1))
+                    .ForMember(dest => dest.TotalSpending, opt => opt.MapFrom(src => 0))
+                    .ForMember(dest => dest.DateCreated, opt => opt.MapFrom(src => DateTime.Now))
+                    .ForMember(dest => dest.DateUpdated, opt => opt.MapFrom(src => DateTime.Now))
+                    .ForMember(dest => dest.Status, opt => opt.MapFrom(src => true));
+
+                cfg.CreateMap<Campaign, CampaignResponse>()
+                    .ForMember(c => c.BrandName, opt => opt.MapFrom(src => src.Brand.BrandName))
+                    .ForMember(c => c.BrandAcronym, opt => opt.MapFrom(src => src.Brand.Acronym))
+                    .ForMember(c => c.TypeName, opt => opt.MapFrom(src => src.Type.TypeName));
+
+                cfg.CreateMap<CampaignStore, CreateCampaignStoreModel>()
+                    .ReverseMap()
+                    .ForMember(c => c.Id, opt => opt.MapFrom(src => Ulid.NewUlid()))
+                    .ForMember(c => c.Status, opt => opt.MapFrom(src => true));
+
+                cfg.CreateMap<CampaignCampus, CreateCampaignCampusModel>()
+                    .ReverseMap()
+                    .ForMember(c => c.Id, opt => opt.MapFrom(src => Ulid.NewUlid()))
+                    .ForMember(c => c.Status, opt => opt.MapFrom(src => true));
+
+                cfg.CreateMap<CampaignDetail, CreateCampaignDetailModel>()
+                    .ReverseMap()
+                    .ForMember(c => c.Id, opt => opt.MapFrom(src => Ulid.NewUlid()))
+                    .ForMember(c => c.DateCreated, opt => opt.MapFrom(src => DateTime.Now))
+                    .ForMember(c => c.DateUpdated, opt => opt.MapFrom(src => DateTime.Now))
+                    .ForMember(c => c.Status, opt => opt.MapFrom(src => true));
+
+                cfg.CreateMap<CampaignDetail, CampaignDetailResponse>();
+            });
+
+            mapper = new Mapper(config);
+        }
+
+
+        public async Task<CampaignResponse> UpdateCampaign(string id, UpdateCampaignModel campaign)
+        {
+            var updateCampaign = await _unitOfWork.GetRepository<Campaign>().SingleOrDefaultAsync(predicate: x => x.Id == id);
+            if (updateCampaign == null)
+            {
+                throw new ApiException("Brand not found", 404, "NOT_FOUND");
             }
-
-            Campaign newCampaign = new Campaign
-            {
-                Id = Ulid.NewUlid().ToString(),
-                BrandId = campaign.BrandId,
-                TypeId = campaign.TypeId,
-                CampaignName = campaign.CampaignName,
-                Image = imageUri,
-                ImageName = !string.IsNullOrEmpty(imageUri)
-                          ? imageUri.Split('/')[imageUri.Split('/').Length - 1]
-                          : "default_cover.jpg",
-                Condition = campaign.Condition,
-                Link = campaign.Link,
-                StartOn = campaign.StartOn,
-                EndOn = campaign.EndOn,
-                File = "abc",
-                FileName = "abc",
-                Duration = ((DateOnly)campaign.EndOn).DayNumber - ((DateOnly)campaign.StartOn).DayNumber + 1,
-                TotalIncome = campaign.TotalIncome,
-                TotalSpending = 0,
-                DateCreated = DateTime.Now,
-                DateUpdated = DateTime.Now,
-                Description = campaign.Description,
-                Status = true
-            };
-
-            newCampaign.CampaignDetails = newCampaign.CampaignDetails.Select(c => new CampaignDetail
+            if (campaign.Image!= null && campaign.Image.Length > 0)
             {
 
-                Id = Ulid.NewUlid().ToString(),
-                VoucherId = c.VoucherId,
-                CampaignId = newCampaign.Id,
-                Description = c.Description,
-                Quantity = c.Quantity,
-                Price = c.Price,
-                Rate = c.Rate,
-                FromIndex = c.FromIndex,
-                ToIndex = c.ToIndex,
-                State = c.State,
-                Status = c.Status,
-                DateCreated = DateTime.Now,
-                DateUpdated = DateTime.Now
-            }).ToList();
+                var f = await _cloudinaryService.UploadImageAsync(campaign.Image);
 
-            newCampaign.CampaignStores = newCampaign.CampaignStores.Select(c => new CampaignStore
-            {
-                Id = Ulid.NewUlid().ToString(),
-                CampaignId = newCampaign.Id,
-                StoreId = c.StoreId,
-            }).ToList();
+            }
+            updateCampaign.TypeId = campaign.TypeId;
+            updateCampaign.CampaignName = campaign.CampaignName;
+            updateCampaign.Condition = campaign.Condition;
+            updateCampaign.Link = campaign.Link;
+            updateCampaign.Description = campaign.Description;
+            updateCampaign.DateUpdated = DateTime.Now;
+            updateCampaign.ImageName = !string.IsNullOrEmpty(updateCampaign.Image)
+                ? updateCampaign.Image.Split('/')[^1]
+                : "default_cover.jpg";
+            _unitOfWork.GetRepository<Campaign>().UpdateAsync(updateCampaign);
 
-            newCampaign.CampaignCampuses = newCampaign.CampaignCampuses.Select(c => new CampaignCampus
-            {
-                Id = Ulid.NewUlid().ToString(),
-                CampaignId = newCampaign.Id,
-                CampusId = c.CampusId
-            }).ToList();
-
-            await _unitOfWork.GetRepository<Campaign>().InsertAsync(newCampaign);
             var isSuccess = await _unitOfWork.CommitAsync() > 0;
-
             if (isSuccess)
             {
                 return new CampaignResponse
                 {
-                    Id = newCampaign.Id,
-                    BrandId = newCampaign.BrandId,
-                    TypeId = newCampaign.TypeId,
-                    CampaignName = newCampaign.CampaignName,
-                    Image = newCampaign.Image,
-                    ImageName = newCampaign.ImageName,
-                    Condition = newCampaign.Condition,
-                    Link = newCampaign.Link,
-                    StartOn = newCampaign.StartOn,
-                    EndOn = newCampaign.EndOn,
-                    Duration = newCampaign.Duration,
-                    TotalIncome = newCampaign.TotalIncome,
-                    TotalSpending = newCampaign.TotalSpending,
-                    DateCreated = newCampaign.DateCreated,
-                    DateUpdated = newCampaign.DateUpdated,
-                    Description = newCampaign.Description,
-                    Status = newCampaign.Status
+                    Id = updateCampaign.Id,
+                    BrandId = updateCampaign.BrandId,
+                    TypeId = updateCampaign.TypeId,
+                    CampaignName = updateCampaign.CampaignName,
+                    Image = updateCampaign.Image,
+                    ImageName = updateCampaign.ImageName,
+                    Condition = updateCampaign.Condition,
+                    Link = updateCampaign.Link,
+                    StartOn = updateCampaign.StartOn,
+                    EndOn = updateCampaign.EndOn,
+                    Duration = updateCampaign.Duration,
+                    TotalIncome = updateCampaign.TotalIncome,
+                    TotalSpending = updateCampaign.TotalSpending,
+                    DateCreated = updateCampaign.DateCreated,
+                    DateUpdated = updateCampaign.DateUpdated,
+                    Description = updateCampaign.Description,
+                    Status = updateCampaign.Status
+
                 };
             }
-            throw new ApiException("Create Campaign Fail", 400, "BAD_REQUEST");
-
+            throw new ApiException("Update Campaign Fail", 400, "BAD_REQUEST");
         }
 
+
+        public async Task<CampaignResponse> CreateCampaign(CreateCampaignModel campaignModel, List<CreateCampaignDetailModel> campaignDetails)
+        {
+            // Upload hình ảnh
+            var imageUri = string.Empty;
+            if (campaignModel.Image != null && campaignModel.Image.Length > 0)
+            {
+                var uploadResult = await _cloudinaryService.UploadImageAsync(campaignModel.Image);
+                imageUri = uploadResult.SecureUrl.AbsoluteUri;
+            }
+
+            var newCampaign = new Campaign
+            {
+                Id = Ulid.NewUlid().ToString(),
+                BrandId = campaignModel.BrandId,
+                TypeId = campaignModel.TypeId,
+                CampaignName = campaignModel.CampaignName,
+                Image = imageUri,
+                ImageName = !string.IsNullOrEmpty(imageUri)
+                    ? imageUri.Split('/')[^1]
+                    : "default_cover.jpg",
+                Condition = campaignModel.Condition,
+                Link = campaignModel.Link,
+                File = "default_value_or_empty_string",
+                FileName = "default_value_or_empty_string",
+                StartOn = campaignModel.StartOn,
+                EndOn = campaignModel.EndOn,
+                Duration = ((DateOnly)campaignModel.EndOn).DayNumber - ((DateOnly)campaignModel.StartOn).DayNumber + 1,
+                TotalIncome = 0,
+                TotalSpending = 0,
+                DateCreated = DateTime.Now,
+                DateUpdated = DateTime.Now,
+                Description = campaignModel.Description,
+                Status = true,
+            };
+
+            // Thêm Campaign vào DbContext
+            await _unitOfWork.GetRepository<Campaign>().InsertAsync(newCampaign);
+
+            // Thêm CampaignStore
+            foreach (var storeId in campaignModel.StoreIds)
+            {
+                var campaignStore = new CampaignStore
+                {
+                    Id = Ulid.NewUlid().ToString(),
+                    CampaignId = newCampaign.Id,
+                    StoreId = storeId,
+                    Description = "Campaign Store",
+                    State = true,
+                    Status = true
+                };
+
+                newCampaign.CampaignStores.Add(campaignStore);
+            }
+
+            
+
+            // Thêm CampaignDetail
+            foreach (var cd in campaignDetails)
+            {
+                // Lấy thông tin Voucher
+                var voucher = await GetVoucherByIdAsync(cd.VoucherId);
+                if (voucher == null)
+                {
+                    throw new Exception($"Voucher with ID {cd.VoucherId} not found.");
+                }
+
+                // Lấy thông tin Index
+               
+
+                // Tạo CampaignDetail
+                var campaignDetail = new CampaignDetail
+                {
+                    Id = Ulid.NewUlid().ToString(),
+                    VoucherId = cd.VoucherId,
+                    Price = voucher.Price, // Gán giá trị từ Voucher
+                    Rate = voucher.Rate,   // Gán giá trị từ Voucher
+                    Quantity = cd.Quantity,
+                    FromIndex = cd.FromIndex, // Gán giá trị từ GetIndexAsync
+                    ToIndex = 10,
+                    DateCreated = DateTime.UtcNow,
+                    DateUpdated = DateTime.UtcNow,
+                    Description = cd.Description,
+                    State = cd.State,
+                    Status = true
+                };
+
+                newCampaign.CampaignDetails.Add(campaignDetail);
+
+
+                var isSuccess = await _unitOfWork.CommitAsync() > 0;
+                if (!isSuccess)
+                {
+                    throw new ApiException("Create CampaignDetail Fail", 400, "BAD_REQUEST");
+                }
+                // Cập nhật danh sách VoucherItem
+                var voucherItem = _voucherItemService.GenerateVoucherItemsAsync(new VoucherItemRequest
+                {
+                    VoucherId = cd.VoucherId,
+                    CampaignDetailId = campaignDetail.Id,
+                    Quantity = (int)cd.Quantity,
+                    ValidOn = campaignModel.StartOn,
+                    ExpireOn = campaignModel.EndOn
+                });
+
+                if (!voucherItem.Result)
+                {
+                    throw new ApiException("Generate VoucherItem Fail", 400, "BAD_REQUEST");
+                }
+            }
+
+
+
+            // Lưu tất cả thay đổi vào cơ sở dữ liệu
+
+            
+
+                return mapper.Map<CampaignResponse>(newCampaign);
+            
+            throw new ApiException("Create Campaign Fail", 400, "BAD_REQUEST");
+        }
+
+        public async Task<VoucherResponse> GetVoucherByIdAsync(string voucherId)
+        {
+            var voucher = await _unitOfWork.GetRepository<Voucher>().SingleOrDefaultAsync(
+                selector: x => new VoucherResponse
+                {
+                    Id = x.Id,
+                    VoucherName = x.VoucherName,
+                    Price = x.Price,
+                    Rate = x.Rate,
+                    DateCreated = x.DateCreated,
+                    DateUpdated = x.DateUpdated,
+                    State = x.State,
+                    Status = x.Status
+                },
+                predicate: x => x.Id == voucherId && (bool)x.State && (bool)x.Status
+            );
+
+            return voucher;
+        }
+
+        public async Task<ItemIndex> GetIndexAsync(string voucherId, int quantity, int fromIndex)
+        {
+            try
+            {
+                var list = (await _unitOfWork.GetRepository<VoucherItem>()
+                    .GetListAsync(
+                        selector: x => x,
+                        predicate: x => x.VoucherId.Equals(voucherId)
+                            && (bool)x.State && (bool)x.Status
+                            && !(bool)x.IsLocked && !(bool)x.IsBought && !(bool)x.IsUsed
+                            && (fromIndex == 0 || x.Index >= fromIndex)
+                            && x.CampaignDetail == null
+                    ))
+                    .Take(quantity)
+                    .ToList();
+
+                if (list == null || !list.Any())
+                {
+                    throw new Exception("Không tìm thấy voucher item phù hợp.");
+                }
+
+                return new ItemIndex
+                {
+                    FromIndex = list.First().Index,
+                    ToIndex = list.Last().Index
+                };
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
+        public async Task UpdateListAsync(
+            string voucherId,
+            string campaignDetailId,
+            int quantity,
+            DateOnly startOn,
+            DateOnly endOn,
+            ItemIndex index)
+        {
+            try
+            {
+                var list = await _unitOfWork.GetRepository<VoucherItem>()
+                    .GetQueryable()
+                    .Where(x => x.VoucherId.Equals(voucherId)
+                        && (bool)x.State && (bool)x.Status
+                        && x.Index >= index.FromIndex && x.Index <= index.ToIndex
+                        && !(bool)x.IsLocked && !(bool)x.IsBought && !(bool)x.IsUsed
+                        && x.CampaignDetail == null)
+                    .Take(quantity)
+                    .ToListAsync();
+
+                var updatedItems = list.Select(i =>
+                {
+                    i.CampaignDetailId = campaignDetailId;
+                    i.IsLocked = true;
+                    i.ValidOn = startOn;
+                    i.ExpireOn = endOn;
+                    i.DateIssued = DateTime.Now;
+                    return i;
+                }).ToList();
+
+                _unitOfWork.GetRepository<VoucherItem>().UpdateRange(updatedItems);
+                await _unitOfWork.CommitAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
 
         public void Delete(string id)
         {
             throw new NotImplementedException();
         }
 
-        public Task<CampaignResponse> GetCampaignById(string id)
+        public async Task<CampaignResponse> GetCampaignById(string id)
         {
-            throw new NotImplementedException();
+            var area = await _unitOfWork.GetRepository<Campaign>().SingleOrDefaultAsync(
+                selector: x => new CampaignResponse
+                {
+                    Id = x.Id,
+                    BrandId = x.BrandId,
+                    TypeId = x.TypeId,
+                    CampaignName = x.CampaignName,
+                    Image = x.Image,
+                    ImageName = x.ImageName,
+                    Condition = x.Condition,
+                    Link = x.Link,
+                    StartOn = x.StartOn,
+                    EndOn = x.EndOn,
+                    Duration = x.Duration,
+                    DateCreated = x.DateCreated,
+                    DateUpdated = x.DateUpdated,
+                    Description = x.Description,
+                    Status = x.Status,
+                    TotalIncome = x.TotalIncome,
+                    TotalSpending = x.TotalSpending
+
+                },
+                
+                predicate: x => x.Id == id);
+            ;
+            return area;
         }
 
-        public Task<IPaginate<CampaignResponse>> GetCampaigns(string searchName, int page, int size)
+        public async Task<IPaginate<CampaignResponse>> GetCampaigns(string searchName, int page, int size)
         {
-            throw new NotImplementedException();
+            Expression<Func<Campaign, bool>> filterQuery;
+            if (string.IsNullOrEmpty(searchName))
+            {
+                filterQuery = p => true;
+            }
+            else
+            {
+                filterQuery = p => p.CampaignName.Contains(searchName);
+            }
+
+            var areas = await _unitOfWork.GetRepository<Campaign>().GetPagingListAsync(
+                selector: x => new CampaignResponse
+                {
+                    Id = x.Id,
+                    BrandId = x.BrandId,
+                    BrandName = x.Brand.BrandName,
+                    BrandAcronym = x.Brand.Acronym,
+                    TypeId = x.TypeId,
+                    TypeName = x.Type.TypeName,
+                    CampaignName = x.CampaignName,
+                    Image = x.Image,
+                    ImageName = x.ImageName,
+                    Condition = x.Condition,
+                    Link = x.Link,
+                    StartOn = x.StartOn,
+                    EndOn = x.EndOn,
+                    Duration = x.Duration,
+                    TotalIncome = x.TotalIncome,
+                    TotalSpending = x.TotalSpending,
+                    DateCreated = x.DateCreated,
+                    DateUpdated = x.DateUpdated,
+                    Description = x.Description,
+                    Status = x.Status
+                },
+                predicate: filterQuery,
+                page: page,
+                include: query => query.Include(x => x.Brand).Include(x => x.Type),
+                size: size);
+            return areas;
         }
 
-        public Task<CampaignResponse> UpdateCampaign(string id, UpdateCampaignModel campaign)
+
+        public async Task<IEnumerable<CampaignDetailResponse>> GetAllCampaignDetails()
         {
-            throw new NotImplementedException();
+            // Lấy toàn bộ dữ liệu từ cơ sở dữ liệu
+            var campaignDetails = await _unitOfWork.GetRepository<CampaignDetail>()
+                .GetListAsync(
+                    selector: x => x, // Chọn toàn bộ đối tượng CampaignDetail
+                    predicate: null, // Không có điều kiện lọc
+                    include: null // Không include thêm dữ liệu liên quan
+                );
+
+            // Ánh xạ dữ liệu sang CampaignDetailResponse
+            var result = mapper.Map<IEnumerable<CampaignDetailResponse>>(campaignDetails);
+
+            return result;
         }
     }
 }

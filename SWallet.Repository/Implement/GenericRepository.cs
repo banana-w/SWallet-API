@@ -146,6 +146,11 @@ namespace SWallet.Repository.Implement
             _dbSet.RemoveRange(entities);
         }
 
+        public IQueryable<T> GetQueryable()
+        {
+            return _dbSet.AsQueryable();
+        }
+
 
 
         #endregion

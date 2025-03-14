@@ -28,6 +28,7 @@ namespace SWallet.Repository.Services.Implements
                     Id = Ulid.NewUlid().ToString(),
                     VoucherId = voucherItemRequest.VoucherId,
                     CampaignDetailId = voucherItemRequest.CampaignDetailId,
+                    VoucherCode = "code",
                     IsBought = false,
                     IsLocked = false,
                     IsUsed = false,
