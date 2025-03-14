@@ -148,9 +148,53 @@ namespace SWallet.Repository.Services.Implements
             return vouchers;
         }
 
-        public Task<bool> UpdateVoucher(VoucherRequest request)
+        public async Task<bool> UpdateVoucher(string id, VoucherRequest request)
         {
-            throw new NotImplementedException();
+            // Lấy voucher từ cơ sở dữ liệu
+            var voucher = await _unitOfWork.GetRepository<Voucher>().SingleOrDefaultAsync(predicate: x => x.Id.Equals(id));
+            if (voucher == null)
+            {
+                throw new ApiException("Voucher not found", 404, "VOUCHER_NOT_FOUND");
+            }
+
+            // Nếu có ảnh mới, upload lên Cloudinary
+            if (request.Image != null && request.Image.Length > 0)
+            {
+                var image = await _cloudinaryService.UploadImageAsync(request.Image);
+                if (image != null)
+                {
+                    // Xóa ảnh cũ trên Cloudinary
+                    if (!string.IsNullOrEmpty(voucher.ImageName))
+                    {
+                        await _cloudinaryService.RemoveImageAsync(voucher.ImageName);
+                    }
+
+                    voucher.Image = image.SecureUrl.AbsoluteUri;
+                    voucher.ImageName = image.PublicId;
+                }
+            }
+
+            // Cập nhật các thông tin khác của voucher
+            voucher.BrandId = request.BrandId;
+            voucher.TypeId = request.TypeId;
+            voucher.Price = request.Price;
+            voucher.Rate = request.Rate;
+            voucher.Condition = request.Condition;
+            voucher.VoucherName = request.VoucherName;
+            voucher.Description = request.Description;
+            voucher.State = request.State;
+            voucher.DateUpdated = DateTime.Now;
+
+            // Cập nhật vào cơ sở dữ liệu
+            _unitOfWork.GetRepository<Voucher>().UpdateAsync(voucher);
+            var result = await _unitOfWork.CommitAsync();
+            if (result > 0)
+            {
+                return true;
+            }
+
+            throw new ApiException("Update voucher failed", 400, "VOUCHER_UPDATE_FAIL");
         }
+
     }
 }

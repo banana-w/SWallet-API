@@ -118,75 +118,104 @@ namespace SWallet.Repository.Services.Implements
 
         public async Task<AccountResponse> CreateBrandAccount(AccountRequest accountRequest, CreateBrandByAccountId brandRequest)
         {
-            var account = await _unitOfWork.GetRepository<Account>().AnyAsync(x => x.UserName == accountRequest.UserName);
-            if (account)
+            await _unitOfWork.BeginTransactionAsync();
+            try
             {
-                throw new ApiException("Account already exists", 400, "BAD_REQUEST");
+                var account = await _unitOfWork.GetRepository<Account>().AnyAsync(x => x.UserName == accountRequest.UserName);
+                if (account)
+                {
+                    throw new ApiException("Account already exists", 400, "BAD_REQUEST");
+                }
+                Account ac = mapper.Map<Account>(accountRequest);
+                ac.Role = (int)Role.Brand;
+
+                await _unitOfWork.GetRepository<Account>().InsertAsync(ac);
+
+                bool isSuccess = await _unitOfWork.CommitAsync() > 0;
+                if (isSuccess)
+                {
+                    //if (ac.Email != null)
+                    //await _emailService.SendEmailBrandRegister(ac.Email);
+                    await _brandService.CreateBrandAsync(ac.Id, brandRequest);
+                    await _unitOfWork.CommitTransactionAsync();
+                    return mapper.Map<AccountResponse>(ac);
+                }
+                throw new ApiException("Brand Account Creation Failed", 400, "BAD_REQUEST");
             }
-            Account ac = mapper.Map<Account>(accountRequest);
-            ac.Role = (int)Role.Brand;
-
-            await _unitOfWork.GetRepository<Account>().InsertAsync(ac);
-
-            bool isSuccess = await _unitOfWork.CommitAsync() > 0;
-            if (isSuccess)
+            catch
             {
-                //if (ac.Email != null)
-                //await _emailService.SendEmailBrandRegister(ac.Email);
-                await _brandService.CreateBrandAsync(ac.Id, brandRequest);
-                return mapper.Map<AccountResponse>(ac);
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
             }
-            throw new ApiException("Brand Account Creation Failed", 400, "BAD_REQUEST");
         }
 
         public async Task<AccountResponse> CreateStoreAccount(AccountRequest accountRequest, CreateStoreModel storeRequest)
         {
-            var account = await _unitOfWork.GetRepository<Account>().AnyAsync(x => x.UserName == accountRequest.UserName);
-            if (account)
+            await _unitOfWork.BeginTransactionAsync();
+            try
             {
-                throw new ApiException("Account already exists", 400, "BAD_REQUEST");
+                var account = await _unitOfWork.GetRepository<Account>().AnyAsync(x => x.UserName == accountRequest.UserName);
+                if (account)
+                {
+                    throw new ApiException("Account already exists", 400, "BAD_REQUEST");
+                }
+                Account ac = mapper.Map<Account>(accountRequest);
+                ac.Role = (int)Role.Store;
+
+                await _unitOfWork.GetRepository<Account>().InsertAsync(ac);
+
+                bool isSuccess = await _unitOfWork.CommitAsync() > 0;
+                if (isSuccess)
+                {
+                    await _storeService.CreateStore(ac.Id, storeRequest);
+                    await _unitOfWork.CommitTransactionAsync();
+                    return mapper.Map<AccountResponse>(ac);
+                }
+                throw new ApiException("Store Account Creation Failed", 400, "BAD_REQUEST");
             }
-            Account ac = mapper.Map<Account>(accountRequest);
-            ac.Role = (int)Role.Store;
-
-            await _unitOfWork.GetRepository<Account>().InsertAsync(ac);
-
-            bool isSuccess = await _unitOfWork.CommitAsync() > 0;
-            if (isSuccess)
+            catch
             {
-                //if (ac.Email != null)
-                //await _emailService.SendEmailStoreRegister(ac.Email);
-                await _storeService.CreateStore(ac.Id, storeRequest);
-                return mapper.Map<AccountResponse>(ac);
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
             }
-            throw new ApiException("Store Account Creation Failed", 400, "BAD_REQUEST");
         }
 
         public async Task<AccountResponse> CreateStudentAccount(AccountRequest accountRequest, StudentRequest studentRequest)
         {
-            var account = await _unitOfWork.GetRepository<Account>().AnyAsync(x => x.UserName == accountRequest.UserName);
-            if (account)
+            await _unitOfWork.BeginTransactionAsync();
+            try
             {
-                throw new ApiException("Account already exists", 400, "BAD_REQUEST");
-            }
-            Account ac = mapper.Map<Account>(accountRequest);
-            ac.Role = (int)Role.Student;
-
-            await _unitOfWork.GetRepository<Account>().InsertAsync(ac);
-
-            bool issuccessfull = await _unitOfWork.CommitAsync() > 0;
-            if (issuccessfull)
-            {
-                if (ac.Email != null)
+                var account = await _unitOfWork.GetRepository<Account>().AnyAsync(x => x.UserName == accountRequest.UserName);
+                if (account)
                 {
-                    var code = await _emailService.SendVerificationEmail(ac.Email);
-                    await _redisService.SaveVerificationCodeAsync(ac.Email, code);
+                    throw new ApiException("Account already exists", 400, "BAD_REQUEST");
                 }
+                Account ac = mapper.Map<Account>(accountRequest);
+                ac.Role = (int)Role.Student;
 
-                await _studentService.CreateStudentAsync(ac.Id, studentRequest);
-                return mapper.Map<AccountResponse>(ac);
+                await _unitOfWork.GetRepository<Account>().InsertAsync(ac);
+
+                bool issuccessfull = await _unitOfWork.CommitAsync() > 0;
+                if (issuccessfull)
+                {
+                    var result = await _studentService.CreateStudentAsync(ac.Id, studentRequest);
+
+                    if (ac.Email != null && result)
+                    {
+                        var code = await _emailService.SendVerificationEmail(ac.Email);
+                        await _redisService.SaveVerificationCodeAsync(ac.Email, code);
+                    }
+
+                    await _unitOfWork.CommitTransactionAsync();
+                    return mapper.Map<AccountResponse>(ac);
+                }
+                else throw new ApiException("Student Account Creation Fail", 400, "BAD_REQUEST");
             }
-            else throw new ApiException("Student Account Creation Fail", 400, "BAD_REQUEST");
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
         }
 
         public async Task<AccountResponse> GetAccountById(string id)
