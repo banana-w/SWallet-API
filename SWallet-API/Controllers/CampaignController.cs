@@ -73,7 +73,7 @@ namespace SWallet_API.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<CampaignResponse>> CreateCampaign(CreateCampaignModel creation, List<CreateCampaignDetailModel> campaignDetails)
+        public async Task<ActionResult<CampaignResponse>> CreateCampaign(CreateCampaignModel creation, [FromForm] List<CreateCampaignDetailModel> campaignDetails)
         {
             try
             {
