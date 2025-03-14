@@ -7,10 +7,8 @@ using SWallet.Domain.Models;
 using SWallet.Domain.Paginate;
 using SWallet.Repository.Interfaces;
 using SWallet.Repository.Payload.ExceptionModels;
-using SWallet.Repository.Payload.Request.Brand;
 using SWallet.Repository.Payload.Request.Campaign;
 using SWallet.Repository.Payload.Request.Voucher;
-using SWallet.Repository.Payload.Response.Brand;
 using SWallet.Repository.Payload.Response.Campaign;
 using SWallet.Repository.Payload.Response.Voucher;
 using SWallet.Repository.Services.Interfaces;
@@ -20,6 +18,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using static Org.BouncyCastle.Asn1.Cmp.Challenge;
 
 namespace SWallet.Repository.Services.Implements
 {
@@ -134,6 +133,22 @@ namespace SWallet.Repository.Services.Implements
 
         public async Task<CampaignResponse> CreateCampaign(CreateCampaignModel campaignModel, List<CreateCampaignDetailModel> campaignDetails)
         {
+            // Kiểm tra BrandId
+            var brandExists = await _unitOfWork.GetRepository<Brand>().SingleOrDefaultAsync(
+                predicate: b => b.Id == campaignModel.BrandId);
+            if (brandExists == null)
+            {
+                throw new ApiException($"Brand with ID {campaignModel.BrandId} not found.", 400, "BAD_REQUEST");
+            }
+
+            // Kiểm tra TypeId
+            var typeExists = await _unitOfWork.GetRepository<CampaignType>().SingleOrDefaultAsync(
+                predicate: b => b.Id == campaignModel.TypeId);
+            if (typeExists == null)
+            {
+                throw new ApiException($"CampaignType with ID {campaignModel.TypeId} not found.", 400, "BAD_REQUEST");
+            }
+
             // Upload hình ảnh
             var imageUri = string.Empty;
             if (campaignModel.Image != null && campaignModel.Image.Length > 0)
@@ -145,6 +160,7 @@ namespace SWallet.Repository.Services.Implements
             var newCampaign = new Campaign
             {
                 Id = Ulid.NewUlid().ToString(),
+                
                 BrandId = campaignModel.BrandId,
                 TypeId = campaignModel.TypeId,
                 CampaignName = campaignModel.CampaignName,
@@ -159,7 +175,7 @@ namespace SWallet.Repository.Services.Implements
                 StartOn = campaignModel.StartOn,
                 EndOn = campaignModel.EndOn,
                 Duration = ((DateOnly)campaignModel.EndOn).DayNumber - ((DateOnly)campaignModel.StartOn).DayNumber + 1,
-                TotalIncome = 0,
+                TotalIncome = campaignModel.TotalIncome,
                 TotalSpending = 0,
                 DateCreated = DateTime.Now,
                 DateUpdated = DateTime.Now,
@@ -186,8 +202,6 @@ namespace SWallet.Repository.Services.Implements
                 newCampaign.CampaignStores.Add(campaignStore);
             }
 
-            
-
             // Thêm CampaignDetail
             foreach (var cd in campaignDetails)
             {
@@ -198,18 +212,15 @@ namespace SWallet.Repository.Services.Implements
                     throw new Exception($"Voucher with ID {cd.VoucherId} not found.");
                 }
 
-                // Lấy thông tin Index
-               
-
                 // Tạo CampaignDetail
                 var campaignDetail = new CampaignDetail
                 {
                     Id = Ulid.NewUlid().ToString(),
                     VoucherId = cd.VoucherId,
-                    Price = voucher.Price, // Gán giá trị từ Voucher
-                    Rate = voucher.Rate,   // Gán giá trị từ Voucher
+                    Price = voucher.Price,
+                    Rate = voucher.Rate,
                     Quantity = cd.Quantity,
-                    FromIndex = cd.FromIndex, // Gán giá trị từ GetIndexAsync
+                    FromIndex = cd.FromIndex,
                     ToIndex = 10,
                     DateCreated = DateTime.UtcNow,
                     DateUpdated = DateTime.UtcNow,
@@ -220,14 +231,14 @@ namespace SWallet.Repository.Services.Implements
 
                 newCampaign.CampaignDetails.Add(campaignDetail);
 
-
                 var isSuccess = await _unitOfWork.CommitAsync() > 0;
                 if (!isSuccess)
                 {
                     throw new ApiException("Create CampaignDetail Fail", 400, "BAD_REQUEST");
                 }
+
                 // Cập nhật danh sách VoucherItem
-                var voucherItem = _voucherItemService.GenerateVoucherItemsAsync(new VoucherItemRequest
+                var voucherItem = await _voucherItemService.GenerateVoucherItemsAsync(new VoucherItemRequest
                 {
                     VoucherId = cd.VoucherId,
                     CampaignDetailId = campaignDetail.Id,
@@ -236,22 +247,41 @@ namespace SWallet.Repository.Services.Implements
                     ExpireOn = campaignModel.EndOn
                 });
 
-                if (!voucherItem.Result)
+                if (!voucherItem)
                 {
                     throw new ApiException("Generate VoucherItem Fail", 400, "BAD_REQUEST");
                 }
             }
 
+            return new CampaignResponse
+            {
+                Id = newCampaign.Id,
+                BrandId = newCampaign.BrandId,
+                BrandAcronym = brandExists.Acronym,
+                BrandName = brandExists.BrandName,
+                TypeId = newCampaign.TypeId,
+                TypeName = typeExists.TypeName,
+                CampaignName = newCampaign.CampaignName,
+                Image = newCampaign.Image,
+                ImageName = newCampaign.ImageName,
+                File = newCampaign.File,
+                FileName = newCampaign.FileName,
+                Condition = newCampaign.Condition,
+                Link = newCampaign.Link,
+                StartOn = newCampaign.StartOn,
+                EndOn = newCampaign.EndOn,
+                Duration = newCampaign.Duration,
+                TotalIncome = newCampaign.TotalIncome,
+                TotalSpending = newCampaign.TotalSpending,
+                DateCreated = newCampaign.DateCreated,
+                DateUpdated = newCampaign.DateUpdated,
+                Description = newCampaign.Description,
+                Status = newCampaign.Status
+            };
 
-
-            // Lưu tất cả thay đổi vào cơ sở dữ liệu
-
-            
-
-                return mapper.Map<CampaignResponse>(newCampaign);
-            
             throw new ApiException("Create Campaign Fail", 400, "BAD_REQUEST");
         }
+
 
         public async Task<VoucherResponse> GetVoucherByIdAsync(string voucherId)
         {
