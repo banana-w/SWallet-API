@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using SWallet.Repository.Payload.ExceptionModels;
 using SWallet.Repository.Payload.Request.Account;
 using SWallet.Repository.Payload.Request.Brand;
+using SWallet.Repository.Payload.Request.Store;
 using SWallet.Repository.Payload.Request.Student;
 using SWallet.Repository.Payload.Response.Account;
 using SWallet.Repository.Services.Interfaces;
@@ -19,6 +20,7 @@ namespace SWallet_API.Controllers
         {
             _accountService = accountService;
         }
+
         [HttpPost("studentRegister")]
         [ProducesResponseType(typeof(AccountResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
@@ -33,6 +35,16 @@ namespace SWallet_API.Controllers
             return Ok(result);
         }
 
+        [HttpPost("storeRegister")]
+        [ProducesResponseType(typeof(AccountResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> StoresRegister([FromForm] AccountRequest accountRequest, CreateStoreModel storeRequest)
+        {
+            var result = await _accountService.CreateStoreAccount(accountRequest, storeRequest)
+                ?? throw new ApiException("Account creation failed.", StatusCodes.Status400BadRequest, "ACCOUNT_CREATION_FAILED");
+            return Ok(result);
+        }
+
         [HttpPost("brandRegister")]
         [ProducesResponseType(typeof(AccountResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
@@ -43,8 +55,6 @@ namespace SWallet_API.Controllers
                 ?? throw new ApiException("Account creation failed.", StatusCodes.Status400BadRequest, "ACCOUNT_CREATION_FAILED");
             return Ok(result);
         }
-
-
 
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(AccountResponse), StatusCodes.Status200OK)]

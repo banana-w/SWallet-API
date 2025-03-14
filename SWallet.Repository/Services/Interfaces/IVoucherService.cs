@@ -12,7 +12,7 @@ namespace SWallet.Repository.Services.Interfaces
     public interface IVoucherService
     {
         Task<bool> CreateVoucher(VoucherRequest request);
-        Task<bool> UpdateVoucher(VoucherRequest request);
+        Task<bool> UpdateVoucher(string id, VoucherRequest request);
         Task<bool> DeleteVoucher(string id);
         Task<VoucherResponse> GetVoucherById(string id);
         Task<IPaginate<VoucherResponse>> GetVouchers(string brandId, string? search, bool? state, bool? isAsc, int page, int size);

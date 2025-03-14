@@ -6,16 +6,6 @@ namespace SWallet.Repository.Payload.Request.Store;
 public class CreateStoreModel
 {
 
-    //[Required(ErrorMessage = "Tên đăng nhập là bắt buộc")]
-    //[StringLength(50, MinimumLength = 5,
-    //    ErrorMessage = "Độ dài tên đăng nhập từ 5 đến 50 ký tự")]
-    //public string UserName { get; set; }
-
-    //[Required(ErrorMessage = "Mật khẩu là bắt buộc")]
-    //[StringLength(255, MinimumLength = 8,
-    //    ErrorMessage = "Độ dài mật khẩu từ 8 đến 255 ký tự")]
-    //public string Password { get; set; }
-
     [Required(ErrorMessage = "Thương hiệu là bắt buộc")]
     public string BrandId { get; set; }
 

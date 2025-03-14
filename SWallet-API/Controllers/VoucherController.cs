@@ -25,10 +25,10 @@ namespace SWallet_API.Controllers
             var result = await _voucherService.CreateVoucher(request);
             if (result)
             {
-                return CreatedAtAction(nameof(CreateVoucher),result);
+                return CreatedAtAction(nameof(CreateVoucher), result);
             }
             throw new ApiException("Create voucher fail", 400, "VOUCHER_FAIL");
-        }        
+        }
 
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(VoucherResponse), StatusCodes.Status200OK)]
@@ -51,6 +51,14 @@ namespace SWallet_API.Controllers
                 return Ok(result);
             }
             throw new ApiException("Voucher not found.", StatusCodes.Status404NotFound, "VOUCHER_NOT_FOUND");
+        }
+
+        [HttpPut("{id}")]
+        [ProducesDefaultResponseType(typeof(bool))]
+        public async Task<IActionResult> UpdateVoucher(string id, [FromForm] VoucherRequest request)
+        {
+            var result = await _voucherService.UpdateVoucher(id, request);
+            return Ok(result);
         }
 
     }
