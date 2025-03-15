@@ -133,154 +133,327 @@ namespace SWallet.Repository.Services.Implements
 
         public async Task<CampaignResponse> CreateCampaign(CreateCampaignModel campaignModel, List<CreateCampaignDetailModel> campaignDetails)
         {
-            // Kiểm tra BrandId
-            var brandExists = await _unitOfWork.GetRepository<Brand>().SingleOrDefaultAsync(
-                predicate: b => b.Id == campaignModel.BrandId);
-            if (brandExists == null)
+            await _unitOfWork.BeginTransactionAsync();
+            try
             {
-                throw new ApiException($"Brand with ID {campaignModel.BrandId} not found.", 400, "BAD_REQUEST");
-            }
+                // Kiểm tra BrandId
+                var brandExists = await _unitOfWork.GetRepository<Brand>().SingleOrDefaultAsync(predicate: b => b.Id == campaignModel.BrandId);
+                if (brandExists == null)
+                {
+                    throw new ApiException($"Brand with ID {campaignModel.BrandId} not found.", 400, "BAD_REQUEST");
+                }
 
-            // Kiểm tra TypeId
-            var typeExists = await _unitOfWork.GetRepository<CampaignType>().SingleOrDefaultAsync(
-                predicate: b => b.Id == campaignModel.TypeId);
-            if (typeExists == null)
-            {
-                throw new ApiException($"CampaignType with ID {campaignModel.TypeId} not found.", 400, "BAD_REQUEST");
-            }
+                // Kiểm tra TypeId
+                var typeExists = await _unitOfWork.GetRepository<CampaignType>().SingleOrDefaultAsync(predicate: b => b.Id == campaignModel.TypeId);
+                if (typeExists == null)
+                {
+                    throw new ApiException($"CampaignType with ID {campaignModel.TypeId} not found.", 400, "BAD_REQUEST");
+                }
 
-            // Upload hình ảnh
-            var imageUri = string.Empty;
-            if (campaignModel.Image != null && campaignModel.Image.Length > 0)
-            {
-                var uploadResult = await _cloudinaryService.UploadImageAsync(campaignModel.Image);
-                imageUri = uploadResult.SecureUrl.AbsoluteUri;
-            }
-
-            var newCampaign = new Campaign
-            {
-                Id = Ulid.NewUlid().ToString(),
-                
-                BrandId = campaignModel.BrandId,
-                TypeId = campaignModel.TypeId,
-                CampaignName = campaignModel.CampaignName,
-                Image = imageUri,
-                ImageName = !string.IsNullOrEmpty(imageUri)
-                    ? imageUri.Split('/')[^1]
-                    : "default_cover.jpg",
-                Condition = campaignModel.Condition,
-                Link = campaignModel.Link,
-                File = "default_value_or_empty_string",
-                FileName = "default_value_or_empty_string",
-                StartOn = campaignModel.StartOn,
-                EndOn = campaignModel.EndOn,
-                Duration = ((DateOnly)campaignModel.EndOn).DayNumber - ((DateOnly)campaignModel.StartOn).DayNumber + 1,
-                TotalIncome = campaignModel.TotalIncome,
-                TotalSpending = 0,
-                DateCreated = DateTime.Now,
-                DateUpdated = DateTime.Now,
-                Description = campaignModel.Description,
-                Status = true,
-            };
-
-            // Thêm Campaign vào DbContext
-            await _unitOfWork.GetRepository<Campaign>().InsertAsync(newCampaign);
-
-            // Thêm CampaignStore
-            foreach (var storeId in campaignModel.StoreIds)
-            {
-                var campaignStore = new CampaignStore
+                var newCampaign = new Campaign
                 {
                     Id = Ulid.NewUlid().ToString(),
-                    CampaignId = newCampaign.Id,
-                    StoreId = storeId,
-                    Description = "Campaign Store",
-                    State = true,
-                    Status = true
+                    BrandId = campaignModel.BrandId,
+                    TypeId = campaignModel.TypeId,
+                    CampaignName = campaignModel.CampaignName,
+                    Condition = campaignModel.Condition,
+                    Link = campaignModel.Link,
+                    File = "default_value_or_empty_string",
+                    FileName = "default_value_or_empty_string",
+                    StartOn = campaignModel.StartOn,
+                    EndOn = campaignModel.EndOn,
+                    Duration = ((DateOnly)campaignModel.EndOn).DayNumber - ((DateOnly)campaignModel.StartOn).DayNumber + 1,
+                    TotalIncome = campaignModel.TotalIncome,
+                    TotalSpending = 0,
+                    DateCreated = DateTime.Now,
+                    DateUpdated = DateTime.Now,
+                    Description = campaignModel.Description,
+                    Status = true,
                 };
 
-                newCampaign.CampaignStores.Add(campaignStore);
-            }
+                // Thêm Campaign vào DbContext
+                await _unitOfWork.GetRepository<Campaign>().InsertAsync(newCampaign);
 
-            // Thêm CampaignDetail
-            foreach (var cd in campaignDetails)
-            {
-                // Lấy thông tin Voucher
-                var voucher = await GetVoucherByIdAsync(cd.VoucherId);
-                if (voucher == null)
+                // Thêm CampaignStore
+                foreach (var storeId in campaignModel.StoreIds)
                 {
-                    throw new Exception($"Voucher with ID {cd.VoucherId} not found.");
+                    // Kiểm tra StoreId
+                    var storeExists = await _unitOfWork.GetRepository<Store>().AnyAsync(s => s.Id == storeId);
+                    if (!storeExists)
+                    {
+                        throw new ApiException($"Store with ID {storeId} not found.", 400, "BAD_REQUEST");
+                    }
+
+                    var campaignStore = new CampaignStore
+                    {
+                        Id = Ulid.NewUlid().ToString(),
+                        CampaignId = newCampaign.Id,
+                        StoreId = storeId,
+                        Description = "Campaign Store",
+                        State = true,
+                        Status = true
+                    };
+
+                    newCampaign.CampaignStores.Add(campaignStore);
                 }
 
-                // Tạo CampaignDetail
-                var campaignDetail = new CampaignDetail
+                // Thêm CampaignDetail
+                foreach (var cd in campaignDetails)
                 {
-                    Id = Ulid.NewUlid().ToString(),
-                    VoucherId = cd.VoucherId,
-                    Price = voucher.Price,
-                    Rate = voucher.Rate,
-                    Quantity = cd.Quantity,
-                    FromIndex = cd.FromIndex,
-                    ToIndex = 10,
-                    DateCreated = DateTime.UtcNow,
-                    DateUpdated = DateTime.UtcNow,
-                    Description = cd.Description,
-                    State = cd.State,
-                    Status = true
+                    // Lấy thông tin Voucher
+                    var voucher = await GetVoucherByIdAsync(cd.VoucherId);
+                    if (voucher == null)
+                    {
+                        throw new ApiException($"Voucher with ID {cd.VoucherId} not found.", 400, "BAD_REQUEST");
+                    }
+
+                    // Tạo CampaignDetail
+                    var campaignDetail = new CampaignDetail
+                    {
+                        Id = Ulid.NewUlid().ToString(),
+                        VoucherId = cd.VoucherId,
+                        Price = voucher.Price,
+                        Rate = voucher.Rate,
+                        Quantity = cd.Quantity,
+                        FromIndex = cd.FromIndex,
+                        ToIndex = 10,
+                        DateCreated = DateTime.UtcNow,
+                        DateUpdated = DateTime.UtcNow,
+                        Description = cd.Description,
+                        State = cd.State,
+                        Status = true
+                    };
+
+                    newCampaign.CampaignDetails.Add(campaignDetail);
+
+                    var isSuccess = await _unitOfWork.CommitAsync() > 0;
+                    if (!isSuccess)
+                    {
+                        throw new ApiException("Create CampaignDetail Fail", 400, "BAD_REQUEST");
+                    }
+
+                    // Cập nhật danh sách VoucherItem
+                    var voucherItemSuccess = await _voucherItemService.GenerateVoucherItemsAsync(new VoucherItemRequest
+                    {
+                        VoucherId = cd.VoucherId,
+                        CampaignDetailId = campaignDetail.Id,
+                        Quantity = (int)cd.Quantity,
+                        ValidOn = campaignModel.StartOn,
+                        ExpireOn = campaignModel.EndOn
+                    });
+
+                    if (!voucherItemSuccess)
+                    {
+                        throw new ApiException("Generate VoucherItem Fail", 400, "BAD_REQUEST");
+                    }
+                }
+
+                // Upload hình ảnh (chỉ sau khi tất cả các thao tác trên thành công)
+                var imageUri = string.Empty;
+                if (campaignModel.Image != null && campaignModel.Image.Length > 0)
+                {
+                    var uploadResult = await _cloudinaryService.UploadImageAsync(campaignModel.Image);
+                    imageUri = uploadResult.SecureUrl.AbsoluteUri;
+                    newCampaign.Image = imageUri;
+                    newCampaign.ImageName = !string.IsNullOrEmpty(imageUri)
+                        ? imageUri.Split('/')[^1]
+                        : "default_cover.jpg";
+                }
+
+                // Commit transaction
+                await _unitOfWork.CommitAsync();
+                await _unitOfWork.CommitTransactionAsync();
+
+                return new CampaignResponse
+                {
+                    Id = newCampaign.Id,
+                    BrandId = newCampaign.BrandId,
+                    BrandAcronym = brandExists.Acronym,
+                    BrandName = brandExists.BrandName,
+                    TypeId = newCampaign.TypeId,
+                    TypeName = typeExists.TypeName,
+                    CampaignName = newCampaign.CampaignName,
+                    Image = newCampaign.Image,
+                    ImageName = newCampaign.ImageName,
+                    File = newCampaign.File,
+                    FileName = newCampaign.FileName,
+                    Condition = newCampaign.Condition,
+                    Link = newCampaign.Link,
+                    StartOn = newCampaign.StartOn,
+                    EndOn = newCampaign.EndOn,
+                    Duration = newCampaign.Duration,
+                    TotalIncome = newCampaign.TotalIncome,
+                    TotalSpending = newCampaign.TotalSpending,
+                    DateCreated = newCampaign.DateCreated,
+                    DateUpdated = newCampaign.DateUpdated,
+                    Description = newCampaign.Description,
+                    Status = newCampaign.Status
                 };
-
-                newCampaign.CampaignDetails.Add(campaignDetail);
-
-                var isSuccess = await _unitOfWork.CommitAsync() > 0;
-                if (!isSuccess)
-                {
-                    throw new ApiException("Create CampaignDetail Fail", 400, "BAD_REQUEST");
-                }
-
-                // Cập nhật danh sách VoucherItem
-                var voucherItem = await _voucherItemService.GenerateVoucherItemsAsync(new VoucherItemRequest
-                {
-                    VoucherId = cd.VoucherId,
-                    CampaignDetailId = campaignDetail.Id,
-                    Quantity = (int)cd.Quantity,
-                    ValidOn = campaignModel.StartOn,
-                    ExpireOn = campaignModel.EndOn
-                });
-
-                if (!voucherItem)
-                {
-                    throw new ApiException("Generate VoucherItem Fail", 400, "BAD_REQUEST");
-                }
             }
-
-            return new CampaignResponse
+            catch (ApiException ex)
             {
-                Id = newCampaign.Id,
-                BrandId = newCampaign.BrandId,
-                BrandAcronym = brandExists.Acronym,
-                BrandName = brandExists.BrandName,
-                TypeId = newCampaign.TypeId,
-                TypeName = typeExists.TypeName,
-                CampaignName = newCampaign.CampaignName,
-                Image = newCampaign.Image,
-                ImageName = newCampaign.ImageName,
-                File = newCampaign.File,
-                FileName = newCampaign.FileName,
-                Condition = newCampaign.Condition,
-                Link = newCampaign.Link,
-                StartOn = newCampaign.StartOn,
-                EndOn = newCampaign.EndOn,
-                Duration = newCampaign.Duration,
-                TotalIncome = newCampaign.TotalIncome,
-                TotalSpending = newCampaign.TotalSpending,
-                DateCreated = newCampaign.DateCreated,
-                DateUpdated = newCampaign.DateUpdated,
-                Description = newCampaign.Description,
-                Status = newCampaign.Status
-            };
-
-            throw new ApiException("Create Campaign Fail", 400, "BAD_REQUEST");
+                await _unitOfWork.RollbackTransactionAsync();
+                // Log lỗi chi tiết
+                Console.WriteLine($"API Exception: {ex.Message}, Status Code: {ex.StatusCode}, Error Code: {ex.ErrorCode}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                // Log lỗi chi tiết
+                Console.WriteLine($"Exception: {ex.Message}, Stack Trace: {ex.StackTrace}");
+                throw new ApiException("Create Campaign Fail", 500, "INTERNAL_SERVER_ERROR");
+            }
         }
+
+        //public async Task<CampaignResponse> CreateCampaign(CreateCampaignModel campaignModel, List<CreateCampaignDetailModel> campaignDetails)
+        //{
+        //    // Kiểm tra BrandId
+        //    var brandExists = await _unitOfWork.GetRepository<Brand>().SingleOrDefaultAsync(predicate: b => b.Id == campaignModel.BrandId);
+        //    if (brandExists == null)
+        //    {
+        //        throw new ApiException($"Brand with ID {campaignModel.BrandId} not found.", 400, "BAD_REQUEST");
+        //    }
+
+        //    // Kiểm tra TypeId
+        //    var typeExists = await _unitOfWork.GetRepository<CampaignType>().SingleOrDefaultAsync(predicate: b => b.Id == campaignModel.TypeId);
+        //    if (typeExists == null)
+        //    {
+        //        throw new ApiException($"CampaignType with ID {campaignModel.TypeId} not found.", 400, "BAD_REQUEST");
+        //    }
+
+        //    // Upload hình ảnh
+        //    var imageUri = string.Empty;
+        //    if (campaignModel.Image != null && campaignModel.Image.Length > 0)
+        //    {
+        //        var uploadResult = await _cloudinaryService.UploadImageAsync(campaignModel.Image);
+        //        imageUri = uploadResult.SecureUrl.AbsoluteUri;
+        //    }
+
+        //    var newCampaign = new Campaign
+        //    {
+        //        Id = Ulid.NewUlid().ToString(),
+
+        //        BrandId = campaignModel.BrandId,
+        //        TypeId = campaignModel.TypeId,
+        //        CampaignName = campaignModel.CampaignName,
+        //        Image = imageUri,
+        //        ImageName = !string.IsNullOrEmpty(imageUri)
+        //            ? imageUri.Split('/')[^1]
+        //            : "default_cover.jpg",
+        //        Condition = campaignModel.Condition,
+        //        Link = campaignModel.Link,
+        //        File = "default_value_or_empty_string",
+        //        FileName = "default_value_or_empty_string",
+        //        StartOn = campaignModel.StartOn,
+        //        EndOn = campaignModel.EndOn,
+        //        Duration = ((DateOnly)campaignModel.EndOn).DayNumber - ((DateOnly)campaignModel.StartOn).DayNumber + 1,
+        //        TotalIncome = campaignModel.TotalIncome,
+        //        TotalSpending = 0,
+        //        DateCreated = DateTime.Now,
+        //        DateUpdated = DateTime.Now,
+        //        Description = campaignModel.Description,
+        //        Status = true,
+        //    };
+
+        //    // Thêm Campaign vào DbContext
+        //    await _unitOfWork.GetRepository<Campaign>().InsertAsync(newCampaign);
+
+        //    // Thêm CampaignStore
+        //    foreach (var storeId in campaignModel.StoreIds)
+        //    {
+        //        var campaignStore = new CampaignStore
+        //        {
+        //            Id = Ulid.NewUlid().ToString(),
+        //            CampaignId = newCampaign.Id,
+        //            StoreId = storeId,
+        //            Description = "Campaign Store",
+        //            State = true,
+        //            Status = true
+        //        };
+
+        //        newCampaign.CampaignStores.Add(campaignStore);
+        //    }
+
+        //    // Thêm CampaignDetail
+        //    foreach (var cd in campaignDetails)
+        //    {
+        //        // Lấy thông tin Voucher
+        //        var voucher = await GetVoucherByIdAsync(cd.VoucherId);
+        //        if (voucher == null)
+        //        {
+        //            throw new Exception($"Voucher with ID {cd.VoucherId} not found.");
+        //        }
+
+        //        // Tạo CampaignDetail
+        //        var campaignDetail = new CampaignDetail
+        //        {
+        //            Id = Ulid.NewUlid().ToString(),
+        //            VoucherId = cd.VoucherId,
+        //            Price = voucher.Price,
+        //            Rate = voucher.Rate,
+        //            Quantity = cd.Quantity,
+        //            FromIndex = cd.FromIndex,
+        //            ToIndex = 10,
+        //            DateCreated = DateTime.UtcNow,
+        //            DateUpdated = DateTime.UtcNow,
+        //            Description = cd.Description,
+        //            State = cd.State,
+        //            Status = true
+        //        };
+
+        //        newCampaign.CampaignDetails.Add(campaignDetail);
+
+        //        var isSuccess = await _unitOfWork.CommitAsync() > 0;
+        //        if (!isSuccess)
+        //        {
+        //            throw new ApiException("Create CampaignDetail Fail", 400, "BAD_REQUEST");
+        //        }
+
+        //        // Cập nhật danh sách VoucherItem
+        //        var voucherItem = await _voucherItemService.GenerateVoucherItemsAsync(new VoucherItemRequest
+        //        {
+        //            VoucherId = cd.VoucherId,
+        //            CampaignDetailId = campaignDetail.Id,
+        //            Quantity = (int)cd.Quantity,
+        //            ValidOn = campaignModel.StartOn,
+        //            ExpireOn = campaignModel.EndOn
+        //        });
+
+        //        if (!voucherItem)
+        //        {
+        //            throw new ApiException("Generate VoucherItem Fail", 400, "BAD_REQUEST");
+        //        }
+        //    }
+
+        //    return new CampaignResponse
+        //    {
+        //        Id = newCampaign.Id,
+        //        BrandId = newCampaign.BrandId,
+        //        BrandAcronym = brandExists.Acronym,
+        //        BrandName = brandExists.BrandName,
+        //        TypeId = newCampaign.TypeId,
+        //        TypeName = typeExists.TypeName,
+        //        CampaignName = newCampaign.CampaignName,
+        //        Image = newCampaign.Image,
+        //        ImageName = newCampaign.ImageName,
+        //        File = newCampaign.File,
+        //        FileName = newCampaign.FileName,
+        //        Condition = newCampaign.Condition,
+        //        Link = newCampaign.Link,
+        //        StartOn = newCampaign.StartOn,
+        //        EndOn = newCampaign.EndOn,
+        //        Duration = newCampaign.Duration,
+        //        TotalIncome = newCampaign.TotalIncome,
+        //        TotalSpending = newCampaign.TotalSpending,
+        //        DateCreated = newCampaign.DateCreated,
+        //        DateUpdated = newCampaign.DateUpdated,
+        //        Description = newCampaign.Description,
+        //        Status = newCampaign.Status
+        //    };
+
+        //    throw new ApiException("Create Campaign Fail", 400, "BAD_REQUEST");
+        //}
 
 
         public async Task<VoucherResponse> GetVoucherByIdAsync(string voucherId)
