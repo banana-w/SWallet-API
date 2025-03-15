@@ -54,7 +54,7 @@ namespace SWallet_API.Controllers
             return Ok(result);
         }
 
-        [HttpPut]
+        [HttpPut("{id}")]
         [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
         [ProducesDefaultResponseType(typeof(ErrorResponse))]
         public async Task<IActionResult> UpdateStudentAsync(string id, StudentRequest studentRequest)
