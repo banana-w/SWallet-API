@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using SWallet.Repository.Payload;
+using SWallet.Repository.VNPAY;
 using SWallet_API.Extentions;
+using VNPAY.NET;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,6 +41,16 @@ builder.Services.AddSingleton<Cloudinary>(sp =>
         cloudinarySettings.ApiKey,
         cloudinarySettings.ApiSecret));
 });
+
+builder.Services.Configure<VnpayConfig>(builder.Configuration.GetSection("Vnpay"));
+builder.Services.AddSingleton<IVnpay>(sp =>
+{
+    var config = sp.GetRequiredService<IOptions<VnpayConfig>>().Value;
+    var vnpay = new Vnpay();
+    vnpay.Initialize(config.TmnCode, config.HashSecret, config.BaseUrl, config.ReturnUrl);
+    return vnpay;
+});
+
 
 builder.Services.AddHttpContextAccessor();
 
