@@ -10,6 +10,7 @@ using SWallet.Repository.Interfaces;
 using SWallet.Repository.Services.Implements;
 using SWallet.Repository.Services.Interfaces;
 using System.Text;
+using VNPAY.NET;
 
 namespace SWallet_API.Extentions
 {
@@ -43,7 +44,7 @@ namespace SWallet_API.Extentions
             services.AddScoped<IWalletService, WalletService>();
             services.AddScoped<IProductService, ProductService>();
             services.AddScoped<IVoucherItemService, VoucherItemService>();
-            services.AddScoped<IVoucherItemService, VoucherItemService>();
+            services.AddScoped<IVnpay, Vnpay>();
 
             return services;
         }

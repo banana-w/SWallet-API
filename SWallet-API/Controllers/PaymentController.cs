@@ -4,19 +4,24 @@ using VNPAY.NET;
 using VNPAY.NET.Enums;
 using VNPAY.NET.Models;
 using VNPAY.NET.Utilities;
+using Microsoft.Extensions.Options;
+using SWallet.Repository.VNPAY;
+
 
 namespace SWallet_API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/VNPAY")]
     [ApiController]
     public class PaymentController : ControllerBase
     {
 
         private readonly IVnpay _vnpay;
+        private readonly VnpayConfig _vnpayConfig;
 
-        public PaymentController(IVnpay vnpay)
+        public PaymentController(IVnpay vnpay, IOptions<VnpayConfig> vnpayConfig)
         {
             _vnpay = vnpay;
+            _vnpayConfig = vnpayConfig.Value;
         }
 
         [HttpGet("CreatePaymentUrl")]
@@ -46,6 +51,59 @@ namespace SWallet_API.Controllers
             {
                 return BadRequest(ex.Message);
             }
+        }
+
+        [HttpGet("IpnAction")]
+        public IActionResult IpnAction()
+        {
+            if (Request.QueryString.HasValue)
+            {
+                try
+                {
+                    var paymentResult = _vnpay.GetPaymentResult(Request.Query);
+                    if (paymentResult.IsSuccess)
+                    {
+                        // Thực hiện hành động nếu thanh toán thành công tại đây. Ví dụ: Cập nhật trạng thái đơn hàng trong cơ sở dữ liệu.
+                        return Ok();
+                    }
+
+                    // Thực hiện hành động nếu thanh toán thất bại tại đây. Ví dụ: Hủy đơn hàng.
+                    return BadRequest("Thanh toán thất bại");
+                }
+                catch (Exception ex)
+                {
+                    return BadRequest(ex.Message);
+                }
+            }
+
+            return NotFound("Không tìm thấy thông tin thanh toán.");
+        }
+
+
+        [HttpGet("Callback")]
+        public ActionResult<string> Callback()
+        {
+            if (Request.QueryString.HasValue)
+            {
+                try
+                {
+                    var paymentResult = _vnpay.GetPaymentResult(Request.Query);
+                    var resultDescription = $"{paymentResult.PaymentResponse.Description}. {paymentResult.TransactionStatus.Description}.";
+
+                    if (paymentResult.IsSuccess)
+                    {
+                        return Ok(resultDescription);
+                    }
+
+                    return BadRequest(resultDescription);
+                }
+                catch (Exception ex)
+                {
+                    return BadRequest(ex.Message);
+                }
+            }
+
+            return NotFound("Không tìm thấy thông tin thanh toán.");
         }
     }
 }
