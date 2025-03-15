@@ -88,24 +88,14 @@ namespace SWallet.Repository.Services.Implements
            .ForMember(s => s.DateCreated, opt => opt.MapFrom(src => DateTime.Now))
            .ForMember(s => s.DateUpdated, opt => opt.MapFrom(src => DateTime.Now))
            .ForMember(s => s.State, opt => opt.MapFrom(src => StudentState.Pending))
-           .ForMember(s => s.Status, opt => opt.MapFrom(src => true));
-                cfg.CreateMap<Account, CreateStudentAccount>()
-           .ReverseMap()
-           .ForMember(t => t.Id, opt => opt.MapFrom(src => Ulid.NewUlid()))
-           .ForMember(t => t.Role, opt => opt.MapFrom(src => Role.Student))
-           .ForMember(t => t.Password, opt => opt.MapFrom(src => BCryptNet.HashPassword(src.Password))) // HashPassword when create account
-           .ForMember(t => t.IsVerify, opt => opt.MapFrom(src => true))
-           .ForMember(t => t.DateCreated, opt => opt.MapFrom(src => DateTime.Now))
-           .ForMember(t => t.DateUpdated, opt => opt.MapFrom(src => DateTime.Now))
-           .ForMember(t => t.Status, opt => opt.MapFrom(src => true));
+           .ForMember(s => s.Status, opt => opt.MapFrom(src => true));                
                 cfg.CreateMap<Account, AccountRequest>()
             .ReverseMap()
             .ForMember(t => t.Id, opt => opt.MapFrom(src => Ulid.NewUlid()))
             .ForMember(t => t.Password, opt => opt.MapFrom(src => BCryptNet.HashPassword(src.Password))) // HashPassword when create account
             .ForMember(t => t.IsVerify, opt => opt.MapFrom(src => true))
             .ForMember(t => t.DateCreated, opt => opt.MapFrom(src => DateTime.Now))
-            .ForMember(t => t.DateUpdated, opt => opt.MapFrom(src => DateTime.Now))
-            .ForMember(t => t.Description, opt => opt.MapFrom(src => "Student Account"))
+            .ForMember(t => t.DateUpdated, opt => opt.MapFrom(src => DateTime.Now))           
             .ForMember(t => t.Status, opt => opt.MapFrom(src => true));
             });
             mapper ??= new Mapper(config);
@@ -128,15 +118,19 @@ namespace SWallet.Repository.Services.Implements
                 }
                 Account ac = mapper.Map<Account>(accountRequest);
                 ac.Role = (int)Role.Brand;
+                ac.Description = "Brand Account";
 
                 await _unitOfWork.GetRepository<Account>().InsertAsync(ac);
 
                 bool isSuccess = await _unitOfWork.CommitAsync() > 0;
                 if (isSuccess)
-                {
-                    //if (ac.Email != null)
-                    //await _emailService.SendEmailBrandRegister(ac.Email);
+                {                   
                     await _brandService.CreateBrandAsync(ac.Id, brandRequest);
+                    if (ac.Email != null)
+                    {
+                        var code = await _emailService.SendVerificationEmail(ac.Email);
+                        await _redisService.SaveVerificationCodeAsync(ac.Email, code);
+                    }
                     await _unitOfWork.CommitTransactionAsync();
                     return mapper.Map<AccountResponse>(ac);
                 }
@@ -161,6 +155,7 @@ namespace SWallet.Repository.Services.Implements
                 }
                 Account ac = mapper.Map<Account>(accountRequest);
                 ac.Role = (int)Role.Store;
+                ac.Description = "Store Account";
 
                 await _unitOfWork.GetRepository<Account>().InsertAsync(ac);
 
@@ -192,6 +187,7 @@ namespace SWallet.Repository.Services.Implements
                 }
                 Account ac = mapper.Map<Account>(accountRequest);
                 ac.Role = (int)Role.Student;
+                ac.Description = "Student Account";
 
                 await _unitOfWork.GetRepository<Account>().InsertAsync(ac);
 
@@ -224,5 +220,34 @@ namespace SWallet.Repository.Services.Implements
             return mapper.Map<AccountResponse>(account);
         }
 
+        public async Task<AccountResponse> UpdateAccount(string id, string oldPassword, AccountRequest accountRequest)
+        {
+            if (accountRequest == null)
+            {
+                throw new ApiException("Account request is null", 400, "BAD_REQUEST");
+            }
+            var account = await _unitOfWork.GetRepository<Account>().SingleOrDefaultAsync(predicate: x => x.Id == id);
+            if (account == null)
+            {
+                throw new ApiException("Account not found", 404, "NOT_FOUND");
+            }
+            else if (!BCryptNet.Verify(oldPassword, account.Password))
+            {
+                throw new ApiException("Old password is incorrect", 400, "BAD_REQUEST");
+            }
+
+            account.Password = BCryptNet.HashPassword(accountRequest.Password);
+            account.Phone = accountRequest.Phone;
+            account.Email = accountRequest.Email;
+            account.DateUpdated = DateTime.Now;
+
+            _unitOfWork.GetRepository<Account>().UpdateAsync(account);
+            var result = await _unitOfWork.CommitAsync() > 0;
+            if (result)
+            {
+                return mapper.Map<AccountResponse>(account);
+            }
+            throw new ApiException("Update Account Failed", 400, "BAD_REQUEST");
+        }
     }
 }

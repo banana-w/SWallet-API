@@ -42,14 +42,14 @@ namespace SWallet_API.Controllers
             return Ok(voucherTypes);
         }
 
-        //[HttpPut("{id}")]
-        //[ProducesResponseType(typeof(VoucherTypeResponse), StatusCodes.Status200OK)]
-        //public async Task<IActionResult> UpdateVoucherType(string id, [FromBody] VoucherTypeRequest voucherTypeRequest)
-        //{
-        //    var voucherType = await _voucherTypeService.UpdateVoucherType(id, voucherTypeRequest);
-        //    return Ok(voucherType);
-        //}
+        [HttpPut("{id}")]
+        [ProducesResponseType(typeof(VoucherTypeResponse), StatusCodes.Status200OK)]
+        public async Task<IActionResult> UpdateVoucherType(string id, [FromForm] VoucherTypeRequest voucherTypeRequest)
+        {
+            var voucherType = await _voucherTypeService.UpdateVoucherType(id, voucherTypeRequest);
+            return Ok(voucherType);
+        }
 
-        
+
     }
 }

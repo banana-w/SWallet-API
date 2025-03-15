@@ -13,5 +13,6 @@ namespace SWallet.Repository.Services.Interfaces
         Task<AccountResponse> GetAccountById(string id);
         Task<AccountResponse> CreateBrandAccount(AccountRequest accountRequest, CreateBrandByAccountId brandRequest);
         Task<AccountResponse> CreateStoreAccount(AccountRequest accountRequest, CreateStoreModel storeRequest);
+        Task<AccountResponse> UpdateAccount(string id, string oldPassword, AccountRequest accountRequest);
     }
 }
