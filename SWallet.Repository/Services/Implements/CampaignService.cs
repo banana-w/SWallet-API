@@ -261,7 +261,6 @@ namespace SWallet.Repository.Services.Implements
                 }
 
                 // Commit transaction
-                await _unitOfWork.CommitAsync();
                 await _unitOfWork.CommitTransactionAsync();
 
                 return new CampaignResponse
@@ -293,14 +292,12 @@ namespace SWallet.Repository.Services.Implements
             catch (ApiException ex)
             {
                 await _unitOfWork.RollbackTransactionAsync();
-                // Log lỗi chi tiết
                 Console.WriteLine($"API Exception: {ex.Message}, Status Code: {ex.StatusCode}, Error Code: {ex.ErrorCode}");
                 throw;
             }
             catch (Exception ex)
             {
                 await _unitOfWork.RollbackTransactionAsync();
-                // Log lỗi chi tiết
                 Console.WriteLine($"Exception: {ex.Message}, Stack Trace: {ex.StackTrace}");
                 throw new ApiException("Create Campaign Fail", 500, "INTERNAL_SERVER_ERROR");
             }

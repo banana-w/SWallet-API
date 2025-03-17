@@ -9,16 +9,26 @@ namespace SWallet_API.Controllers
     public class EmailController : ControllerBase
     {
         private readonly IEmailService _emailService;
+        private readonly IRedisService _redisService;
 
-        public EmailController(IEmailService emailService)
+        public EmailController(IEmailService emailService, IRedisService redisService)
         {
             _emailService = emailService;
+            _redisService = redisService;
         }
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> SendVerificationEmail(string email)
         {
-           return Ok(await _emailService.SendVerificationEmail(email));
+            if (string.IsNullOrEmpty(email))
+            {
+                return BadRequest("Email is required");
+            }
+
+            var code = await _emailService.SendVerificationEmail(email);
+            await _redisService.SaveVerificationCodeAsync(email, code);
+
+            return Ok(code);
         }
 
     }
