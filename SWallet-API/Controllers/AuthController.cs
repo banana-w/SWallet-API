@@ -53,5 +53,17 @@ namespace SWallet_API.Controllers
             return Ok(result);
         }
 
+        [HttpPost("verify-brand")]
+        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+        public async Task<IActionResult> VerifyBrand([FromBody] VerifyBrandRequest verifyBrandRequest)
+        {
+            var result = await _authService.VerifyBrand(verifyBrandRequest.Email, verifyBrandRequest.Code, verifyBrandRequest.BrandId);
+            if (!result)
+            {
+                throw new ApiException("Invalid brand", StatusCodes.Status400BadRequest, "INVALID_BRAND");
+            }
+            return Ok(result);
+        }
+
     }
 }

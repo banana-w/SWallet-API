@@ -115,5 +115,22 @@ namespace SWallet.Repository.Services.Implements
             }
             return false;
         }
+        
+        public async Task<bool> VerifyBrand(string email, string userInput, string brandId)
+        {
+            var brand = await _unitOfWork.GetRepository<Brand>().SingleOrDefaultAsync(predicate: x => x.Id == brandId);
+
+            if (brand != null)
+            {
+                var result = await redisService.VerifyCodeAsync(email, userInput);
+                if (result)
+                {
+                    brand.State = true;
+                    _unitOfWork.GetRepository<Brand>().UpdateAsync(brand);
+                    return await _unitOfWork.CommitAsync() > 0;
+                }
+            }
+            return false;
+        }
     }
 }
