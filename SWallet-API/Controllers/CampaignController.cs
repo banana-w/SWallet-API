@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using Org.BouncyCastle.Security;
 using SWallet.Domain.Paginate;
 using SWallet.Repository.Payload.Request.Brand;
@@ -73,11 +74,14 @@ namespace SWallet_API.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<CampaignResponse>> CreateCampaign(CreateCampaignModel creation, [FromForm] List<CreateCampaignDetailModel> campaignDetails)
+        public async Task<ActionResult<CampaignResponse>> CreateCampaign(CreateCampaignModel creation, [FromForm] string campaignDetails = "[{   \"voucherId\": \"Abc\",   \"quantity\": 1,   \"fromIndex\": 1,   \"description\": \"test 943\",   \"state\": true }]")
         {
             try
             {
-                var campaignResponse = await _campaignService.CreateCampaign(creation, campaignDetails);
+                var detail = JsonConvert.DeserializeObject<List<CreateCampaignDetailModel>>(campaignDetails);
+
+                var campaignResponse = await _campaignService.CreateCampaign(creation, detail!);
+
                 return Ok(campaignResponse); // Return 201 Created with location header
             }
             catch (Exception ex)
