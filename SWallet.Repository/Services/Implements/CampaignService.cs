@@ -261,6 +261,7 @@ namespace SWallet.Repository.Services.Implements
                 }
 
                 // Commit transaction
+                await _unitOfWork.CommitAsync();
                 await _unitOfWork.CommitTransactionAsync();
 
                 return new CampaignResponse
