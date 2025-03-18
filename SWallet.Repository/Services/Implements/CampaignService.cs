@@ -159,6 +159,8 @@ namespace SWallet.Repository.Services.Implements
                     Condition = campaignModel.Condition,
                     Link = campaignModel.Link,
                     File = "default_value_or_empty_string",
+                    Image = "string",
+                    ImageName = "string",
                     FileName = "default_value_or_empty_string",
                     StartOn = campaignModel.StartOn,
                     EndOn = campaignModel.EndOn,
