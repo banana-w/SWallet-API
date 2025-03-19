@@ -26,39 +26,43 @@ namespace SWallet.Repository.Services.Implements
 
         public async Task<bool> CreateVoucher(VoucherRequest request)
         {
+
+            var voucher = new Voucher
+            {
+                Id = Ulid.NewUlid().ToString(),
+                BrandId = request.BrandId,
+                TypeId = request.TypeId,
+                Price = request.Price,
+                Rate = request.Rate,
+                Condition = request.Condition,
+                VoucherName = request.VoucherName,
+                Description = request.Description,
+                Image = "NULL",
+                File = "Null",
+                FileName = "Null",
+                ImageName = "NUll",
+                State = request.State,
+                DateCreated = DateTime.Now,
+                DateUpdated = DateTime.Now,
+                Status = true
+            };
+
+            // Add voucher to the database
+            await _unitOfWork.GetRepository<Voucher>().InsertAsync(voucher);
+
             if (request.Image != null && request.Image.Length > 0)
             {
                 var image = await _cloudinaryService.UploadImageAsync(request.Image);
                 if (image != null)
                 {
-                    var voucher = new Voucher
-                    {
-                        Id = Ulid.NewUlid().ToString(),
-                        BrandId = request.BrandId,
-                        TypeId = request.TypeId,
-                        Price = request.Price,
-                        Rate = request.Rate,
-                        Condition = request.Condition,
-                        VoucherName = request.VoucherName,
-                        Description = request.Description,
-                        Image = image.SecureUrl.AbsoluteUri,
-                        File = "Null",
-                        FileName = "Null",
-                        ImageName = image.PublicId,
-                        State = request.State,
-                        DateCreated = DateTime.Now,
-                        DateUpdated = DateTime.Now,
-                        Status = true
-                    };
-
-                    // Add voucher to the database
-                    await _unitOfWork.GetRepository<Voucher>().InsertAsync(voucher);
-                    var result = await _unitOfWork.CommitAsync();
-                    if (result > 0)
-                    {
-                        return true;
-                    }
+                    voucher.Image = image.SecureUrl.AbsoluteUri;
+                    voucher.ImageName = image.PublicId;
                 }
+            }
+                var result = await _unitOfWork.CommitAsync();
+            if (result > 0)
+            {
+                return true;
             }
             throw new ApiException("Create voucher fail", 400, "VOUCHER_FAIL");
         }
