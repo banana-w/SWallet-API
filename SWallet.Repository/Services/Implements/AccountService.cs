@@ -220,49 +220,38 @@ namespace SWallet.Repository.Services.Implements
             return mapper.Map<AccountResponse>(account);
         }
 
-        public async Task<AccountResponse> UpdateAccount(string id, string phone, string email)
+        public async Task<AccountResponse> UpdateAccount(string id, string phone, string email, string oldPassword, string newPassword)
         {
-            if (string.IsNullOrEmpty(phone) || string.IsNullOrEmpty(email))
+            if (string.IsNullOrEmpty(phone) && string.IsNullOrEmpty(email) && string.IsNullOrEmpty(oldPassword) && string.IsNullOrEmpty(newPassword))
             {
-                throw new ApiException("Phone or Email is null or empty", 400, "BAD_REQUEST");
+                throw new ApiException("No update data provided", 400, "BAD_REQUEST");
             }
+
             var account = await _unitOfWork.GetRepository<Account>().SingleOrDefaultAsync(predicate: x => x.Id == id);
             if (account == null)
             {
                 throw new ApiException("Account not found", 404, "NOT_FOUND");
             }
 
-            account.Phone = phone;
-            //account.Email = email;
-            account.DateUpdated = DateTime.Now;
-
-            _unitOfWork.GetRepository<Account>().UpdateAsync(account);
-            var result = await _unitOfWork.CommitAsync() > 0;
-            if (result)
+            if (!string.IsNullOrEmpty(phone))
             {
-                return mapper.Map<AccountResponse>(account);
-            }
-            throw new ApiException("Update Account Failed", 400, "BAD_REQUEST");
-
-        }
-
-        public async Task<AccountResponse> UpdateAccountPassword(string id, string oldPassword, string newPassword)
-        {
-            if (string.IsNullOrEmpty(oldPassword) || string.IsNullOrEmpty(newPassword))
-            {
-                throw new ApiException("Password is null or empty", 400, "BAD_REQUEST");
-            }
-            var account = await _unitOfWork.GetRepository<Account>().SingleOrDefaultAsync(predicate: x => x.Id == id);
-            if (account == null)
-            {
-                throw new ApiException("Account not found", 404, "NOT_FOUND");
-            }
-            else if (!BCryptNet.Verify(oldPassword, account.Password))
-            {
-                throw new ApiException("Old password is incorrect", 400, "BAD_REQUEST");
+                account.Phone = phone;
             }
 
-            account.Password = BCryptNet.HashPassword(newPassword);
+            if (!string.IsNullOrEmpty(email))
+            {
+                account.Email = email;
+            }
+
+            if (!string.IsNullOrEmpty(oldPassword) && !string.IsNullOrEmpty(newPassword))
+            {
+                if (!BCryptNet.Verify(oldPassword, account.Password))
+                {
+                    throw new ApiException("Old password is incorrect", 400, "BAD_REQUEST");
+                }
+                account.Password = BCryptNet.HashPassword(newPassword);
+            }
+
             account.DateUpdated = DateTime.Now;
 
             _unitOfWork.GetRepository<Account>().UpdateAsync(account);
@@ -273,5 +262,6 @@ namespace SWallet.Repository.Services.Implements
             }
             throw new ApiException("Update Account Failed", 400, "BAD_REQUEST");
         }
+
     }
 }
