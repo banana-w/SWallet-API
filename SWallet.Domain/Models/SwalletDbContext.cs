@@ -60,6 +60,8 @@ public partial class SwalletDbContext : DbContext
 
     public virtual DbSet<OrderTransaction> OrderTransactions { get; set; }
 
+    public virtual DbSet<PointPackage> PointPackages { get; set; }
+
     public virtual DbSet<Product> Products { get; set; }
 
     public virtual DbSet<Request> Requests { get; set; }
@@ -87,7 +89,7 @@ public partial class SwalletDbContext : DbContext
     public virtual DbSet<Wallet> Wallets { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlServer(GetConnectionString());
+    => optionsBuilder.UseSqlServer(GetConnectionString());
 
     private string GetConnectionString()
     {
@@ -606,6 +608,11 @@ public partial class SwalletDbContext : DbContext
                 .IsUnicode(false)
                 .IsFixedLength()
                 .HasColumnName("id");
+            entity.Property(e => e.AccountId)
+                .HasMaxLength(26)
+                .IsUnicode(false)
+                .IsFixedLength()
+                .HasColumnName("account_id");
             entity.Property(e => e.Address).HasColumnName("address");
             entity.Property(e => e.AreaId)
                 .HasMaxLength(26)
@@ -631,6 +638,10 @@ public partial class SwalletDbContext : DbContext
                 .HasColumnName("phone");
             entity.Property(e => e.State).HasColumnName("state");
             entity.Property(e => e.Status).HasColumnName("status");
+
+            entity.HasOne(d => d.Account).WithMany(p => p.Campuses)
+                .HasForeignKey(d => d.AccountId)
+                .HasConstraintName("FK_campus_account");
 
             entity.HasOne(d => d.Area).WithMany(p => p.Campuses)
                 .HasForeignKey(d => d.AreaId)
@@ -686,9 +697,7 @@ public partial class SwalletDbContext : DbContext
                 .HasColumnName("condition");
             entity.Property(e => e.DateCreated).HasColumnName("date_created");
             entity.Property(e => e.DateUpdated).HasColumnName("date_updated");
-            entity.Property(e => e.Description)
-                .HasColumnType("text")
-                .HasColumnName("description");
+            entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.FileName)
                 .HasColumnType("text")
                 .HasColumnName("file_name");
@@ -984,6 +993,27 @@ public partial class SwalletDbContext : DbContext
                 .HasForeignKey(d => d.WalletId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_tbl_order_transaction_tbl_wallet_wallet_id");
+        });
+
+        modelBuilder.Entity<PointPackage>(entity =>
+        {
+            entity.ToTable("Point_package");
+
+            entity.Property(e => e.Id)
+                .HasMaxLength(26)
+                .IsUnicode(false)
+                .IsFixedLength()
+                .HasColumnName("id");
+            entity.Property(e => e.DateCreated).HasColumnName("date_created");
+            entity.Property(e => e.DateUpdated).HasColumnName("date_updated");
+            entity.Property(e => e.PackageName)
+                .HasMaxLength(255)
+                .HasColumnName("package_name");
+            entity.Property(e => e.Point).HasColumnName("point");
+            entity.Property(e => e.Price)
+                .HasColumnType("decimal(38, 2)")
+                .HasColumnName("price");
+            entity.Property(e => e.Status).HasColumnName("status");
         });
 
         modelBuilder.Entity<Product>(entity =>
@@ -1627,6 +1657,11 @@ public partial class SwalletDbContext : DbContext
                 .IsUnicode(false)
                 .IsFixedLength()
                 .HasColumnName("campaign_id");
+            entity.Property(e => e.CampusId)
+                .HasMaxLength(26)
+                .IsUnicode(false)
+                .IsFixedLength()
+                .HasColumnName("campus_id");
             entity.Property(e => e.DateCreated).HasColumnName("date_created");
             entity.Property(e => e.DateUpdated).HasColumnName("date_updated");
             entity.Property(e => e.Description)
@@ -1637,7 +1672,6 @@ public partial class SwalletDbContext : DbContext
                 .IsUnicode(false)
                 .IsFixedLength()
                 .HasColumnName("lecturer_id");
-            entity.Property(e => e.State).HasColumnName("state");
             entity.Property(e => e.Status).HasColumnName("status");
             entity.Property(e => e.StudentId)
                 .HasMaxLength(26)
@@ -1654,6 +1688,10 @@ public partial class SwalletDbContext : DbContext
             entity.HasOne(d => d.Campaign).WithMany(p => p.Wallets)
                 .HasForeignKey(d => d.CampaignId)
                 .HasConstraintName("FK_tbl_wallet_tbl_campaign_campaign_id");
+
+            entity.HasOne(d => d.Campus).WithMany(p => p.Wallets)
+                .HasForeignKey(d => d.CampusId)
+                .HasConstraintName("FK_wallet_campus");
 
             entity.HasOne(d => d.Lecturer).WithMany(p => p.Wallets)
                 .HasForeignKey(d => d.LecturerId)
