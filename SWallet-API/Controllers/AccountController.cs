@@ -69,12 +69,22 @@ namespace SWallet_API.Controllers
             return Ok(result);
         }
 
+        [HttpPut("{id}/Pwd")]
+        [ProducesResponseType(typeof(AccountResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> UpdateAccountPwd(string id, string oldPassword, string newPassword)
+        {
+            var result = await _accountService.UpdateAccountPassword(id, oldPassword, newPassword)
+                ?? throw new ApiException("Account update failed.", StatusCodes.Status400BadRequest, "ACCOUNT_UPDATE_FAILED");
+            return Ok(result);
+        }
+
         [HttpPut("{id}")]
         [ProducesResponseType(typeof(AccountResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> UpdateAccount(string id, string oldPassword, AccountRequest accountRequest)
+        public async Task<IActionResult> UpdateAccount(string id, string phone, string email)
         {
-            var result = await _accountService.UpdateAccount(id, oldPassword, accountRequest)
+            var result = await _accountService.UpdateAccount(id, phone, email)
                 ?? throw new ApiException("Account update failed.", StatusCodes.Status400BadRequest, "ACCOUNT_UPDATE_FAILED");
             return Ok(result);
         }
