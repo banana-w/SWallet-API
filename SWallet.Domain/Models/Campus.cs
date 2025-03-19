@@ -7,6 +7,8 @@ public partial class Campus
 {
     public string Id { get; set; } = null!;
 
+    public string? AccountId { get; set; }
+
     public string AreaId { get; set; } = null!;
 
     public string CampusName { get; set; } = null!;
@@ -33,9 +35,13 @@ public partial class Campus
 
     public bool? Status { get; set; }
 
+    public virtual Account? Account { get; set; }
+
     public virtual Area Area { get; set; } = null!;
 
     public virtual ICollection<CampaignCampus> CampaignCampuses { get; set; } = new List<CampaignCampus>();
 
     public virtual ICollection<Student> Students { get; set; } = new List<Student>();
+
+    public virtual ICollection<Wallet> Wallets { get; set; } = new List<Wallet>();
 }

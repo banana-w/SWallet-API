@@ -39,6 +39,8 @@ public partial class Account
 
     public virtual ICollection<Brand> Brands { get; set; } = new List<Brand>();
 
+    public virtual ICollection<Campus> Campuses { get; set; } = new List<Campus>();
+
     public virtual ICollection<Lecturer> Lecturers { get; set; } = new List<Lecturer>();
 
     public virtual ICollection<Store> Stores { get; set; } = new List<Store>();

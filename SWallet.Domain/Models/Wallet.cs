@@ -9,6 +9,8 @@ public partial class Wallet
 
     public string? LecturerId { get; set; }
 
+    public string? CampusId { get; set; }
+
     public string? CampaignId { get; set; }
 
     public string? StudentId { get; set; }
@@ -23,9 +25,7 @@ public partial class Wallet
 
     public DateTime? DateUpdated { get; set; }
 
-    public string Description { get; set; } = null!;
-
-    public bool? State { get; set; }
+    public string? Description { get; set; }
 
     public bool? Status { get; set; }
 
@@ -36,6 +36,8 @@ public partial class Wallet
     public virtual Campaign? Campaign { get; set; }
 
     public virtual ICollection<CampaignTransaction> CampaignTransactions { get; set; } = new List<CampaignTransaction>();
+
+    public virtual Campus? Campus { get; set; }
 
     public virtual ICollection<ChallengeTransaction> ChallengeTransactions { get; set; } = new List<ChallengeTransaction>();
 

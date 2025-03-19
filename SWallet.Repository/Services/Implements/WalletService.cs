@@ -36,7 +36,6 @@ namespace SWallet.Repository.Services.Implements
                 DateCreated = DateTime.Now,
                 DateUpdated = DateTime.Now,
                 Description = walletRequest.Description,
-                State = walletRequest.State,
                 Status = true
             };
             await _unitOfWork.GetRepository<Wallet>().InsertAsync(wallet);
@@ -54,7 +53,6 @@ namespace SWallet.Repository.Services.Implements
                     DateCreated = wallet.DateCreated,
                     DateUpdated = wallet.DateUpdated,
                     Description = wallet.Description,
-                    State = wallet.State,
                     Status = wallet.Status
                 };
             }
@@ -84,7 +82,6 @@ namespace SWallet.Repository.Services.Implements
                 DateCreated = wallet.DateCreated,
                 DateUpdated = wallet.DateUpdated,
                 Description = wallet.Description,
-                State = wallet.State,
                 Status = wallet.Status
             };
         }
@@ -119,7 +116,6 @@ namespace SWallet.Repository.Services.Implements
                     DateCreated = wallet.DateCreated,
                     DateUpdated = wallet.DateUpdated,
                     Description = wallet.Description,
-                    State = wallet.State,
                     Status = wallet.Status
                 };
             }
