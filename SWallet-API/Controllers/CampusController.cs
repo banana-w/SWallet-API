@@ -5,10 +5,12 @@ using SWallet.API.Controllers;
 using SWallet.Domain.Paginate;
 using SWallet.Repository.Payload.Request.Brand;
 using SWallet.Repository.Payload.Request.Campus;
+using SWallet.Repository.Payload.Request.PointPackage;
 using SWallet.Repository.Payload.Response.Brand;
 using SWallet.Repository.Payload.Response.Campus;
 using SWallet.Repository.Services.Implements;
 using SWallet.Repository.Services.Interfaces;
+using VNPAY.NET;
 
 namespace SWallet_API.Controllers
 {
@@ -17,13 +19,17 @@ namespace SWallet_API.Controllers
     public class CampusController : ControllerBase
     {
         private readonly ICampusService _campusService;
+        private readonly IPointPackageService _pointPackageService;
         private readonly ILogger<CampusController> _logger;
+        private readonly IVnpay _vnPayService;
 
-        public CampusController(ICampusService campusService, ILogger<CampusController> logger)
+        public CampusController(ICampusService campusService, ILogger<CampusController> logger, IPointPackageService pointPackageService)
         {
             _campusService = campusService;
+            _pointPackageService = pointPackageService;
             _logger = logger;
         }
+
 
         [HttpPost]
         public async Task<ActionResult<CampusResponse>> CreateCampus(CreateCampusModel creation)

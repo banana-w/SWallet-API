@@ -36,8 +36,8 @@ namespace SWallet.API.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating admin"); // Log the error
-                return StatusCode(StatusCodes.Status500InternalServerError, "Error creating admin"); // Return 500 Internal Server Error
+                _logger.LogError(ex, "Error creating brand"); // Log the error
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error creating brand"); // Return 500 Internal Server Error
             }
         }
 

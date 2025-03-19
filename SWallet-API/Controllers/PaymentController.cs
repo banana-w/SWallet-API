@@ -6,6 +6,9 @@ using VNPAY.NET.Models;
 using VNPAY.NET.Utilities;
 using Microsoft.Extensions.Options;
 using SWallet.Repository.VNPAY;
+using SWallet.Repository.Payload.ExceptionModels;
+using SWallet.Repository.Payload.Request.PointPackage;
+using SWallet.Repository.Services.Interfaces;
 
 
 namespace SWallet_API.Controllers
@@ -17,11 +20,62 @@ namespace SWallet_API.Controllers
 
         private readonly IVnpay _vnpay;
         private readonly VnpayConfig _vnpayConfig;
+        private readonly IPointPackageService _pointPackageService;
+        private readonly ICampusService _campusService;
 
-        public PaymentController(IVnpay vnpay, IOptions<VnpayConfig> vnpayConfig)
+        public PaymentController(IVnpay vnpay, IOptions<VnpayConfig> vnpayConfig, IPointPackageService pointPackageService, ICampusService campusService)
         {
             _vnpay = vnpay;
             _vnpayConfig = vnpayConfig.Value;
+            _pointPackageService = pointPackageService;
+            _campusService = campusService;
+        }
+
+        [HttpPost("purchase-points")]
+        public async Task<IActionResult> PurchasePoints([FromBody] PurchasePointRequest request)
+        {
+            try
+            {
+                // Lấy thông tin gói điểm
+                var pointPackage = await _pointPackageService.GetPointPackageById(request.PointPackageId);
+                if (pointPackage == null)
+                {
+                    return BadRequest(new { error = "Point package not found" });
+                }
+
+                var campus = await _campusService.GetCampusById(request.CampusId);
+                if (campus == null)
+                {
+                    return BadRequest(new { error = "Campus not found" });
+                }
+                var ipAddress = NetworkHelper.GetIpAddress(HttpContext);
+                // Tạo PaymentRequest
+                var paymentRequest = new PaymentRequest
+                {
+                    PaymentId = DateTime.Now.Ticks,
+                    Description = $"Purchase Point Package {pointPackage.PackageName}",
+                    Money = (double)pointPackage.Price,
+                    IpAddress = ipAddress, // Lấy địa chỉ IP (sử dụng helper method hoặc inject IHttpContextAccessor)
+                    BankCode = BankCode.ANY, // Hoặc giá trị cụ thể
+                    CreatedDate = DateTime.Now,
+                    Currency = Currency.VND, // Hoặc giá trị cụ thể
+                    Language = DisplayLanguage.Vietnamese // Hoặc giá trị cụ thể
+                };
+
+                // Tạo link thanh toán
+                var paymentUrl = _vnpay.GetPaymentUrl(paymentRequest);
+
+                // Trả về link thanh toán
+                return Ok(new { paymentUrl });
+            }
+            catch (ApiException ex)
+            {
+                return StatusCode(ex.StatusCode, new { error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
         }
 
         [HttpGet("CreatePaymentUrl")]
