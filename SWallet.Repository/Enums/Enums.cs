@@ -68,4 +68,20 @@ namespace SWallet.Repository.Enums
         [Description("Sử dụng khuyến mãi")]
         Use = 2,
     }
+
+    public enum ChallengeType
+    {
+        [Display(Name = "Thường")]
+        [Description("Thách thức thường")]
+        Normal = 1,
+        [Display(Name = "Ngày")]
+        [Description("Thách thức theo ngày")]
+        Daily = 2,
+        [Display(Name = "Tuần")]
+        [Description("Thách thức theo tuần")]
+        Weekly = 3,
+        [Display(Name = "Tháng")]
+        [Description("Thách thức theo tháng")]
+        Monthly = 4,
+    }
 }

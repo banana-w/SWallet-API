@@ -5,8 +5,6 @@ namespace SWallet.Domain.Models;
 
 public partial class StudentChallenge
 {
-    public string Id { get; set; } = null!;
-
     public string ChallengeId { get; set; } = null!;
 
     public string StudentId { get; set; } = null!;
@@ -24,8 +22,6 @@ public partial class StudentChallenge
     public DateTime? DateUpdated { get; set; }
 
     public string Description { get; set; } = null!;
-
-    public bool? State { get; set; }
 
     public bool? Status { get; set; }
 

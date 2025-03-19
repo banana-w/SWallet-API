@@ -89,7 +89,7 @@ public partial class SwalletDbContext : DbContext
     public virtual DbSet<Wallet> Wallets { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    => optionsBuilder.UseSqlServer(GetConnectionString());
+     => optionsBuilder.UseSqlServer(GetConnectionString());
 
     private string GetConnectionString()
     {
@@ -741,20 +741,25 @@ public partial class SwalletDbContext : DbContext
                 .HasColumnName("rate");
             entity.Property(e => e.State).HasColumnName("state");
             entity.Property(e => e.Status).HasColumnName("status");
+            entity.Property(e => e.StudentId)
+                .HasMaxLength(26)
+                .IsUnicode(false)
+                .IsFixedLength()
+                .HasColumnName("student_id");
             entity.Property(e => e.WalletId)
                 .HasMaxLength(26)
                 .IsUnicode(false)
                 .IsFixedLength()
                 .HasColumnName("wallet_id");
 
-            entity.HasOne(d => d.Challenge).WithMany(p => p.ChallengeTransactions)
-                .HasForeignKey(d => d.ChallengeId)
-                .HasConstraintName("FK_tbl_challenge_transaction_tbl_student_challenge_challenge_id");
-
             entity.HasOne(d => d.Wallet).WithMany(p => p.ChallengeTransactions)
                 .HasForeignKey(d => d.WalletId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_tbl_challenge_transaction_tbl_wallet_wallet_id");
+
+            entity.HasOne(d => d.StudentChallenge).WithMany(p => p.ChallengeTransactions)
+                .HasForeignKey(d => new { d.ChallengeId, d.StudentId })
+                .HasConstraintName("FK_challenge_transaction_student_challenge");
         });
 
         modelBuilder.Entity<Invitation>(entity =>
@@ -1433,7 +1438,7 @@ public partial class SwalletDbContext : DbContext
 
         modelBuilder.Entity<StudentChallenge>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK_tbl_student_challenge");
+            entity.HasKey(e => new { e.ChallengeId, e.StudentId });
 
             entity.ToTable("student_challenge");
 
@@ -1441,19 +1446,19 @@ public partial class SwalletDbContext : DbContext
 
             entity.HasIndex(e => e.StudentId, "IX_tbl_student_challenge_student_id");
 
-            entity.Property(e => e.Id)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("id");
-            entity.Property(e => e.Amount)
-                .HasColumnType("decimal(38, 2)")
-                .HasColumnName("amount");
             entity.Property(e => e.ChallengeId)
                 .HasMaxLength(26)
                 .IsUnicode(false)
                 .IsFixedLength()
                 .HasColumnName("challenge_id");
+            entity.Property(e => e.StudentId)
+                .HasMaxLength(26)
+                .IsUnicode(false)
+                .IsFixedLength()
+                .HasColumnName("student_id");
+            entity.Property(e => e.Amount)
+                .HasColumnType("decimal(38, 2)")
+                .HasColumnName("amount");
             entity.Property(e => e.Condition)
                 .HasColumnType("decimal(38, 2)")
                 .HasColumnName("condition");
@@ -1466,13 +1471,7 @@ public partial class SwalletDbContext : DbContext
                 .HasColumnType("text")
                 .HasColumnName("description");
             entity.Property(e => e.IsCompleted).HasColumnName("is_completed");
-            entity.Property(e => e.State).HasColumnName("state");
             entity.Property(e => e.Status).HasColumnName("status");
-            entity.Property(e => e.StudentId)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("student_id");
 
             entity.HasOne(d => d.Challenge).WithMany(p => p.StudentChallenges)
                 .HasForeignKey(d => d.ChallengeId)
