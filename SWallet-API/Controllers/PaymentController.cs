@@ -112,9 +112,12 @@ namespace SWallet_API.Controllers
             }
         }
 
+ 
+
         [HttpGet("IpnAction")]
         public async Task<IActionResult> IpnAction()
         {
+            
             if (Request.QueryString.HasValue)
             {
                 try
@@ -142,12 +145,15 @@ namespace SWallet_API.Controllers
                     }
                     else
                     {
-                        return BadRequest("Thanh toán thất bại"); // Trả về 400 BadRequest
+                        return BadRequest(error: "Thanh toán thất bại"); // Trả về 400 BadRequest
+                       
                     }
                 }
                 catch (Exception ex)
                 {
+                    Console.WriteLine("IpnAction called at: " + DateTime.Now + ex.Message);
                     return BadRequest(ex.Message); // Trả về 400 BadRequest
+
                 }
             }
 
@@ -201,8 +207,9 @@ namespace SWallet_API.Controllers
 
 
         [HttpGet("Callback")]
-        public ActionResult<string> Callback()
+        public async Task<ActionResult<string>> Callback()
         {
+
             if (Request.QueryString.HasValue)
             {
 
