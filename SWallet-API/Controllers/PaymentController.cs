@@ -124,6 +124,7 @@ namespace SWallet_API.Controllers
                     if (paymentResult.IsSuccess)
                     {
                         var orderInfo = paymentResult.PaymentResponse.Description;
+                        Console.WriteLine("OrderInfo: " + orderInfo);
                         var parts = orderInfo.Split('-');
                         var campusId = parts[0];
                         var pointPackageId = parts[1];
