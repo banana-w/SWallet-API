@@ -583,17 +583,17 @@ namespace SWallet.Repository.Services.Implements
             return area;
         }
 
-        public async Task<IPaginate<CampaignResponse>> GetCampaigns(string searchName, int page, int size)
+        public async Task<IPaginate<CampaignResponse>> GetCampaigns(string brandId, string? searchName, int page, int size)
         {
             Expression<Func<Campaign, bool>> filterQuery;
             if (string.IsNullOrEmpty(searchName))
             {
-                filterQuery = p => true;
+                filterQuery = p => p.BrandId == brandId;
             }
             else
             {
-                filterQuery = p => p.CampaignName.Contains(searchName);
-            }
+                filterQuery = p => p.BrandId == brandId && p.CampaignName.Contains(searchName);
+            }         
 
             var areas = await _unitOfWork.GetRepository<Campaign>().GetPagingListAsync(
                 selector: x => new CampaignResponse
