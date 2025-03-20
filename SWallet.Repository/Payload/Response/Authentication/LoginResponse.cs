@@ -11,5 +11,6 @@ namespace SWallet.Repository.Payload.Response.Authentication
         public string? Token { get; set; }
         public string? Role { get; set; }
         public string? AccountId { get; set; }
+        public bool? IsVerify { get; set; }
     }
 }

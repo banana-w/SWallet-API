@@ -80,20 +80,20 @@ namespace SWallet.Repository.Services.Implements
                 .ReverseMap();
 
 
-                cfg.CreateMap<Student, CreateStudentAccount>()
-           .ReverseMap()
-           .ForMember(s => s.Id, opt => opt.MapFrom(src => Ulid.NewUlid()))
-           .ForMember(s => s.TotalIncome, opt => opt.MapFrom(src => 0))
-           .ForMember(s => s.TotalSpending, opt => opt.MapFrom(src => 0))
-           .ForMember(s => s.DateCreated, opt => opt.MapFrom(src => DateTime.Now))
-           .ForMember(s => s.DateUpdated, opt => opt.MapFrom(src => DateTime.Now))
-           .ForMember(s => s.State, opt => opt.MapFrom(src => StudentState.Pending))
-           .ForMember(s => s.Status, opt => opt.MapFrom(src => true));                
+           //     cfg.CreateMap<Student, CreateStudentAccount>()
+           //.ReverseMap()
+           //.ForMember(s => s.Id, opt => opt.MapFrom(src => Ulid.NewUlid()))
+           //.ForMember(s => s.TotalIncome, opt => opt.MapFrom(src => 0))
+           //.ForMember(s => s.TotalSpending, opt => opt.MapFrom(src => 0))
+           //.ForMember(s => s.DateCreated, opt => opt.MapFrom(src => DateTime.Now))
+           //.ForMember(s => s.DateUpdated, opt => opt.MapFrom(src => DateTime.Now))
+           //.ForMember(s => s.State, opt => opt.MapFrom(src => StudentState.Pending))
+           //.ForMember(s => s.Status, opt => opt.MapFrom(src => true));                
                 cfg.CreateMap<Account, AccountRequest>()
             .ReverseMap()
             .ForMember(t => t.Id, opt => opt.MapFrom(src => Ulid.NewUlid()))
             .ForMember(t => t.Password, opt => opt.MapFrom(src => BCryptNet.HashPassword(src.Password))) // HashPassword when create account
-            .ForMember(t => t.IsVerify, opt => opt.MapFrom(src => true))
+            .ForMember(t => t.IsVerify, opt => opt.MapFrom(src => false)) // Verify 1st
             .ForMember(t => t.DateCreated, opt => opt.MapFrom(src => DateTime.Now))
             .ForMember(t => t.DateUpdated, opt => opt.MapFrom(src => DateTime.Now))           
             .ForMember(t => t.Status, opt => opt.MapFrom(src => true));
@@ -155,6 +155,7 @@ namespace SWallet.Repository.Services.Implements
                 }
                 Account ac = mapper.Map<Account>(accountRequest);
                 ac.Role = (int)Role.Store;
+                ac.IsVerify = true;
                 ac.Description = "Store Account";
 
                 await _unitOfWork.GetRepository<Account>().InsertAsync(ac);

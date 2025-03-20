@@ -2,11 +2,7 @@
 using SWallet.Repository.Enums;
 using SWallet.Repository.Payload.Request;
 using SWallet.Repository.Payload.Response.Challenge;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace SWallet.Repository.Services.Interfaces
 {

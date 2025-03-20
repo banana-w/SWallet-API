@@ -89,7 +89,7 @@ public partial class SwalletDbContext : DbContext
     public virtual DbSet<Wallet> Wallets { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-     => optionsBuilder.UseSqlServer(GetConnectionString());
+        => optionsBuilder.UseSqlServer(GetConnectionString());
 
     private string GetConnectionString()
     {
@@ -1002,7 +1002,9 @@ public partial class SwalletDbContext : DbContext
 
         modelBuilder.Entity<PointPackage>(entity =>
         {
-            entity.ToTable("Point_package");
+            entity.HasKey(e => e.Id).HasName("PK_Point_package");
+
+            entity.ToTable("point_package");
 
             entity.Property(e => e.Id)
                 .HasMaxLength(26)
@@ -1465,11 +1467,10 @@ public partial class SwalletDbContext : DbContext
             entity.Property(e => e.Current)
                 .HasColumnType("decimal(38, 2)")
                 .HasColumnName("current");
+            entity.Property(e => e.DateCompleted).HasColumnName("dateCompleted");
             entity.Property(e => e.DateCreated).HasColumnName("date_created");
             entity.Property(e => e.DateUpdated).HasColumnName("date_updated");
-            entity.Property(e => e.Description)
-                .HasColumnType("text")
-                .HasColumnName("description");
+            entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.IsCompleted).HasColumnName("is_completed");
             entity.Property(e => e.Status).HasColumnName("status");
 

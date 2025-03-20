@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using SWallet.Domain.Models;
 using SWallet.Domain.Paginate;
 using SWallet.Repository.Enums;
@@ -60,9 +61,83 @@ namespace SWallet.Repository.Services.Implements
             throw new ApiException("Create challenge fail", 400, "CHALLENGE_FAIL");
         }
 
+        //public async Task<bool> CompleteChallengeAsync(string challengeId, string studentId)
+        //{
+        //    var challenge = await _unitOfWork.GetRepository<Challenge>().SingleOrDefaultAsync(predicate: x => x.Id == challengeId);
+        //    if (challenge == null) return false;
+
+        //    var studentChallenge = await _unitOfWork.GetRepository<StudentChallenge>().SingleOrDefaultAsync(
+        //        predicate: sc => sc.ChallengeId == challengeId && sc.StudentId == studentId);
+
+        //    // Nếu chưa có, tạo mới
+        //    if (studentChallenge == null)
+        //    {
+        //        studentChallenge = new StudentChallenge
+        //        {
+        //            ChallengeId = challengeId,
+        //            StudentId = studentId,
+        //            IsCompleted = false,
+        //            DateCreated = DateTime.Now,
+        //            DateUpdated = DateTime.Now // last reset
+        //        };
+        //        await _unitOfWork.GetRepository<StudentChallenge>().InsertAsync(studentChallenge);
+        //    }
+
+        //    // Xử lý hoàn thành Daily Challenge
+        //    if (challenge.Type == (int)ChallengeType.Daily) // Daily Challenge
+        //    {
+        //        if ((bool)!studentChallenge.IsCompleted)
+        //        {
+        //            studentChallenge.IsCompleted = true;
+        //            studentChallenge.DateUpdated = DateTime.Now;
+        //            //studentChallenge.LastReset = DateTime.Now;
+        //            //await GrantRewardAsync(studentId, challenge.Reward);
+        //        }
+        //    }
+        //    // Xử lý hoàn thành Achievement Challenge
+        //    else if (challenge.Type == (int)ChallengeType.Achievement) // Achievement Challenge
+        //    {
+        //        if (studentChallenge.Current < challenge.MaxMilestone)
+        //        {
+        //            studentChallenge.CurrentMilestone++;
+        //            studentChallenge.DateUpdated = DateTime.Now;
+
+        //            // Kiểm tra hoàn thành milestone cuối
+        //            if (studentChallenge.CurrentMilestone == challenge.MaxMilestone)
+        //            {
+        //                studentChallenge.IsCompleted = true;
+        //                await IncreaseUserLevelAsync(studentId);
+        //            }
+
+        //            await GrantRewardAsync(studentId, challenge.Reward);
+        //        }
+        //    }
+
+        //    _context.StudentChallenges.Update(studentChallenge);
+        //    await _context.SaveChangesAsync();
+        //    return true;
+        //}
+
         public Task<ChallengeResponse> GetChallenge(string id)
         {
-            throw new NotImplementedException();
+            var challenge = _unitOfWork.GetRepository<Challenge>().SingleOrDefaultAsync(
+                selector: x => new ChallengeResponse
+                {
+                    Id = x.Id,
+                    ChallengeName = x.ChallengeName,
+                    Description = x.Description,
+                    Type = x.Type,
+                    Image = x.Image,
+                    DateCreated = x.DateCreated,
+                    DateUpdated = x.DateUpdated,
+                    Status = x.Status
+                },
+                predicate: x => x.Id.Equals(id));
+            if (challenge == null)
+            {
+                throw new ApiException("Challenge not found", 404, "CHALLENGE_NOT_FOUND");
+            }
+            return challenge;
         }
 
         public Task<IPaginate<ChallengeResponse>> GetChallenges(string? search, IEnumerable<ChallengeType> types, int page, int size)

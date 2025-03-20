@@ -91,7 +91,8 @@ namespace SWallet.Repository.Services.Implements
             {
                 Token = _jwtService.GenerateJwtToken(acc),
                 Role = acc.RoleName,
-                AccountId = acc.Id
+                AccountId = acc.Id,
+                IsVerify = acc.IsVerify
             };
         }
 
@@ -127,6 +128,22 @@ namespace SWallet.Repository.Services.Implements
                 {
                     brand.State = true;
                     _unitOfWork.GetRepository<Brand>().UpdateAsync(brand);
+                    return await _unitOfWork.CommitAsync() > 0;
+                }
+            }
+            return false;
+        }
+
+        public async Task<bool> VerifyAccount(string email, string userInput, string accountId)
+        {
+            var account = await _unitOfWork.GetRepository<Account>().SingleOrDefaultAsync(predicate: x => x.Id == accountId);
+            if (account != null)
+            {
+                var result = await redisService.VerifyCodeAsync(email, userInput);
+                if (result)
+                {
+                    account.IsVerify = true;
+                    _unitOfWork.GetRepository<Account>().UpdateAsync(account);
                     return await _unitOfWork.CommitAsync() > 0;
                 }
             }

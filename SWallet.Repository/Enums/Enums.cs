@@ -73,7 +73,7 @@ namespace SWallet.Repository.Enums
     {
         [Display(Name = "Thường")]
         [Description("Thách thức thường")]
-        Normal = 1,
+        Achievement = 1,
         [Display(Name = "Ngày")]
         [Description("Thách thức theo ngày")]
         Daily = 2,
