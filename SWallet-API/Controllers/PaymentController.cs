@@ -9,6 +9,7 @@ using SWallet.Repository.VNPAY;
 using SWallet.Repository.Payload.ExceptionModels;
 using SWallet.Repository.Payload.Request.PointPackage;
 using SWallet.Repository.Services.Interfaces;
+using SWallet.Repository.Services.Implements;
 
 
 namespace SWallet_API.Controllers
@@ -22,13 +23,16 @@ namespace SWallet_API.Controllers
         private readonly VnpayConfig _vnpayConfig;
         private readonly IPointPackageService _pointPackageService;
         private readonly ICampusService _campusService;
+        private readonly IWalletService _walletService;
 
-        public PaymentController(IVnpay vnpay, IOptions<VnpayConfig> vnpayConfig, IPointPackageService pointPackageService, ICampusService campusService)
+
+        public PaymentController(IVnpay vnpay, IOptions<VnpayConfig> vnpayConfig, IPointPackageService pointPackageService, ICampusService campusService, IWalletService walletService)
         {
             _vnpay = vnpay;
             _vnpayConfig = vnpayConfig.Value;
             _pointPackageService = pointPackageService;
             _campusService = campusService;
+            _walletService = walletService;
         }
 
         [HttpPost("purchase-points")]
@@ -49,11 +53,12 @@ namespace SWallet_API.Controllers
                     return BadRequest(new { error = "Campus not found" });
                 }
                 var ipAddress = NetworkHelper.GetIpAddress(HttpContext);
-                // Tạo PaymentRequest
+                var orderInfo = $"{request.CampusId}-{request.PointPackageId}";
+
                 var paymentRequest = new PaymentRequest
                 {
                     PaymentId = DateTime.Now.Ticks,
-                    Description = $"Purchase Point Package {pointPackage.PackageName}",
+                    Description = orderInfo,
                     Money = (double)pointPackage.Price,
                     IpAddress = ipAddress, // Lấy địa chỉ IP (sử dụng helper method hoặc inject IHttpContextAccessor)
                     BankCode = BankCode.ANY, // Hoặc giá trị cụ thể
@@ -108,30 +113,91 @@ namespace SWallet_API.Controllers
         }
 
         [HttpGet("IpnAction")]
-        public IActionResult IpnAction()
+        public async Task<IActionResult> IpnAction()
         {
             if (Request.QueryString.HasValue)
             {
                 try
                 {
                     var paymentResult = _vnpay.GetPaymentResult(Request.Query);
+
                     if (paymentResult.IsSuccess)
                     {
-                        // Thực hiện hành động nếu thanh toán thành công tại đây. Ví dụ: Cập nhật trạng thái đơn hàng trong cơ sở dữ liệu.
-                        return Ok();
-                    }
+                        var orderInfo = paymentResult.PaymentResponse.Description;
+                        var parts = orderInfo.Split('-');
+                        var campusId = parts[0];
+                        var pointPackageId = parts[1];
 
-                    // Thực hiện hành động nếu thanh toán thất bại tại đây. Ví dụ: Hủy đơn hàng.
-                    return BadRequest("Thanh toán thất bại");
+                        // Lấy thông tin gói điểm và Campus (nếu có)
+                        var pointPackage = await _pointPackageService.GetPointPackageById(pointPackageId);
+                        var campus = await _campusService.GetCampusById(campusId);
+
+                        // Cập nhật Wallet (nếu có thông tin)
+                        if (campus != null && pointPackage != null)
+                        {
+                            await _walletService.AddPointsToWallet(campus.Id, (int)pointPackage.Point);
+                        }
+
+                        return Ok(); // Trả về 200 OK
+                    }
+                    else
+                    {
+                        return BadRequest("Thanh toán thất bại"); // Trả về 400 BadRequest
+                    }
                 }
                 catch (Exception ex)
                 {
-                    return BadRequest(ex.Message);
+                    return BadRequest(ex.Message); // Trả về 400 BadRequest
                 }
             }
 
-            return NotFound("Không tìm thấy thông tin thanh toán.");
+            return NotFound("Không tìm thấy thông tin thanh toán."); // Trả về 404 NotFound
         }
+
+
+        //    [HttpGet("Callback")]
+        //    public async Task<ActionResult<string>> Callback()
+        //    {
+        //        if (Request.QueryString.HasValue)
+        //        {
+        //            try
+        //            {
+        //                var paymentResult = _vnpay.GetPaymentResult(Request.Query);
+
+        //                if (paymentResult.IsSuccess)
+        //                {
+
+        //                    var orderInfo = paymentResult.Description;
+        //                    var parts = orderInfo.Split('-');
+        //                    var campusId = parts[0];
+        //                    var pointPackageId = parts[1];
+
+        //                    // Lấy thông tin gói điểm và Campus (nếu có)
+        //                    var pointPackage = await _pointPackageService.GetPointPackageById(pointPackageId);
+        //                    var campus = await _campusService.GetCampusById(campusId);
+        //                    var resultDescription = $"Thanh toán thành công. Đã cộng thêm {pointPackage.Point} vào ví của Campus với ID là: {campus.Id}.";
+        //                    // Cập nhật Wallet (nếu có thông tin)
+        //                    if (campus != null && pointPackage != null)
+        //                    {
+        //                        await _walletService.AddPointsToWallet(campus.Id, (int)pointPackage.Point);
+        //                    }
+
+        //                    return Ok(resultDescription); // Trả về 200 OK
+        //                }
+        //                else
+        //                {
+        //                    return BadRequest("Thanh toán thất bại"); // Trả về 400 BadRequest
+        //                }
+        //            }
+        //            catch (Exception ex)
+        //            {
+        //                return BadRequest(ex.Message); // Trả về 400 BadRequest
+        //            }
+        //        }
+
+        //        return NotFound("Không tìm thấy thông tin thanh toán."); // Trả về 404 NotFound
+        //    }
+        //}
 
 
         [HttpGet("Callback")]
@@ -139,8 +205,10 @@ namespace SWallet_API.Controllers
         {
             if (Request.QueryString.HasValue)
             {
+
                 try
                 {
+
                     var paymentResult = _vnpay.GetPaymentResult(Request.Query);
                     var resultDescription = $"{paymentResult.PaymentResponse.Description}. {paymentResult.TransactionStatus.Description}.";
 
@@ -161,3 +229,9 @@ namespace SWallet_API.Controllers
         }
     }
 }
+
+
+
+
+
+

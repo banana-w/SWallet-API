@@ -17,6 +17,8 @@ namespace SWallet.Repository.Payload.Request.Wallet
 
         public string? BrandId { get; set; }
 
+        public string? CampusId { get; set; }
+
         /// <summary>
         /// Green = 1, Red = 2
         /// </summary>

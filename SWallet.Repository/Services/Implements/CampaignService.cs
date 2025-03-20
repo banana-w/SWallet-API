@@ -10,6 +10,7 @@ using SWallet.Repository.Payload.ExceptionModels;
 using SWallet.Repository.Payload.Request.Campaign;
 using SWallet.Repository.Payload.Request.Voucher;
 using SWallet.Repository.Payload.Response.Campaign;
+using SWallet.Repository.Payload.Response.Store;
 using SWallet.Repository.Payload.Response.Voucher;
 using SWallet.Repository.Services.Interfaces;
 using System;
@@ -642,5 +643,39 @@ namespace SWallet.Repository.Services.Implements
 
             return result;
         }
+
+        //public async Task<IPaginate<CampaignResponse>> GetStoresByCampaignId(string campaignId, int page, int size)
+        //{
+        //    var stores = await _unitOfWork.GetRepository<Store>().GetPagingListAsync(
+        //        selector: x => new StoreResponse
+        //        {
+        //            Id = x.Id,
+        //            AccountId = x.AccountId,
+        //            BrandId = x.BrandId,
+        //            BrandName = x.Brand.BrandName,
+        //            AreaId = x.AreaId,
+        //            AreaName = x.Area.AreaName,
+        //            StoreName = x.StoreName,
+        //            Address = x.Address,
+        //            OpeningHours = x.OpeningHours,
+        //            ClosingHours = x.ClosingHours,
+        //            DateCreated = x.DateCreated,
+        //            DateUpdated = x.DateUpdated,
+        //            Description = x.Description,
+        //            State = x.State,
+        //            Status = x.Account.Status,
+        //            UserName = x.Account.UserName,
+        //            Email = x.Account.Email,
+        //            Phone = x.Account.Phone,
+        //            Avatar = x.Account.Avatar,
+        //            AvatarFileName = x.Account.FileName,
+        //        },
+        //        predicate: filterQuery,
+        //        include: x => x.Include(a => a.Account).Include(b => b.Brand).Include(c => c.Area),
+        //        page: page,
+        //        size: size);
+
+        //    return stores;
+        //}
     }
 }
