@@ -65,5 +65,17 @@ namespace SWallet_API.Controllers
             return Ok(result);
         }
 
+        [HttpPost("verify-account")]
+        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+        public async Task<IActionResult> VerifyAccount([FromBody] VerifyAccountRequest verifyAccountRequest)
+        {
+            var result = await _authService.VerifyAccount(verifyAccountRequest.Email, verifyAccountRequest.Code, verifyAccountRequest.Id);
+            if (!result)
+            {
+                throw new ApiException("Invalid account", StatusCodes.Status400BadRequest, "INVALID_ACCOUNT");
+            }
+            return Ok(result);
+        }
+
     }
 }
