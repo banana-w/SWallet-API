@@ -147,6 +147,7 @@ namespace SWallet_API.Controllers
                 }
                 catch (Exception ex)
                 {
+                Console.WriteLine("IpnAction called at: " + DateTime.Now + ex.Message);
                     return BadRequest(ex.Message); // Trả về 400 BadRequest
                 }
             }
