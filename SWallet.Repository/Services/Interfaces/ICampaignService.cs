@@ -18,6 +18,8 @@ namespace SWallet.Repository.Services.Interfaces
         Task<CampaignResponse> CreateCampaign(CreateCampaignModel campaign, List<CreateCampaignDetailModel> campaignDetails);
         Task<CampaignResponse> UpdateCampaign(string id, UpdateCampaignModel campaign);
 
+        //Task<IPaginate<CampaignResponse>> GetStoresByCampaignId(string campaignId, string searchName, int page, int size);
+
         Task<IEnumerable<CampaignDetailResponse>> GetAllCampaignDetails();
         void Delete(string id);
 
