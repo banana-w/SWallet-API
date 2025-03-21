@@ -13,6 +13,7 @@ namespace SWallet.Repository.Services.Interfaces
 {
     public interface ICampaignService
     {
+        Task<IPaginate<CampaignResponse>> GetCampaignsInBrand(string? searchName, int page, int size);
         Task<IPaginate<CampaignResponse>> GetCampaigns(string? searchName, int page, int size);
         Task<CampaignResponse> GetCampaignById(string id);
         Task<CampaignResponse> CreateCampaign(CreateCampaignModel campaign, List<CreateCampaignDetailModel> campaignDetails);
