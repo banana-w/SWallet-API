@@ -41,7 +41,7 @@ namespace SWallet.Repository.Services.Implements
                        issuer: issuer,
                        audience: audience,
                        claims: claims,
-                       expires: DateTime.Now.AddMinutes(30),
+                       expires: DateTime.Now.AddMinutes(120),
                        signingCredentials: credentials);
 
             var token = new JwtSecurityTokenHandler().WriteToken(preparedToken);

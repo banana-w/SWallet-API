@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using SWallet.Domain.Models;
 using SWallet.Domain.Paginate;
@@ -70,6 +71,38 @@ namespace SWallet.Repository.Services.Implements
         public Task<bool> DeleteVoucher(string id)
         {
             throw new NotImplementedException();
+        }
+
+        public async Task<IEnumerable<VoucherResponse>> GetVoucherByCampaignId(string campaignId)
+        {
+            var vouchers = await _unitOfWork.GetRepository<Voucher>().GetListAsync(
+                selector: x => new VoucherResponse
+                {
+                    Id = x.Id,
+                    BrandId = x.BrandId,
+                    BrandName = x.Brand.BrandName,
+                    TypeId = x.TypeId,
+                    TypeName = x.Type.TypeName,
+                    VoucherName = x.VoucherName,
+                    Price = x.Price,
+                    Rate = x.Rate,
+                    Condition = x.Condition,
+                    Image = x.Image,
+                    ImageName = x.ImageName,
+                    File = x.File,
+                    FileName = x.FileName,
+                    DateCreated = x.DateCreated,
+                    DateUpdated = x.DateUpdated,
+                    Description = x.Description,
+                    State = x.State,
+                    Status = x.Status,
+                    NumberOfItemsAvailable = null,
+                    //x.VoucherItems.Where(i => !(bool)i.IsLocked && !(bool)i.IsBought && !(bool)i.IsUsed && i.CampaignDetailId.IsNullOrEmpty()).Count(),
+                    NumberOfItems = x.VoucherItems.Count()
+                },
+                predicate: x => x.CampaignDetails.Any(c => c.CampaignId == campaignId),
+                include: x => x.Include(x => x.CampaignDetails));
+            return vouchers;
         }
 
         public async Task<VoucherResponse> GetVoucherById(string id)
