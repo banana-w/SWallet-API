@@ -5,6 +5,6 @@ namespace SWallet.Repository.Services.Interfaces
 {
     public interface IJwtService
     {
-        string GenerateJwtToken(AccountResponse account);
+        string GenerateJwtToken(AccountResponse account, Tuple<string, string> guidClaim);
     }
 }

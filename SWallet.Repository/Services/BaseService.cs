@@ -45,10 +45,11 @@ namespace SWallet.Repository.Services
         //    return storeAccount.Select(x => x.AccountId).Contains(account.Id);
         //}
 
-        //protected string GetBrandIdFromJwt()
-        //{
-        //    return _httpContextAccessor?.HttpContext?.User?.FindFirstValue("brandId");
-        //}
+        protected string GetBrandIdFromJwt()
+        {
+            var id = _httpContextAccessor?.HttpContext?.User?.FindFirst("brandId");
+            return id?.Value ?? string.Empty;
+        }
         //protected string GetOrganizationIdFromJwt()
         //{
         //    return _httpContextAccessor?.HttpContext?.User?.FindFirstValue("organizationId");

@@ -19,6 +19,7 @@ using System.Text;
 using System.Threading.Tasks;
 using static Org.BouncyCastle.Asn1.Cmp.Challenge;
 using BCryptNet = BCrypt.Net.BCrypt;
+using Microsoft.AspNetCore.Http;
 
 namespace SWallet.Repository.Services.Implements
 {
@@ -27,7 +28,7 @@ namespace SWallet.Repository.Services.Implements
         private readonly Mapper mapper;
         private readonly ICloudinaryService _cloudinaryService;
 
-        public StoreService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<StoreService> logger, ICloudinaryService cloudinaryService) : base(unitOfWork, logger)
+        public StoreService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<StoreService> logger, ICloudinaryService cloudinaryService, IHttpContextAccessor httpContextAccessor) : base(unitOfWork, logger, httpContextAccessor)
         {
             _cloudinaryService = cloudinaryService;
             var config = new MapperConfiguration(cfg
@@ -167,8 +168,9 @@ namespace SWallet.Repository.Services.Implements
         }
 
 
-        public async Task<IPaginate<StoreResponse>> GetStoreByBrandId(string brandId, string searchName, int page, int size)
+        public async Task<IPaginate<StoreResponse>> GetStoreByBrandId(string searchName, int page, int size)
         {
+            var brandId = GetBrandIdFromJwt();
             Expression<Func<Store, bool>> filterQuery;
 
             if (string.IsNullOrEmpty(searchName))

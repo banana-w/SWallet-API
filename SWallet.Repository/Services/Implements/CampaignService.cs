@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using CloudinaryDotNet.Core;
 using Microsoft.AspNetCore.Builder.Extensions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SWallet.Domain.Models;
@@ -34,7 +35,7 @@ namespace SWallet.Repository.Services.Implements
             public int? ToIndex { get; set; }
         }
 
-        public CampaignService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<CampaignService> logger, ICloudinaryService cloudinaryService, IVoucherItemService voucherItemService) : base(unitOfWork, logger)
+        public CampaignService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<CampaignService> logger, ICloudinaryService cloudinaryService, IVoucherItemService voucherItemService, IHttpContextAccessor httpContextAccessor) : base(unitOfWork, logger, httpContextAccessor)
         {
             _cloudinaryService = cloudinaryService;
             _voucherItemService = voucherItemService;
@@ -583,8 +584,9 @@ namespace SWallet.Repository.Services.Implements
             return area;
         }
 
-        public async Task<IPaginate<CampaignResponse>> GetCampaigns(string brandId, string? searchName, int page, int size)
+        public async Task<IPaginate<CampaignResponse>> GetCampaigns(string? searchName, int page, int size)
         {
+            var brandId = GetBrandIdFromJwt();
             Expression<Func<Campaign, bool>> filterQuery;
             if (string.IsNullOrEmpty(searchName))
             {
@@ -595,7 +597,7 @@ namespace SWallet.Repository.Services.Implements
                 filterQuery = p => p.BrandId == brandId && p.CampaignName.Contains(searchName);
             }         
 
-            var areas = await _unitOfWork.GetRepository<Campaign>().GetPagingListAsync(
+            var campaigns = await _unitOfWork.GetRepository<Campaign>().GetPagingListAsync(
                 selector: x => new CampaignResponse
                 {
                     Id = x.Id,
@@ -623,7 +625,7 @@ namespace SWallet.Repository.Services.Implements
                 page: page,
                 include: query => query.Include(x => x.Brand).Include(x => x.Type),
                 size: size);
-            return areas;
+            return campaigns;
         }
 
 
