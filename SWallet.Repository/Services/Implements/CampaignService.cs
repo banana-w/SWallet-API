@@ -644,38 +644,38 @@ namespace SWallet.Repository.Services.Implements
             return result;
         }
 
-        //public async Task<IPaginate<CampaignResponse>> GetStoresByCampaignId(string campaignId, int page, int size)
-        //{
-        //    var stores = await _unitOfWork.GetRepository<Store>().GetPagingListAsync(
-        //        selector: x => new StoreResponse
-        //        {
-        //            Id = x.Id,
-        //            AccountId = x.AccountId,
-        //            BrandId = x.BrandId,
-        //            BrandName = x.Brand.BrandName,
-        //            AreaId = x.AreaId,
-        //            AreaName = x.Area.AreaName,
-        //            StoreName = x.StoreName,
-        //            Address = x.Address,
-        //            OpeningHours = x.OpeningHours,
-        //            ClosingHours = x.ClosingHours,
-        //            DateCreated = x.DateCreated,
-        //            DateUpdated = x.DateUpdated,
-        //            Description = x.Description,
-        //            State = x.State,
-        //            Status = x.Account.Status,
-        //            UserName = x.Account.UserName,
-        //            Email = x.Account.Email,
-        //            Phone = x.Account.Phone,
-        //            Avatar = x.Account.Avatar,
-        //            AvatarFileName = x.Account.FileName,
-        //        },
-        //        predicate: filterQuery,
-        //        include: x => x.Include(a => a.Account).Include(b => b.Brand).Include(c => c.Area),
-        //        page: page,
-        //        size: size);
+        public async Task<IPaginate<CampaignStore>> GetStoresByCampaignId(string campaignId, string searchName, int page, int size)
+        {
+            Expression<Func<CampaignStore, bool>> filterQuery;
 
-        //    return stores;
-        //}
+            if (string.IsNullOrEmpty(searchName))
+            {
+                filterQuery = p => p.CampaignId == campaignId;
+            }
+            else
+            {
+                filterQuery = p => p.CampaignId == campaignId && p.CampaignId.Contains(searchName);
+            }
+
+            var stores = await _unitOfWork.GetRepository<CampaignStore>().GetPagingListAsync(
+                selector: x => new CampaignStore
+                {
+                    Id = x.Id,
+                    CampaignId = x.CampaignId,
+                    StoreId = x.StoreId,
+                    Description = x.Description,
+                    State = x.State,
+                    Status = x.Status,
+                    Store = x.Store,
+                    Campaign = x.Campaign
+
+                },
+                predicate: filterQuery,
+                include: x => x.Include(a => a.Store).Include(b => b.Campaign),
+                page: page,
+                size: size);
+
+            return stores;
+        }
     }
 }
