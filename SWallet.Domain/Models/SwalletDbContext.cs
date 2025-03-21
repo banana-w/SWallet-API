@@ -42,6 +42,8 @@ public partial class SwalletDbContext : DbContext
 
     public virtual DbSet<Campus> Campuses { get; set; }
 
+    public virtual DbSet<CampusLecturer> CampusLecturers { get; set; }
+
     public virtual DbSet<Category> Categories { get; set; }
 
     public virtual DbSet<Challenge> Challenges { get; set; }
@@ -129,7 +131,7 @@ public partial class SwalletDbContext : DbContext
                 .HasMaxLength(255)
                 .HasColumnName("password");
             entity.Property(e => e.Phone)
-                .HasMaxLength(20)
+                .HasMaxLength(10)
                 .IsUnicode(false)
                 .IsFixedLength()
                 .HasColumnName("phone");
@@ -508,7 +510,6 @@ public partial class SwalletDbContext : DbContext
                 .IsFixedLength()
                 .HasColumnName("campaign_id");
             entity.Property(e => e.Description).HasColumnName("description");
-            entity.Property(e => e.State).HasColumnName("state");
             entity.Property(e => e.Status).HasColumnName("status");
             entity.Property(e => e.StoreId)
                 .HasMaxLength(26)
@@ -646,6 +647,36 @@ public partial class SwalletDbContext : DbContext
             entity.HasOne(d => d.Area).WithMany(p => p.Campuses)
                 .HasForeignKey(d => d.AreaId)
                 .HasConstraintName("FK_tbl_campus_tbl_area_area_id");
+        });
+
+        modelBuilder.Entity<CampusLecturer>(entity =>
+        {
+            entity.ToTable("campus_lecturer");
+
+            entity.Property(e => e.Id)
+                .HasMaxLength(26)
+                .IsUnicode(false)
+                .IsFixedLength()
+                .HasColumnName("id");
+            entity.Property(e => e.CampusId)
+                .HasMaxLength(26)
+                .IsUnicode(false)
+                .IsFixedLength()
+                .HasColumnName("campus_id");
+            entity.Property(e => e.LecturerId)
+                .HasMaxLength(26)
+                .IsUnicode(false)
+                .IsFixedLength()
+                .HasColumnName("lecturer_id");
+            entity.Property(e => e.Status).HasColumnName("status");
+
+            entity.HasOne(d => d.Campus).WithMany(p => p.CampusLecturers)
+                .HasForeignKey(d => d.CampusId)
+                .HasConstraintName("FK_campus_lecturer_campus");
+
+            entity.HasOne(d => d.Lecturer).WithMany(p => p.CampusLecturers)
+                .HasForeignKey(d => d.LecturerId)
+                .HasConstraintName("FK_campus_lecturer_lecturer");
         });
 
         modelBuilder.Entity<Category>(entity =>
@@ -1503,14 +1534,10 @@ public partial class SwalletDbContext : DbContext
                 .IsUnicode(false)
                 .IsFixedLength()
                 .HasColumnName("brand_id");
-            entity.Property(e => e.Condition)
-                .HasColumnType("text")
-                .HasColumnName("condition");
+            entity.Property(e => e.Condition).HasColumnName("condition");
             entity.Property(e => e.DateCreated).HasColumnName("date_created");
             entity.Property(e => e.DateUpdated).HasColumnName("date_updated");
-            entity.Property(e => e.Description)
-                .HasColumnType("text")
-                .HasColumnName("description");
+            entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.File)
                 .HasColumnType("text")
                 .HasColumnName("file");
@@ -1611,9 +1638,7 @@ public partial class SwalletDbContext : DbContext
                 .HasColumnName("id");
             entity.Property(e => e.DateCreated).HasColumnName("date_created");
             entity.Property(e => e.DateUpdated).HasColumnName("date_updated");
-            entity.Property(e => e.Description)
-                .HasColumnType("text")
-                .HasColumnName("description");
+            entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.FileName)
                 .HasColumnType("text")
                 .HasColumnName("file_name");

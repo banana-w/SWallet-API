@@ -194,7 +194,6 @@ namespace SWallet.Repository.Services.Implements
                         CampaignId = newCampaign.Id,
                         StoreId = storeId,
                         Description = "Campaign Store",
-                        State = true,
                         Status = true
                     };
 
@@ -666,7 +665,6 @@ namespace SWallet.Repository.Services.Implements
                     CampaignId = x.CampaignId,
                     StoreId = x.StoreId,
                     Description = x.Description,
-                    State = x.State,
                     Status = x.Status,
                     Store = x.Store,
                     Campaign = x.Campaign

@@ -41,6 +41,8 @@ public partial class Campus
 
     public virtual ICollection<CampaignCampus> CampaignCampuses { get; set; } = new List<CampaignCampus>();
 
+    public virtual ICollection<CampusLecturer> CampusLecturers { get; set; } = new List<CampusLecturer>();
+
     public virtual ICollection<Student> Students { get; set; } = new List<Student>();
 
     public virtual ICollection<Wallet> Wallets { get; set; } = new List<Wallet>();
