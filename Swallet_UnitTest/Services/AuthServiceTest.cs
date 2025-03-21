@@ -48,7 +48,7 @@ namespace Swallet_UnitTest.Services
                 .ReturnsAsync(account);
             _mapperMock.Setup(m => m.Map<AccountResponse>(account)).Returns(accountResponse);
 
-            _jwtServiceMock.Setup(j => j.GenerateJwtToken(It.IsAny<AccountResponse>())).Returns("token");
+            _jwtServiceMock.Setup(j => j.GenerateJwtToken(It.IsAny<AccountResponse>(), It.IsAny<Tuple<string, string>>())).Returns("token");
 
             // Act
             var result = await _authService.Login(loginRequest);
