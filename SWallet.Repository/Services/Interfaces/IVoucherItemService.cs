@@ -1,5 +1,6 @@
 ﻿using SWallet.Domain.Models;
 using SWallet.Repository.Payload.Request.Voucher;
+using SWallet.Repository.Payload.Response.Voucher;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,5 +14,6 @@ namespace SWallet.Repository.Services.Interfaces
         Task<bool> GenerateVoucherItemsAsync(VoucherItemRequest voucherItemRequest);
         Task<bool> RedeemVoucherAsync(string voucherId);
         Task<VoucherItem> GetVoucherItemByIdAsync(string voucherId);
+        Task<IEnumerable<VoucherItemResponse>> GetVoucherItemsByCampaignDetailIdAsync(IEnumerable<string> campaignDetailId);
     }
 }

@@ -53,6 +53,18 @@ namespace SWallet_API.Controllers
             throw new ApiException("Voucher not found.", StatusCodes.Status404NotFound, "VOUCHER_NOT_FOUND");
         }
 
+        [HttpGet("campaign-detail/{campaignId}")]
+        [ProducesResponseType(typeof(IEnumerable<VoucherResponse>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetVoucherByCampaignId(string campaignId)
+        {
+            var result = await _voucherService.GetVoucherByCampaignId(campaignId);
+            if (result != null)
+            {
+                return Ok(result);
+            }
+            throw new ApiException("Voucher not found.", StatusCodes.Status404NotFound, "VOUCHER_NOT_FOUND");
+        }
+
         [HttpPut("{id}")]
         [ProducesDefaultResponseType(typeof(bool))]
         public async Task<IActionResult> UpdateVoucher(string id, [FromForm] VoucherRequest request)
@@ -60,6 +72,8 @@ namespace SWallet_API.Controllers
             var result = await _voucherService.UpdateVoucher(id, request);
             return Ok(result);
         }
+
+    
 
     }
 }
