@@ -19,6 +19,7 @@ using System.Text;
 using System.Threading.Tasks;
 using static Org.BouncyCastle.Asn1.Cmp.Challenge;
 using BCryptNet = BCrypt.Net.BCrypt;
+using Microsoft.AspNetCore.Http;
 
 namespace SWallet.Repository.Services.Implements
 {
@@ -27,7 +28,7 @@ namespace SWallet.Repository.Services.Implements
         private readonly Mapper mapper;
         private readonly ICloudinaryService _cloudinaryService;
 
-        public StoreService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<StoreService> logger, ICloudinaryService cloudinaryService) : base(unitOfWork, logger)
+        public StoreService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<StoreService> logger, ICloudinaryService cloudinaryService, IHttpContextAccessor httpContextAccessor) : base(unitOfWork, logger, httpContextAccessor)
         {
             _cloudinaryService = cloudinaryService;
             var config = new MapperConfiguration(cfg
@@ -167,8 +168,9 @@ namespace SWallet.Repository.Services.Implements
         }
 
 
-        public async Task<IPaginate<StoreResponse>> GetStoreByBrandId(string brandId, string searchName, int page, int size)
+        public async Task<IPaginate<StoreResponse>> GetStoreByBrandId(string searchName, int page, int size)
         {
+            var brandId = GetBrandIdFromJwt();
             Expression<Func<Store, bool>> filterQuery;
 
             if (string.IsNullOrEmpty(searchName))
@@ -218,13 +220,25 @@ namespace SWallet.Repository.Services.Implements
                selector: x => new StoreResponse
                {
                    Id = x.Id,
+                   AccountId = x.AccountId,
                    BrandId = x.BrandId,
                    BrandName = x.Brand.BrandName,
                    AreaId = x.AreaId,
                    AreaName = x.Area.AreaName,
-                   AccountId = x.AccountId,
-                   StoreName = x.StoreName
-   
+                   StoreName = x.StoreName,
+                   Address = x.Address,
+                   OpeningHours = x.OpeningHours,
+                   ClosingHours = x.ClosingHours,
+                   DateCreated = x.DateCreated,
+                   DateUpdated = x.DateUpdated,
+                   Description = x.Description,
+                   State = x.State,
+                   Status = x.Account.Status,
+                   UserName = x.Account.UserName,
+                   Email = x.Account.Email,
+                   Phone = x.Account.Phone,
+                   Avatar = x.Account.Avatar,
+                   AvatarFileName = x.Account.FileName,
                },
                predicate: x => x.Id == id);
             return area;

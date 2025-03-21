@@ -23,7 +23,7 @@ namespace SWallet.Repository.Services.Implements
             _configuration = configuration;
         }
 
-        public string GenerateJwtToken(AccountResponse account)
+        public string GenerateJwtToken(AccountResponse account, Tuple<string, string> guidClaim)
         {
             var secrectKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
             var credentials = new SigningCredentials(secrectKey, SecurityAlgorithms.HmacSha256Signature);
@@ -35,11 +35,13 @@ namespace SWallet.Repository.Services.Implements
                     new Claim(ClaimTypes.NameIdentifier, account.Id.ToString())
                 };
 
+            if (guidClaim != null) claims.Add(new Claim(guidClaim.Item1, guidClaim.Item2.ToString()));
+
             var preparedToken = new JwtSecurityToken(
                        issuer: issuer,
                        audience: audience,
                        claims: claims,
-                       expires: DateTime.Now.AddMinutes(30),
+                       expires: DateTime.Now.AddMinutes(120),
                        signingCredentials: credentials);
 
             var token = new JwtSecurityTokenHandler().WriteToken(preparedToken);

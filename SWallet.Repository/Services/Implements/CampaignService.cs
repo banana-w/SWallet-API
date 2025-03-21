@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using CloudinaryDotNet.Core;
 using Microsoft.AspNetCore.Builder.Extensions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SWallet.Domain.Models;
@@ -35,7 +36,7 @@ namespace SWallet.Repository.Services.Implements
             public int? ToIndex { get; set; }
         }
 
-        public CampaignService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<CampaignService> logger, ICloudinaryService cloudinaryService, IVoucherItemService voucherItemService) : base(unitOfWork, logger)
+        public CampaignService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<CampaignService> logger, ICloudinaryService cloudinaryService, IVoucherItemService voucherItemService, IHttpContextAccessor httpContextAccessor) : base(unitOfWork, logger, httpContextAccessor)
         {
             _cloudinaryService = cloudinaryService;
             _voucherItemService = voucherItemService;
@@ -584,8 +585,9 @@ namespace SWallet.Repository.Services.Implements
             return area;
         }
 
-        public async Task<IPaginate<CampaignResponse>> GetCampaigns(string brandId, string? searchName, int page, int size)
+        public async Task<IPaginate<CampaignResponse>> GetCampaignsInBrand(string? searchName, int page, int size)
         {
+            var brandId = GetBrandIdFromJwt();
             Expression<Func<Campaign, bool>> filterQuery;
             if (string.IsNullOrEmpty(searchName))
             {
@@ -596,7 +598,7 @@ namespace SWallet.Repository.Services.Implements
                 filterQuery = p => p.BrandId == brandId && p.CampaignName.Contains(searchName);
             }         
 
-            var areas = await _unitOfWork.GetRepository<Campaign>().GetPagingListAsync(
+            var campaigns = await _unitOfWork.GetRepository<Campaign>().GetPagingListAsync(
                 selector: x => new CampaignResponse
                 {
                     Id = x.Id,
@@ -624,7 +626,7 @@ namespace SWallet.Repository.Services.Implements
                 page: page,
                 include: query => query.Include(x => x.Brand).Include(x => x.Type),
                 size: size);
-            return areas;
+            return campaigns;
         }
 
 
@@ -677,5 +679,83 @@ namespace SWallet.Repository.Services.Implements
 
             return stores;
         }
+
+        public async Task<IPaginate<CampaignResponse>> GetCampaigns(string? searchName, int page, int size)
+        {
+            Expression<Func<Campaign, bool>> filterQuery;
+            if (string.IsNullOrEmpty(searchName))
+            {
+                filterQuery = p => true;
+            }
+            else
+            {
+                filterQuery = p => p.CampaignName.Contains(searchName);
+            }
+
+            var campaigns = await _unitOfWork.GetRepository<Campaign>().GetPagingListAsync(
+                selector: x => new CampaignResponse
+                {
+                    Id = x.Id,
+                    BrandId = x.BrandId,
+                    BrandName = x.Brand.BrandName,
+                    BrandAcronym = x.Brand.Acronym,
+                    TypeId = x.TypeId,
+                    TypeName = x.Type.TypeName,
+                    CampaignName = x.CampaignName,
+                    Image = x.Image,
+                    ImageName = x.ImageName,
+                    Condition = x.Condition,
+                    Link = x.Link,
+                    StartOn = x.StartOn,
+                    EndOn = x.EndOn,
+                    Duration = x.Duration,
+                    TotalIncome = x.TotalIncome,
+                    TotalSpending = x.TotalSpending,
+                    DateCreated = x.DateCreated,
+                    DateUpdated = x.DateUpdated,
+                    Description = x.Description,
+                    Status = x.Status
+                },
+                predicate: filterQuery,
+                page: page,
+                include: query => query.Include(x => x.Brand).Include(x => x.Type),
+                size: size);
+            return campaigns;
+        }
+
+        //public async Task<IPaginate<CampaignResponse>> GetStoresByCampaignId(string campaignId, int page, int size)
+        //{
+        //    var stores = await _unitOfWork.GetRepository<Store>().GetPagingListAsync(
+        //        selector: x => new StoreResponse
+        //        {
+        //            Id = x.Id,
+        //            AccountId = x.AccountId,
+        //            BrandId = x.BrandId,
+        //            BrandName = x.Brand.BrandName,
+        //            AreaId = x.AreaId,
+        //            AreaName = x.Area.AreaName,
+        //            StoreName = x.StoreName,
+        //            Address = x.Address,
+        //            OpeningHours = x.OpeningHours,
+        //            ClosingHours = x.ClosingHours,
+        //            DateCreated = x.DateCreated,
+        //            DateUpdated = x.DateUpdated,
+        //            Description = x.Description,
+        //            State = x.State,
+        //            Status = x.Account.Status,
+        //            UserName = x.Account.UserName,
+        //            Email = x.Account.Email,
+        //            Phone = x.Account.Phone,
+        //            Avatar = x.Account.Avatar,
+        //            AvatarFileName = x.Account.FileName,
+        //        },
+        //        predicate: filterQuery,
+        //        include: x => x.Include(a => a.Account).Include(b => b.Brand).Include(c => c.Area),
+        //        page: page,
+        //        size: size);
+
+        //    return stores;
+        //}
+
     }
 }

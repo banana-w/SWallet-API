@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SWallet.Domain.Models;
 using SWallet.Repository.Enums;
@@ -9,6 +10,7 @@ using SWallet.Repository.Payload.Response.Account;
 using SWallet.Repository.Payload.Response.Authentication;
 using SWallet.Repository.Services.Interfaces;
 using SWallet.Repository.Utils;
+using System.Diagnostics;
 using BCryptNet = BCrypt.Net.BCrypt;
 
 
@@ -81,15 +83,29 @@ namespace SWallet.Repository.Services.Implements
 
         public async Task<LoginResponse> Login(LoginRequest loginRequest)
         {
-            Account account = await _unitOfWork.GetRepository<Account>().SingleOrDefaultAsync(predicate: x => x.UserName == loginRequest.UserName);
+            Account account = await _unitOfWork.GetRepository<Account>().SingleOrDefaultAsync(
+                predicate: x => x.UserName == loginRequest.UserName,
+                include: x => x.Include(x => x.Brands)
+                                .Include(x => x.Students));
+
             if (account == null || !BCryptNet.Verify(loginRequest.Password, account.Password))
             {
                 return null;
             }
             var acc = mapper.Map<AccountResponse>(account);
+            Tuple<string, string> guidClaim = null;
+            switch (account.Role)
+            {              
+                case (int)Role.Brand:
+                    guidClaim = new Tuple<string, string>("brandId", account.Brands?.FirstOrDefault()?.Id);
+                    break;
+                case (int)Role.Student:
+                    guidClaim = new Tuple<string, string>("studentId", account.Students?.FirstOrDefault()?.Id);
+                    break;
+            }
             return new LoginResponse
             {
-                Token = _jwtService.GenerateJwtToken(acc),
+                Token = _jwtService.GenerateJwtToken(acc, guidClaim),
                 Role = acc.RoleName,
                 AccountId = acc.Id,
                 IsVerify = acc.IsVerify

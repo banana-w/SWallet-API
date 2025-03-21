@@ -61,12 +61,12 @@ namespace SWallet_API.Controllers
             }
         }
 
-        [HttpGet("getStoreByBrandId/{brandId}")]
-        public async Task<ActionResult<IPaginate<StoreResponse>>> GetAllStoresByBrandId(string brandId, string searchName = "", int page = 1, int size = 10)
+        [HttpGet("brand")]
+        public async Task<ActionResult<IPaginate<StoreResponse>>> GetAllStoresByBrandId(string searchName = "", int page = 1, int size = 10)
         {
             try
             {
-                var result = await _storeService.GetStoreByBrandId(brandId, searchName, page, size);
+                var result = await _storeService.GetStoreByBrandId(searchName, page, size);
                 return Ok(result);
             }
             catch (Exception ex)

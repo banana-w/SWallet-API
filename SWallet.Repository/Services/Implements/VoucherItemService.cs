@@ -4,6 +4,7 @@ using SWallet.Domain.Models;
 using SWallet.Repository.Interfaces;
 using SWallet.Repository.Payload.ExceptionModels;
 using SWallet.Repository.Payload.Request.Voucher;
+using SWallet.Repository.Payload.Response.Voucher;
 using SWallet.Repository.Services.Interfaces;
 
 namespace SWallet.Repository.Services.Implements
@@ -49,6 +50,29 @@ namespace SWallet.Repository.Services.Implements
         public Task<VoucherItem> GetVoucherItemByIdAsync(string voucherId)
         {
             var result = _unitOfWork.GetRepository<VoucherItem>().SingleOrDefaultAsync(predicate: x => x.VoucherId.Equals(voucherId));
+            return result;
+        }
+
+        public async Task<IEnumerable<VoucherItemResponse>> GetVoucherItemsByCampaignDetailIdAsync(IEnumerable<string> campaignDetailIds)
+        {
+               var result = await _unitOfWork.GetRepository<VoucherItem>().GetListAsync(
+                    selector: x => new VoucherItemResponse
+                    {
+                        Id = x.Id,
+                        VoucherId = x.VoucherId,
+                        CampaignDetailId = x.CampaignDetailId,
+                        VoucherCode = x.VoucherCode,
+                        Index = x.Index,
+                        IsLocked = x.IsLocked,
+                        IsBought = x.IsBought,
+                        IsUsed = x.IsUsed,
+                        ValidOn = x.ValidOn,
+                        ExpireOn = x.ExpireOn,
+                        DateCreated = x.DateCreated,
+                        DateIssued = x.DateIssued,
+                        Status = x.Status,        
+                    },
+                     predicate: x => campaignDetailIds.Contains(x.CampaignDetailId));
             return result;
         }
 

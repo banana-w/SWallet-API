@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SWallet.Repository.Payload.Request.Voucher;
+using SWallet.Repository.Payload.Response.Voucher;
 using SWallet.Repository.Services.Interfaces;
 
 namespace SWallet_API.Controllers
@@ -30,6 +31,14 @@ namespace SWallet_API.Controllers
         public async Task<IActionResult> GenerateVoucherItems([FromBody] VoucherItemRequest voucherItemRequest)
         {
             var result = await _voucherItemService.GenerateVoucherItemsAsync(voucherItemRequest);
+            return Ok(result);
+        }
+
+        [HttpGet]
+        [ProducesResponseType(typeof(IEnumerable<VoucherItemResponse>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetVoucherItems([FromQuery] IEnumerable<string> campaignDetailId)
+        {
+            var result = await _voucherItemService.GetVoucherItemsByCampaignDetailIdAsync(campaignDetailId);
             return Ok(result);
         }
 

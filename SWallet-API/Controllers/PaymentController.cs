@@ -127,10 +127,6 @@ namespace SWallet_API.Controllers
                     if (paymentResult.IsSuccess)
                     {
                         var orderInfo = paymentResult.Description;
-                        Console.WriteLine("OrderInfo: " + orderInfo);
-
-
-
                         var parts = orderInfo.Split('-');
                         var campusId = parts[0];
                         var pointPackageId = parts[1];
@@ -155,7 +151,6 @@ namespace SWallet_API.Controllers
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("IpnAction called at: " + DateTime.Now + ex.Message);
                     return BadRequest(ex.Message); // Trả về 400 BadRequest
 
                 }
