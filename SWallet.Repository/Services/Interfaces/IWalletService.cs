@@ -14,6 +14,7 @@ namespace SWallet.Repository.Services.Interfaces
         Task<WalletResponse> UpdateWallet(string id, decimal balance);
         Task<WalletResponse> GetWalletByStudentId(string id, int type);
         Task<WalletResponse> GetWalletByBrandId(string id);
+        Task AddPointsToWallet(string campusId, int points);
 
 
     }

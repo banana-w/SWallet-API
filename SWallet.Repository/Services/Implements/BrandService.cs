@@ -53,6 +53,7 @@ namespace SWallet.Repository.Services.Implements
                     throw new ApiException("Username already exists", 400, "BAD_REQUEST");
                 }
             var imageUri = string.Empty;
+            
             if (brand.CoverPhoto != null && brand.CoverPhoto.Length > 0)
             {
                 var uploadResult = await _cloudinaryService.UploadImageAsync(brand.CoverPhoto);

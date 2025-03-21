@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using SWallet.Domain.Models;
 using SWallet.Repository.Interfaces;
 using SWallet.Repository.Payload.ExceptionModels;
@@ -10,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Org.BouncyCastle.Asn1.Cmp.Challenge;
 
 namespace SWallet.Repository.Services.Implements
 {
@@ -17,6 +19,50 @@ namespace SWallet.Repository.Services.Implements
     {
         public WalletService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<WalletService> logger) : base(unitOfWork, logger)
         {
+        }
+
+        public async Task AddPointsToWallet(string campusId, int points)
+        {
+            try
+            {
+                // Tìm Wallet dựa trên CampusId
+                var wallet = await _unitOfWork.GetRepository<Wallet>().SingleOrDefaultAsync(
+                 predicate: b => b.CampusId == campusId);
+
+
+                if (wallet != null)
+                {
+                    // Cộng điểm vào Wallet
+                    wallet.Balance += points;
+
+                    // Cập nhật Wallet trong cơ sở dữ liệu
+                    _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
+                    await _unitOfWork.CommitAsync();
+                }
+                else
+                {
+                    // Xử lý trường hợp không tìm thấy Wallet
+                    // Bạn có thể tạo mới Wallet hoặc ném exception
+                    // Ví dụ: tạo mới Wallet
+                    var newWallet = new Wallet
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        Balance = points,
+                        CampusId = campusId,
+                        DateCreated = DateTime.Now,
+                        DateUpdated = DateTime.Now,
+                        Status = true
+                    };
+                    _unitOfWork.GetRepository<Wallet>().InsertAsync(wallet);
+                    await _unitOfWork.CommitAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                // Xử lý lỗi (ví dụ: log lỗi)
+                Console.WriteLine($"Lỗi khi cộng điểm vào Wallet: {ex.Message}");
+                throw; // Ném lại exception để xử lý ở tầng trên
+            }
         }
 
         public async Task<WalletResponse> AddWallet(WalletRequest walletRequest)
@@ -28,6 +74,7 @@ namespace SWallet.Repository.Services.Implements
             var wallet = new Wallet
             {
                 Id = Ulid.NewUlid().ToString(),
+                CampusId = walletRequest.CampusId,
                 CampaignId = walletRequest.CampaignId,
                 StudentId = walletRequest.StudentId,
                 BrandId = walletRequest.BrandId,
@@ -47,6 +94,7 @@ namespace SWallet.Repository.Services.Implements
                     Id = wallet.Id,
                     CampaignId = wallet.CampaignId,
                     StudentId = wallet.StudentId,
+                    CampusId = wallet.CampusId,
                     BrandId = wallet.BrandId,
                     Type = wallet.Type,
                     Balance = wallet.Balance,
