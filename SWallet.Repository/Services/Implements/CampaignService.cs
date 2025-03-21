@@ -585,7 +585,7 @@ namespace SWallet.Repository.Services.Implements
             return area;
         }
 
-        public async Task<IPaginate<CampaignResponse>> GetCampaigns(string? searchName, int page, int size)
+        public async Task<IPaginate<CampaignResponse>> GetCampaignsInBrand(string? searchName, int page, int size)
         {
             var brandId = GetBrandIdFromJwt();
             Expression<Func<Campaign, bool>> filterQuery;
@@ -644,6 +644,49 @@ namespace SWallet.Repository.Services.Implements
             var result = mapper.Map<IEnumerable<CampaignDetailResponse>>(campaignDetails);
 
             return result;
+        }
+
+        public async Task<IPaginate<CampaignResponse>> GetCampaigns(string? searchName, int page, int size)
+        {
+            Expression<Func<Campaign, bool>> filterQuery;
+            if (string.IsNullOrEmpty(searchName))
+            {
+                filterQuery = p => true;
+            }
+            else
+            {
+                filterQuery = p => p.CampaignName.Contains(searchName);
+            }
+
+            var campaigns = await _unitOfWork.GetRepository<Campaign>().GetPagingListAsync(
+                selector: x => new CampaignResponse
+                {
+                    Id = x.Id,
+                    BrandId = x.BrandId,
+                    BrandName = x.Brand.BrandName,
+                    BrandAcronym = x.Brand.Acronym,
+                    TypeId = x.TypeId,
+                    TypeName = x.Type.TypeName,
+                    CampaignName = x.CampaignName,
+                    Image = x.Image,
+                    ImageName = x.ImageName,
+                    Condition = x.Condition,
+                    Link = x.Link,
+                    StartOn = x.StartOn,
+                    EndOn = x.EndOn,
+                    Duration = x.Duration,
+                    TotalIncome = x.TotalIncome,
+                    TotalSpending = x.TotalSpending,
+                    DateCreated = x.DateCreated,
+                    DateUpdated = x.DateUpdated,
+                    Description = x.Description,
+                    Status = x.Status
+                },
+                predicate: filterQuery,
+                page: page,
+                include: query => query.Include(x => x.Brand).Include(x => x.Type),
+                size: size);
+            return campaigns;
         }
 
         //public async Task<IPaginate<CampaignResponse>> GetStoresByCampaignId(string campaignId, int page, int size)
