@@ -646,6 +646,40 @@ namespace SWallet.Repository.Services.Implements
             return result;
         }
 
+        public async Task<IPaginate<CampaignStore>> GetStoresByCampaignId(string campaignId, string searchName, int page, int size)
+        {
+            Expression<Func<CampaignStore, bool>> filterQuery;
+
+            if (string.IsNullOrEmpty(searchName))
+            {
+                filterQuery = p => p.CampaignId == campaignId;
+            }
+            else
+            {
+                filterQuery = p => p.CampaignId == campaignId && p.CampaignId.Contains(searchName);
+            }
+
+            var stores = await _unitOfWork.GetRepository<CampaignStore>().GetPagingListAsync(
+                selector: x => new CampaignStore
+                {
+                    Id = x.Id,
+                    CampaignId = x.CampaignId,
+                    StoreId = x.StoreId,
+                    Description = x.Description,
+                    State = x.State,
+                    Status = x.Status,
+                    Store = x.Store,
+                    Campaign = x.Campaign
+
+                },
+                predicate: filterQuery,
+                include: x => x.Include(a => a.Store).Include(b => b.Campaign),
+                page: page,
+                size: size);
+
+            return stores;
+        }
+
         public async Task<IPaginate<CampaignResponse>> GetCampaigns(string? searchName, int page, int size)
         {
             Expression<Func<Campaign, bool>> filterQuery;
@@ -722,5 +756,6 @@ namespace SWallet.Repository.Services.Implements
 
         //    return stores;
         //}
+
     }
 }

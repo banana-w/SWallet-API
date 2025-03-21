@@ -7,6 +7,7 @@ using SWallet.Repository.Payload.Request.Brand;
 using SWallet.Repository.Payload.Request.Campaign;
 using SWallet.Repository.Payload.Response.Brand;
 using SWallet.Repository.Payload.Response.Campaign;
+using SWallet.Repository.Payload.Response.Store;
 using SWallet.Repository.Services.Implements;
 using SWallet.Repository.Services.Interfaces;
 
@@ -36,6 +37,21 @@ namespace SWallet_API.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpGet("getStoreByCampaignId/{campaignId}")]
+        public async Task<ActionResult<IPaginate<StoreResponse>>> GetAllStoresByCampaignId(string campaignId, string searchName = "", int page = 1, int size = 10)
+        {
+            try
+            {
+                var result = await _campaignService.GetStoresByCampaignId(campaignId, searchName, page, size);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting stores");
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error getting stores");
             }
         }
 
