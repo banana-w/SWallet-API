@@ -17,7 +17,7 @@ public partial class VoucherType
 
     public DateTime? DateUpdated { get; set; }
 
-    public string Description { get; set; } = null!;
+    public string? Description { get; set; }
 
     public bool? State { get; set; }
 

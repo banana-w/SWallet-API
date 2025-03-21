@@ -17,7 +17,7 @@ public partial class Voucher
 
     public decimal? Rate { get; set; }
 
-    public string Condition { get; set; } = null!;
+    public string? Condition { get; set; }
 
     public string Image { get; set; } = null!;
 
@@ -31,7 +31,7 @@ public partial class Voucher
 
     public DateTime? DateUpdated { get; set; }
 
-    public string Description { get; set; } = null!;
+    public string? Description { get; set; }
 
     public bool? State { get; set; }
 

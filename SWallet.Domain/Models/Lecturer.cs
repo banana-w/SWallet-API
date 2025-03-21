@@ -21,5 +21,7 @@ public partial class Lecturer
 
     public virtual Account Account { get; set; } = null!;
 
+    public virtual ICollection<CampusLecturer> CampusLecturers { get; set; } = new List<CampusLecturer>();
+
     public virtual ICollection<Wallet> Wallets { get; set; } = new List<Wallet>();
 }

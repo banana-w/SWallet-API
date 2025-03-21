@@ -13,8 +13,6 @@ public partial class CampaignStore
 
     public string Description { get; set; } = null!;
 
-    public bool? State { get; set; }
-
     public bool? Status { get; set; }
 
     public virtual Campaign Campaign { get; set; } = null!;
