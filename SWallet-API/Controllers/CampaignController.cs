@@ -123,6 +123,7 @@ namespace SWallet_API.Controllers
 
 
         [HttpGet("{id}")]
+        [ProducesResponseType(typeof(CampaignResponseExtra),StatusCodes.Status200OK)]
         public async Task<IActionResult> GetCampaignById(string id)
         {
             var typeResponse = await _campaignService.GetCampaignById(id);
