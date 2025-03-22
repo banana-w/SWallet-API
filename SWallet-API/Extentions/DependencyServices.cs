@@ -47,6 +47,8 @@ namespace SWallet_API.Extentions
             services.AddScoped<IVnpay, Vnpay>();
             services.AddScoped<IChallengeService, ChallengeService>();
             services.AddScoped<IPointPackageService, PointPackageService>();
+            services.AddScoped<IQRCodeService, QRCodeService>();
+            services.AddScoped<ILuckyPrizeService, LuckyPrizeService>();
 
 
             return services;

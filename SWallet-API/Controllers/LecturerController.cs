@@ -4,7 +4,9 @@ using SWallet.Domain.Models;
 using SWallet.Domain.Paginate;
 using SWallet.Repository.Payload.Request.Account;
 using SWallet.Repository.Payload.Request.Brand;
+using SWallet.Repository.Payload.Request.QRCodeRequest;
 using SWallet.Repository.Payload.Response.Lecturer;
+using SWallet.Repository.Payload.Response.QRCodeResponse;
 using SWallet.Repository.Payload.Response.Store;
 using SWallet.Repository.Services.Implements;
 using SWallet.Repository.Services.Interfaces;
@@ -17,12 +19,14 @@ namespace SWallet_API.Controllers
     {
         private readonly ILecturerService _lecturerService;
         private readonly ILogger<LecturerController> _logger;
+        private readonly IQRCodeService _qrCodeService;
         
 
-        public LecturerController(ILecturerService lecturerService, ILogger<LecturerController> logger)
+        public LecturerController(ILecturerService lecturerService, ILogger<LecturerController> logger, IQRCodeService qrCodeService)
         {
             _lecturerService = lecturerService;
             _logger = logger;
+            _qrCodeService = qrCodeService;
         }
 
         [HttpPost]
@@ -40,6 +44,13 @@ namespace SWallet_API.Controllers
             }
         }
 
+        [HttpPost("generate-qrcode")]
+        public async Task<ActionResult<QRCodeResponse>> GenerateQRCode([FromBody] GenerateQRCodeRequest request)
+        {
+            var response = await _qrCodeService.GenerateQRCode(request);
+            return Ok(response);
+        }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetLecturerById(string id)
         {
@@ -50,6 +61,16 @@ namespace SWallet_API.Controllers
             }
             return Ok(lecturerResponse);
         }
+
+
+        [HttpPost("scan-qrcode")]
+        public async Task<IActionResult> ScanQRCode([FromBody] ScanQRCodeRequest request)
+        {
+            var response = await _qrCodeService.ScanQRCode(request);
+            return Ok(response);
+        }
+
+
 
         [HttpGet("campus")]
         public async Task<ActionResult<IPaginate<LecturerResponse>>> GetAllLecturerByCampusId(string campusId, string searchName = "", int page = 1, int size = 10)

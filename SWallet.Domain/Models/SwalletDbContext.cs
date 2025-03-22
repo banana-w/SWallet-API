@@ -54,6 +54,8 @@ public partial class SwalletDbContext : DbContext
 
     public virtual DbSet<Lecturer> Lecturers { get; set; }
 
+    public virtual DbSet<LuckyPrize> LuckyPrizes { get; set; }
+
     public virtual DbSet<Order> Orders { get; set; }
 
     public virtual DbSet<OrderDetail> OrderDetails { get; set; }
@@ -65,6 +67,8 @@ public partial class SwalletDbContext : DbContext
     public virtual DbSet<PointPackage> PointPackages { get; set; }
 
     public virtual DbSet<Product> Products { get; set; }
+
+    public virtual DbSet<QrcodeUsage> QrcodeUsages { get; set; }
 
     public virtual DbSet<Request> Requests { get; set; }
 
@@ -91,7 +95,7 @@ public partial class SwalletDbContext : DbContext
     public virtual DbSet<Wallet> Wallets { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlServer(GetConnectionString());
+     => optionsBuilder.UseSqlServer(GetConnectionString());
 
     private string GetConnectionString()
     {
@@ -103,6 +107,7 @@ public partial class SwalletDbContext : DbContext
 
         return strConn;
     }
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -866,6 +871,21 @@ public partial class SwalletDbContext : DbContext
                 .HasConstraintName("FK_tbl_staff_tbl_account_account_id");
         });
 
+        modelBuilder.Entity<LuckyPrize>(entity =>
+        {
+            entity.ToTable("luckyPrize");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.PrizeName)
+                .HasMaxLength(250)
+                .HasColumnName("prize_name");
+            entity.Property(e => e.Probability)
+                .HasColumnType("decimal(18, 2)")
+                .HasColumnName("probability");
+            entity.Property(e => e.Quantity).HasColumnName("quantity");
+            entity.Property(e => e.Status).HasColumnName("status");
+        });
+
         modelBuilder.Entity<Order>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK_tbl_order");
@@ -1093,6 +1113,20 @@ public partial class SwalletDbContext : DbContext
             entity.HasOne(d => d.Category).WithMany(p => p.Products)
                 .HasForeignKey(d => d.CategoryId)
                 .HasConstraintName("FK_tbl_product_tbl_category_category_id");
+        });
+
+        modelBuilder.Entity<QrcodeUsage>(entity =>
+        {
+            entity.ToTable("qrcode_usage");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.QrcodeJson).HasColumnName("qrcode_json");
+            entity.Property(e => e.StudentId)
+                .HasMaxLength(26)
+                .IsUnicode(false)
+                .IsFixedLength()
+                .HasColumnName("student_id");
+            entity.Property(e => e.UsedAt).HasColumnName("used_at");
         });
 
         modelBuilder.Entity<Request>(entity =>
