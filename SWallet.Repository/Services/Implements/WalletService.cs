@@ -107,9 +107,70 @@ namespace SWallet.Repository.Services.Implements
             throw new ApiException("Create Wallet Failed", 500, "WALLET_CREATION_FAILED");
         }
 
-        public Task<WalletResponse> GetWalletByBrandId(string id)
+        public async Task<WalletResponse> GetWalletByBrandId(string id, int type)
         {
-            throw new NotImplementedException();
+            var wallet = await _unitOfWork.GetRepository<Wallet>().SingleOrDefaultAsync(predicate: x => x.BrandId == id && x.Type == type);
+            if (wallet == null)
+            {
+                throw new ApiException("Wallet not found", 404, "WALLET_NOT_FOUND");
+            }
+            return new WalletResponse
+            {
+                Id = wallet.Id,
+                CampaignId = wallet.CampaignId,
+                StudentId = wallet.StudentId,
+                BrandId = wallet.BrandId,
+                Type = wallet.Type,
+                Balance = wallet.Balance,
+                DateCreated = wallet.DateCreated,
+                DateUpdated = wallet.DateUpdated,
+                Description = wallet.Description,
+                Status = wallet.Status
+            };
+        }
+
+        public async Task<WalletResponse> GetWalletByCampusId(string id, int type)
+        {
+            var wallet = await _unitOfWork.GetRepository<Wallet>().SingleOrDefaultAsync(predicate: x => x.CampusId == id && x.Type == type);
+            if (wallet == null)
+            {
+                throw new ApiException("Wallet not found", 404, "WALLET_NOT_FOUND");
+            }
+            return new WalletResponse
+            {
+                Id = wallet.Id,
+                CampaignId = wallet.CampaignId,
+                StudentId = wallet.StudentId,
+                BrandId = wallet.BrandId,
+                Type = wallet.Type,
+                Balance = wallet.Balance,
+                DateCreated = wallet.DateCreated,
+                DateUpdated = wallet.DateUpdated,
+                Description = wallet.Description,
+                Status = wallet.Status
+            };
+        }
+
+        public async Task<WalletResponse> GetWalletByLecturerId(string id, int type)
+        {
+            var wallet = await _unitOfWork.GetRepository<Wallet>().SingleOrDefaultAsync(predicate: x => x.LecturerId == id && x.Type == type);
+            if (wallet == null)
+            {
+                throw new ApiException("Wallet not found", 404, "WALLET_NOT_FOUND");
+            }
+            return new WalletResponse
+            {
+                Id = wallet.Id,
+                CampaignId = wallet.CampaignId,
+                StudentId = wallet.StudentId,
+                BrandId = wallet.BrandId,
+                Type = wallet.Type,
+                Balance = wallet.Balance,
+                DateCreated = wallet.DateCreated,
+                DateUpdated = wallet.DateUpdated,
+                Description = wallet.Description,
+                Status = wallet.Status
+            };
         }
 
         public async Task<WalletResponse> GetWalletByStudentId(string id, int type)
@@ -169,5 +230,7 @@ namespace SWallet.Repository.Services.Implements
             }
             throw new ApiException("Update Wallet Failed", 500, "WALLET_UPDATE_FAILED");
         }
+
+       
     }
 }
