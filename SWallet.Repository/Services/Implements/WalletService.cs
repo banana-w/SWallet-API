@@ -207,7 +207,7 @@ namespace SWallet.Repository.Services.Implements
                 throw new ApiException("Balance cannot be negative", 400, "NEGATIVE_BALANCE");
             }
 
-            wallet.Balance = balance;
+            wallet.Balance =+ balance ;
             wallet.DateUpdated = DateTime.Now;
 
              _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);

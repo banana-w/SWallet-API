@@ -8,6 +8,7 @@ using SWallet.Repository.Payload.Request.Account;
 using SWallet.Repository.Payload.Request.Brand;
 using SWallet.Repository.Payload.Request.Store;
 using SWallet.Repository.Payload.Request.Student;
+using SWallet.Repository.Payload.Request.Wallet;
 using SWallet.Repository.Payload.Response.Account;
 using SWallet.Repository.Services.Interfaces;
 using SWallet.Repository.Utils;
@@ -23,9 +24,10 @@ namespace SWallet.Repository.Services.Implements
         private readonly IStudentService _studentService;
         private readonly IStoreService _storeService;
         private readonly IRedisService _redisService;
+        private readonly IWalletService _walletService;
 
         public AccountService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<AccountService> logger,
-            IEmailService emailService, IBrandService brandService, IStudentService studentService, IRedisService redisService, IStoreService storeService) : base(unitOfWork, logger)
+            IEmailService emailService, IBrandService brandService, IStudentService studentService, IRedisService redisService, IStoreService storeService, IWalletService walletService) : base(unitOfWork, logger)
         {
             var config = new MapperConfiguration(cfg
                 =>
@@ -104,6 +106,7 @@ namespace SWallet.Repository.Services.Implements
             _studentService = studentService;
             _redisService = redisService;
             _storeService = storeService;
+            _walletService = walletService;
         }
 
         public async Task<AccountResponse> CreateBrandAccount(AccountRequest accountRequest, CreateBrandByAccountId brandRequest)
@@ -125,12 +128,24 @@ namespace SWallet.Repository.Services.Implements
                 bool isSuccess = await _unitOfWork.CommitAsync() > 0;
                 if (isSuccess)
                 {                   
-                    await _brandService.CreateBrandAsync(ac.Id, brandRequest);
+                    var brand = await _brandService.CreateBrandAsync(ac.Id, brandRequest);
+                    
+
+                    await _walletService.AddWallet(new WalletRequest
+                    {
+                        BrandId = brand.Id,
+                        Type = (int)WalletType.Green,
+                        Balance = 0,
+                        Description = "Brand Wallet",
+                        State = true
+                    });
+
                     if (ac.Email != null)
                     {
                         var code = await _emailService.SendVerificationEmail(ac.Email);
                         await _redisService.SaveVerificationCodeAsync(ac.Email, code);
                     }
+
                     await _unitOfWork.CommitTransactionAsync();
                     return mapper.Map<AccountResponse>(ac);
                 }
@@ -195,14 +210,23 @@ namespace SWallet.Repository.Services.Implements
                 bool issuccessfull = await _unitOfWork.CommitAsync() > 0;
                 if (issuccessfull)
                 {
-                    var result = await _studentService.CreateStudentAsync(ac.Id, studentRequest);
+                    var student = await _studentService.CreateStudentAsync(ac.Id, studentRequest);
 
-                    if (ac.Email != null && result)
+                    
+                    await _walletService.AddWallet(new WalletRequest
+                    {
+                        StudentId = student.Id,
+                        Type = (int)WalletType.Green,
+                        Balance = 0,
+                        Description = "Student Wallet",
+                        State = true
+                    });
+
+                    if (ac.Email != null)
                     {
                         var code = await _emailService.SendVerificationEmail(ac.Email);
                         await _redisService.SaveVerificationCodeAsync(ac.Email, code);
                     }
-
                     await _unitOfWork.CommitTransactionAsync();
                     return mapper.Map<AccountResponse>(ac);
                 }

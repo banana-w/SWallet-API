@@ -54,7 +54,7 @@ namespace SWallet.Repository.Services.Implements
                 await _unitOfWork.CommitAsync();
 
                 //tru diem
-                await _walletService.UpdateWallet(wallet.Id, (decimal)activityRequest.Cost);
+                await _walletService.UpdateWallet(wallet.Id, -(decimal)activityRequest.Cost);
                 await _voucherItemService.RedeemVoucherAsync(activityRequest.VoucherItemId);
 
                 //add transaction

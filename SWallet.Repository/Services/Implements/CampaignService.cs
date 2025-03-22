@@ -554,10 +554,10 @@ namespace SWallet.Repository.Services.Implements
             throw new NotImplementedException();
         }
 
-        public async Task<CampaignResponse> GetCampaignById(string id)
+        public async Task<CampaignResponseExtra> GetCampaignById(string id)
         {
             var area = await _unitOfWork.GetRepository<Campaign>().SingleOrDefaultAsync(
-                selector: x => new CampaignResponse
+                selector: x => new CampaignResponseExtra
                 {
                     Id = x.Id,
                     BrandId = x.BrandId,
@@ -575,11 +575,12 @@ namespace SWallet.Repository.Services.Implements
                     Description = x.Description,
                     Status = x.Status,
                     TotalIncome = x.TotalIncome,
-                    TotalSpending = x.TotalSpending
-
+                    TotalSpending = x.TotalSpending,
+                    CampaignDetailId = x.CampaignDetails.Select(cd => cd.Id)
                 },
                 
-                predicate: x => x.Id == id);
+                predicate: x => x.Id == id,
+                include: x => x.Include(x => x.CampaignDetails));
             ;
             return area;
         }

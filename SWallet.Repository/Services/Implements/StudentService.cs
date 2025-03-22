@@ -3,6 +3,7 @@ using SWallet.Domain.Models;
 using SWallet.Domain.Paginate;
 using SWallet.Repository.Enums;
 using SWallet.Repository.Interfaces;
+using SWallet.Repository.Payload.ExceptionModels;
 using SWallet.Repository.Payload.Request.Student;
 using SWallet.Repository.Payload.Response.Student;
 using SWallet.Repository.Services.Interfaces;
@@ -17,7 +18,7 @@ namespace SWallet.Repository.Services.Implements
         {
             _cloudinaryService = cloudinaryService;
         }
-        public async Task<bool> CreateStudentAsync(string accountId, StudentRequest studentRequest)
+        public async Task<StudentResponse> CreateStudentAsync(string accountId, StudentRequest studentRequest)
         {
             if (string.IsNullOrEmpty(accountId) || studentRequest == null)
             {
@@ -54,7 +55,24 @@ namespace SWallet.Repository.Services.Implements
             await _unitOfWork.GetRepository<Student>().InsertAsync(student);
             var result = await _unitOfWork.CommitAsync();
 
-            return result > 0;
+            if (result > 0)
+            {
+                return new StudentResponse
+                {
+                    Id = student.Id,
+                    CampusId = student.CampusId,
+                    AccountId = student.AccountId,
+                    StudentCardFront = student.StudentCardFront,
+                    StudentCardBack = student.StudentCardBack,
+                    Address = student.Address,
+                    DateOfBirth = student.DateOfBirth,
+                    Code = student.Code,
+                    FullName = student.FullName,
+                    DateCreated = student.DateCreated,
+                    DateUpdated = student.DateUpdated,
+                };
+            }
+            throw new ApiException("Create student fail", 400, "STUDENT_FAIL");
         }
 
         public async Task<StudentResponse> GetStudentAsync(string studentId)
@@ -83,7 +101,7 @@ namespace SWallet.Repository.Services.Implements
                     Status = x.Status,
                     TotalIncome = x.TotalIncome,
                     TotalSpending = x.TotalSpending,
-                    
+
                 },
                     predicate: x => x.Id == studentId);
             if (student == null)
