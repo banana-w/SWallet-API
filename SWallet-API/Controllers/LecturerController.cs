@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using SWallet.Domain.Models;
 using SWallet.Domain.Paginate;
 using SWallet.Repository.Payload.Request.Account;
 using SWallet.Repository.Payload.Request.Brand;
@@ -16,6 +17,7 @@ namespace SWallet_API.Controllers
     {
         private readonly ILecturerService _lecturerService;
         private readonly ILogger<LecturerController> _logger;
+        
 
         public LecturerController(ILecturerService lecturerService, ILogger<LecturerController> logger)
         {
@@ -47,6 +49,20 @@ namespace SWallet_API.Controllers
                 return NotFound();
             }
             return Ok(lecturerResponse);
+        }
+
+        [HttpGet("campus")]
+        public async Task<ActionResult<IPaginate<LecturerResponse>>> GetAllLecturerByCampusId(string campusId, string searchName = "", int page = 1, int size = 10)
+        {
+
+            var result = await _lecturerService.GetLecturersByCampusId(campusId, searchName, page, size);
+            if (result == null)
+            {
+                return NotFound("Không tìm thấy giảng viên nào thuộc campus này.");
+            }
+            return Ok(result);
+
+
         }
 
         [HttpGet]

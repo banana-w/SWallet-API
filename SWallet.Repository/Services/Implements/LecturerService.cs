@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SWallet.Domain.Models;
 using SWallet.Domain.Paginate;
@@ -8,6 +9,7 @@ using SWallet.Repository.Payload.Request.Account;
 using SWallet.Repository.Payload.Request.Brand;
 using SWallet.Repository.Payload.Response.Brand;
 using SWallet.Repository.Payload.Response.Lecturer;
+using SWallet.Repository.Payload.Response.Store;
 using SWallet.Repository.Services.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -93,7 +95,8 @@ namespace SWallet.Repository.Services.Implements
                     DateCreated = x.DateCreated,
                     DateUpdated = x.DateUpdated,                    
                     State = x.State,
-                    Status = x.Status
+                    Status = x.Status,
+                    
                 },
                 predicate: x => x.Id == id);
             return area;
@@ -127,6 +130,45 @@ namespace SWallet.Repository.Services.Implements
                 page: page,
                 size: size);
             return areas;
+        }
+
+        public async Task<IPaginate<LecturerResponse>> GetLecturersByCampusId(string campusId, string searchName, int page, int size)
+        {
+            Expression<Func<CampusLecturer, bool>> filterQuery;
+
+            if (string.IsNullOrEmpty(searchName))
+            {
+                filterQuery = p => p.CampusId == campusId;
+            }
+            else
+            {
+                filterQuery = p => p.CampusId == campusId && p.Lecturer.FullName.Contains(searchName); // Filter by Lecturer.FullName
+            }
+
+            var lecturers = await _unitOfWork.GetRepository<CampusLecturer>().GetPagingListAsync(
+                selector: x => new LecturerResponse
+                {
+                    Id = x.Lecturer.Id, // Get Lecturer Id
+                    FullName = x.Lecturer.FullName, // Get Lecturer FullName
+                    AccountId = x.Lecturer.AccountId,
+                    State = x.Lecturer.State,
+                    Status = x.Lecturer.Status,
+                    DateCreated = x.Lecturer.DateCreated,
+                    DateUpdated = x.Lecturer.DateUpdated
+                    
+                },
+                predicate: filterQuery,
+                include: x => x.Include(a => a.Lecturer).ThenInclude(w => w.Wallets), // Include Lecturer and Wallets
+                page: page,
+                size: size);
+
+            return lecturers;
+        }
+
+        protected string GetCampusIdFromJwt()
+        {
+            var id = _httpContextAccessor?.HttpContext?.User?.FindFirst("campusId");
+            return id?.Value ?? string.Empty;
         }
 
         public async Task<LecturerResponse> UpdateLecturer(string id, UpdateLecturerModel lecturer)
