@@ -82,22 +82,22 @@ namespace SWallet.Repository.Services.Implements
                 .ReverseMap();
 
 
-           //     cfg.CreateMap<Student, CreateStudentAccount>()
-           //.ReverseMap()
-           //.ForMember(s => s.Id, opt => opt.MapFrom(src => Ulid.NewUlid()))
-           //.ForMember(s => s.TotalIncome, opt => opt.MapFrom(src => 0))
-           //.ForMember(s => s.TotalSpending, opt => opt.MapFrom(src => 0))
-           //.ForMember(s => s.DateCreated, opt => opt.MapFrom(src => DateTime.Now))
-           //.ForMember(s => s.DateUpdated, opt => opt.MapFrom(src => DateTime.Now))
-           //.ForMember(s => s.State, opt => opt.MapFrom(src => StudentState.Pending))
-           //.ForMember(s => s.Status, opt => opt.MapFrom(src => true));                
+                //     cfg.CreateMap<Student, CreateStudentAccount>()
+                //.ReverseMap()
+                //.ForMember(s => s.Id, opt => opt.MapFrom(src => Ulid.NewUlid()))
+                //.ForMember(s => s.TotalIncome, opt => opt.MapFrom(src => 0))
+                //.ForMember(s => s.TotalSpending, opt => opt.MapFrom(src => 0))
+                //.ForMember(s => s.DateCreated, opt => opt.MapFrom(src => DateTime.Now))
+                //.ForMember(s => s.DateUpdated, opt => opt.MapFrom(src => DateTime.Now))
+                //.ForMember(s => s.State, opt => opt.MapFrom(src => StudentState.Pending))
+                //.ForMember(s => s.Status, opt => opt.MapFrom(src => true));                
                 cfg.CreateMap<Account, AccountRequest>()
             .ReverseMap()
             .ForMember(t => t.Id, opt => opt.MapFrom(src => Ulid.NewUlid()))
             .ForMember(t => t.Password, opt => opt.MapFrom(src => BCryptNet.HashPassword(src.Password))) // HashPassword when create account
             .ForMember(t => t.IsVerify, opt => opt.MapFrom(src => false)) // Verify 1st
             .ForMember(t => t.DateCreated, opt => opt.MapFrom(src => DateTime.Now))
-            .ForMember(t => t.DateUpdated, opt => opt.MapFrom(src => DateTime.Now))           
+            .ForMember(t => t.DateUpdated, opt => opt.MapFrom(src => DateTime.Now))
             .ForMember(t => t.Status, opt => opt.MapFrom(src => true));
             });
             mapper ??= new Mapper(config);
@@ -127,9 +127,9 @@ namespace SWallet.Repository.Services.Implements
 
                 bool isSuccess = await _unitOfWork.CommitAsync() > 0;
                 if (isSuccess)
-                {                   
+                {
                     var brand = await _brandService.CreateBrandAsync(ac.Id, brandRequest);
-                    
+
 
                     await _walletService.AddWallet(new WalletRequest
                     {
@@ -212,7 +212,7 @@ namespace SWallet.Repository.Services.Implements
                 {
                     var student = await _studentService.CreateStudentAsync(ac.Id, studentRequest);
 
-                    
+
                     await _walletService.AddWallet(new WalletRequest
                     {
                         StudentId = student.Id,
@@ -290,15 +290,12 @@ namespace SWallet.Repository.Services.Implements
 
         public Task<bool> ValidEmail(string email)
         {
-            var account =  _unitOfWork.GetRepository<Account>().AnyAsync(x => x.Email == email);
+            var account = _unitOfWork.GetRepository<Account>().AnyAsync(x => x.Email == email);
             if (account.Result)
             {
-                return Task.FromResult(true);
+                throw new ApiException("Email already exists", 400, "BAD_REQUEST");
             }
-            else
-            {
-                return Task.FromResult(false);
-            }
+            return Task.FromResult(true);
         }
 
         public Task<bool> ValidUsername(string username)
@@ -306,12 +303,9 @@ namespace SWallet.Repository.Services.Implements
             var account = _unitOfWork.GetRepository<Account>().AnyAsync(x => x.UserName == username);
             if (account.Result)
             {
-                return Task.FromResult(true);
+                throw new ApiException("Username already exists", 400, "BAD_REQUEST");
             }
-            else
-            {
-                return Task.FromResult(false);
-            }
+            return Task.FromResult(true);
         }
     }
 }
