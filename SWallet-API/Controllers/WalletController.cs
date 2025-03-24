@@ -40,5 +40,33 @@ namespace SWallet_API.Controllers
             var wallet = await _walletService.UpdateWallet(id, balance);
             return Ok(wallet);
         }
+
+        [HttpPost("add-points-to-brand-wallet")]
+        public async Task<IActionResult> AddPointsToBrandWallet(string brandId, int points)
+        {
+            try
+            {
+                // Kiểm tra dữ liệu đầu vào
+                if (string.IsNullOrEmpty(brandId))
+                {
+                    return BadRequest(new { error = "BrandId is required" });
+                }
+                if (points <= 0)
+                {
+                    return BadRequest(new { error = "Points must be greater than 0" });
+                }
+
+                // Gọi service để cộng điểm vào wallet của Brand
+                await _walletService.AddPointsToBrandWallet(brandId, points);
+
+                // Trả về phản hồi thành công
+                return Ok(new { message = "Points added to Brand wallet successfully" });
+            }
+            catch (Exception ex)
+            {
+                // Xử lý lỗi và trả về phản hồi lỗi
+                return StatusCode(500, new { error = "An error occurred while adding points", details = ex.Message });
+            }
+        }
     }
 }

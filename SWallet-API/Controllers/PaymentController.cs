@@ -24,18 +24,20 @@ namespace SWallet_API.Controllers
         private readonly IPointPackageService _pointPackageService;
         private readonly ICampusService _campusService;
         private readonly IWalletService _walletService;
+        private readonly IBrandService _brandService;
 
 
-        public PaymentController(IVnpay vnpay, IOptions<VnpayConfig> vnpayConfig, IPointPackageService pointPackageService, ICampusService campusService, IWalletService walletService)
+        public PaymentController(IVnpay vnpay, IOptions<VnpayConfig> vnpayConfig, IPointPackageService pointPackageService, ICampusService campusService, IWalletService walletService, IBrandService brandService)
         {
             _vnpay = vnpay;
             _vnpayConfig = vnpayConfig.Value;
             _pointPackageService = pointPackageService;
             _campusService = campusService;
             _walletService = walletService;
+            _brandService = brandService;
         }
 
-        [HttpPost("purchase-points")]
+        [HttpPost("campus-purchase-points")]
         public async Task<IActionResult> PurchasePoints([FromBody] PurchasePointRequest request)
         {
             try
@@ -83,6 +85,166 @@ namespace SWallet_API.Controllers
             }
         }
 
+        [HttpPost("brand-purchase-points")]
+        public async Task<IActionResult> BrandPurchasePoints([FromBody] PurchasePointRequest request)
+        {
+            try
+            {
+                // Lấy thông tin gói điểm
+                var pointPackage = await _pointPackageService.GetPointPackageById(request.PointPackageId);
+                if (pointPackage == null)
+                {
+                    return BadRequest(new { error = "Point package not found" });
+                }
+
+                var brand = await _brandService.GetBrandById(request.BrandId);
+                if (brand == null)
+                {
+                    return BadRequest(new { error = "Brand not found" });
+                }
+                var ipAddress = NetworkHelper.GetIpAddress(HttpContext);
+                var orderInfo = $"{request.BrandId}-{request.PointPackageId}";
+
+                var paymentRequest = new PaymentRequest
+                {
+                    PaymentId = DateTime.Now.Ticks,
+                    Description = orderInfo,
+                    Money = (double)pointPackage.Price,
+                    IpAddress = ipAddress, // Lấy địa chỉ IP (sử dụng helper method hoặc inject IHttpContextAccessor)
+                    BankCode = BankCode.ANY, // Hoặc giá trị cụ thể
+                    CreatedDate = DateTime.Now,
+                    Currency = Currency.VND, // Hoặc giá trị cụ thể
+                    Language = DisplayLanguage.Vietnamese // Hoặc giá trị cụ thể
+                };
+
+                // Tạo link thanh toán
+                var paymentUrl = _vnpay.GetPaymentUrl(paymentRequest);
+
+                // Trả về link thanh toán
+                return Ok(new { paymentUrl });
+            }
+            catch (ApiException ex)
+            {
+                return StatusCode(ex.StatusCode, new { error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
+
+
+        [HttpGet("IpnAction")]
+        public async Task<IActionResult> IpnAction()
+        {
+            if (Request.QueryString.HasValue)
+            {
+                try
+                {
+                    var paymentResult = _vnpay.GetPaymentResult(Request.Query);
+
+                    if (paymentResult.IsSuccess)
+                    {
+                        var orderInfo = paymentResult.Description;
+                        var parts = orderInfo.Split('-');
+                        if (parts.Length != 2)
+                        {
+                            return BadRequest(new { error = "Invalid order info format" });
+                        }
+
+                        var entityId = parts[0]; // Có thể là CampusId hoặc BrandId
+                        var pointPackageId = parts[1];
+
+                        // Lấy thông tin gói điểm
+                        var pointPackage = await _pointPackageService.GetPointPackageById(pointPackageId);
+                        if (pointPackage == null)
+                        {
+                            return BadRequest(new { error = "Point package not found" });
+                        }
+
+                        // Kiểm tra xem entityId là Campus hay Brand
+                        var campus = await _campusService.GetCampusById(entityId);
+                        if (campus != null)
+                        {
+                            // Trường hợp Campus mua điểm
+                            await _walletService.AddPointsToWallet(campus.Id, (int)pointPackage.Point);
+                            return Ok(); // Trả về 200 OK
+                        }
+
+                        var brand = await _brandService.GetBrandById(entityId);
+                        if (brand != null)
+                        {
+                            // Trường hợp Brand mua điểm
+                            await _walletService.AddPointsToBrandWallet(brand.Id, (int)pointPackage.Point);
+                            return Ok(); // Trả về 200 OK
+                        }
+
+                        return BadRequest(new { error = "Campus or Brand not found" });
+                    }
+                    else
+                    {
+                        return BadRequest(new { error = "Thanh toán thất bại" });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return BadRequest(new { error = ex.Message });
+                }
+            }
+
+            return NotFound(new { error = "Không tìm thấy thông tin thanh toán" });
+        }
+
+
+        //[HttpGet("IpnAction")]
+        //public async Task<IActionResult> IpnAction()
+        //{
+            
+        //    if (Request.QueryString.HasValue)
+        //    {
+        //        try
+        //        {
+        //            var paymentResult = _vnpay.GetPaymentResult(Request.Query);
+
+        //            if (paymentResult.IsSuccess)
+        //            {
+        //                var orderInfo = paymentResult.Description;
+        //                var parts = orderInfo.Split('-');
+        //                var campusId = parts[0];
+        //                var pointPackageId = parts[1];
+
+        //                // Lấy thông tin gói điểm và Campus (nếu có)
+        //                var pointPackage = await _pointPackageService.GetPointPackageById(pointPackageId);
+        //                var campus = await _campusService.GetCampusById(campusId);
+
+        //                // Cập nhật Wallet (nếu có thông tin)
+        //                if (campus != null && pointPackage != null)
+        //                {
+        //                    await _walletService.AddPointsToWallet(campus.Id, (int)pointPackage.Point);
+        //                }
+
+        //                return Ok(); // Trả về 200 OK
+        //            }
+        //            else
+        //            {
+        //                return BadRequest(error: "Thanh toán thất bại"); // Trả về 400 BadRequest
+                       
+        //            }
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            return BadRequest(ex.Message); // Trả về 400 BadRequest
+
+        //        }
+        //    }
+
+        //    return NotFound("Không tìm thấy thông tin thanh toán."); // Trả về 404 NotFound
+        //}
+
+
+
+
         [HttpGet("CreatePaymentUrl")]
         public ActionResult<string> CreatePaymentUrl(double moneyToPay, string description)
         {
@@ -111,54 +273,6 @@ namespace SWallet_API.Controllers
                 return BadRequest(ex.Message);
             }
         }
-
- 
-
-        [HttpGet("IpnAction")]
-        public async Task<IActionResult> IpnAction()
-        {
-            
-            if (Request.QueryString.HasValue)
-            {
-                try
-                {
-                    var paymentResult = _vnpay.GetPaymentResult(Request.Query);
-
-                    if (paymentResult.IsSuccess)
-                    {
-                        var orderInfo = paymentResult.Description;
-                        var parts = orderInfo.Split('-');
-                        var campusId = parts[0];
-                        var pointPackageId = parts[1];
-
-                        // Lấy thông tin gói điểm và Campus (nếu có)
-                        var pointPackage = await _pointPackageService.GetPointPackageById(pointPackageId);
-                        var campus = await _campusService.GetCampusById(campusId);
-
-                        // Cập nhật Wallet (nếu có thông tin)
-                        if (campus != null && pointPackage != null)
-                        {
-                            await _walletService.AddPointsToWallet(campus.Id, (int)pointPackage.Point);
-                        }
-
-                        return Ok(); // Trả về 200 OK
-                    }
-                    else
-                    {
-                        return BadRequest(error: "Thanh toán thất bại"); // Trả về 400 BadRequest
-                       
-                    }
-                }
-                catch (Exception ex)
-                {
-                    return BadRequest(ex.Message); // Trả về 400 BadRequest
-
-                }
-            }
-
-            return NotFound("Không tìm thấy thông tin thanh toán."); // Trả về 404 NotFound
-        }
-
 
         //    [HttpGet("Callback")]
         //    public async Task<ActionResult<string>> Callback()

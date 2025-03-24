@@ -10,6 +10,7 @@ namespace SWallet.Repository.Payload.Request.PointPackage
     {
         public string PointPackageId { get; set; }
         public string CampusId { get; set; }
+        public string BrandId { get; set; } 
     }
 }
 
