@@ -9,7 +9,10 @@ using SWallet.Repository.Interfaces;
 using SWallet.Repository.Payload.ExceptionModels;
 using SWallet.Repository.Payload.Request.Account;
 using SWallet.Repository.Payload.Request.Student;
+using SWallet.Repository.Payload.Request.Wallet;
 using SWallet.Repository.Payload.Response.Account;
+using SWallet.Repository.Payload.Response.Student;
+using SWallet.Repository.Payload.Response.Wallet;
 using SWallet.Repository.Services.Implements;
 using SWallet.Repository.Services.Interfaces;
 
@@ -54,50 +57,53 @@ namespace Swallet_UnitTest.Services
                 );
         }
 
-        //[Fact]
-        //public async Task CreateStudentAccount_ShouldReturnAccountResponse_WhenSuccess()
-        //{
-        //    // Arrange
-        //    var accountRequest = new AccountRequest
-        //    {
-        //        UserName = "testuser",
-        //        Password = "Test@1234",
-        //        Phone = "1234567890",
-        //        Email = "testuser@example.com",
-        //    };
-        //    var studentRequest = new StudentRequest
-        //    {
-        //        CampusId = "Main",
-        //        FullName = "Test User",
-        //        StudentCardFront = Mock.Of<IFormFile>(),
-        //        Code = "123456",
-        //        Address = "123 Test St",
-        //        DateOfBirth = new DateOnly(2000, 1, 1),
-        //        Gender = 1,
-        //    };
+        [Fact]
+        public async Task CreateStudentAccount_ShouldReturnAccountResponse_WhenSuccess()
+        {
+            // Arrange
+            var accountRequest = new AccountRequest
+            {
+                UserName = "testuser",
+                Password = "Test@1234",
+                Phone = "1234567890",
+                Email = "testuser@example.com",
+            };
+            var studentRequest = new StudentRequest
+            {
+                CampusId = "Main",
+                FullName = "Test User",
+                StudentCardFront = Mock.Of<IFormFile>(),
+                Code = "123456",
+                Address = "123 Test St",
+                DateOfBirth = new DateOnly(2000, 1, 1),
+                Gender = 1,
+            };
 
-        //    var account = new Account { Id = "1", Email = "testuser@example.com" };
-        //    var student = new Student { AccountId = "1" };
-        //    var accountResponse = new AccountResponse { Id = "1", Email = "testuser@example.com" };
+            var account = new Account { Id = "1", Email = "testuser@example.com" };
+            var student = new Student { AccountId = "1", Id = "1" };
+            var accountResponse = new AccountResponse { Id = "1", Email = "testuser@example.com" };
 
-        //    _cloudinaryServiceMock.Setup(c => c.UploadImageAsync(It.IsAny<IFormFile>(), null, null)).ReturnsAsync(new ImageUploadResult
-        //    {
-        //        SecureUrl = new Uri("http://example.com/image.jpg"),
-        //        PublicId = "image123"
-        //    });
-        //    _unitOfWorkMock.Setup(u => u.GetRepository<Account>().InsertAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
-        //    _unitOfWorkMock.Setup(u => u.GetRepository<Student>().InsertAsync(It.IsAny<Student>())).Returns(Task.CompletedTask);
-        //    _emailServiceMock.Setup(e => e.SendEmailStudentRegister(It.IsAny<string>())).Returns(Task.FromResult(true));
-        //    _unitOfWorkMock.Setup(u => u.CommitAsync()).ReturnsAsync(1);
+            _cloudinaryServiceMock.Setup(c => c.UploadImageAsync(It.IsAny<IFormFile>(), null, null)).ReturnsAsync(new ImageUploadResult
+            {
+                SecureUrl = new Uri("http://example.com/image.jpg"),
+                PublicId = "image123"
+            });
+            _unitOfWorkMock.Setup(u => u.GetRepository<Account>().InsertAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
+            _unitOfWorkMock.Setup(u => u.GetRepository<Student>().InsertAsync(It.IsAny<Student>())).Returns(Task.CompletedTask);
+            _emailServiceMock.Setup(e => e.SendVerificationEmail(It.IsAny<string>())).Returns(Task.FromResult(string.Empty));
+            _redisServiceMock.Setup(r => r.SaveVerificationCodeAsync(It.IsAny<string>(), It.IsAny<string>())).Returns(Task.FromResult(string.Empty));
+            _unitOfWorkMock.Setup(u => u.CommitAsync()).ReturnsAsync(1);
+            _walletServiceMock.Setup(w => w.AddWallet(It.IsAny<WalletRequest>())).ReturnsAsync(new WalletResponse { Id = "1" });
+            _studentServiceMock.Setup(s => s.CreateStudentAsync(It.IsAny<string>(), It.IsAny<StudentRequest>())).ReturnsAsync(new StudentResponse { Id = "1" });
 
-        //    // Act
-        //    var result = await _accountService.CreateStudentAccount(accountRequest, studentRequest);
+            // Act
+            var result = await _accountService.CreateStudentAccount(accountRequest, studentRequest);
 
-        //    // Assert
-        //    Assert.NotNull(result);
-        //    Assert.Equal("testuser@example.com", result.Email);
-        //    _emailServiceMock.Verify(e => e.SendEmailStudentRegister("testuser@example.com"), Times.Once);
-        //}
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("testuser@example.com", result.Email);
+            _emailServiceMock.Verify(e => e.SendVerificationEmail("testuser@example.com"), Times.Once);
+        }
         [Fact]
         public async Task CreateStudentAccount_ShouldThrowException_WhenCommitFails()
         {
