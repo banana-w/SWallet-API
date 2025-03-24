@@ -78,5 +78,23 @@ namespace SWallet_API.Controllers
                 ?? throw new ApiException("Account update failed.", StatusCodes.Status400BadRequest, "ACCOUNT_UPDATE_FAILED");
             return Ok(result);
         }
+
+        [HttpPost("validUsername/{username}")]
+        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> ValidUsername(string username)
+        {
+            var result = await _accountService.ValidUsername(username);
+            return Ok(result);
+        }
+
+        [HttpPost("validEmail/{email}")]
+        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> ValidEmail(string email)
+        {
+            var result = await _accountService.ValidEmail(email);
+            return Ok(result);
+        }
     }
 }

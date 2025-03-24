@@ -288,5 +288,30 @@ namespace SWallet.Repository.Services.Implements
             throw new ApiException("Update Account Failed", 400, "BAD_REQUEST");
         }
 
+        public Task<bool> ValidEmail(string email)
+        {
+            var account =  _unitOfWork.GetRepository<Account>().AnyAsync(x => x.Email == email);
+            if (account.Result)
+            {
+                return Task.FromResult(true);
+            }
+            else
+            {
+                return Task.FromResult(false);
+            }
+        }
+
+        public Task<bool> ValidUsername(string username)
+        {
+            var account = _unitOfWork.GetRepository<Account>().AnyAsync(x => x.UserName == username);
+            if (account.Result)
+            {
+                return Task.FromResult(true);
+            }
+            else
+            {
+                return Task.FromResult(false);
+            }
+        }
     }
 }
