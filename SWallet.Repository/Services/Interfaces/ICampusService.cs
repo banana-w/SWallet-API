@@ -15,8 +15,9 @@ namespace SWallet.Repository.Services.Interfaces
     {
         Task<IPaginate<CampusResponse>> GetCampus(string searchName, int page, int size);
         Task<CampusResponse> GetCampusById(string id);
-        Task<CampusResponse> CreateCampus(CreateCampusModel brand);
-        Task<CampusResponse> UpdateCampus(string id, UpdateCampusModel brand);
+        Task<CampusResponse> CreateCampus(CreateCampusModel campus);
+        Task<CampusResponse> UpdateCampus(string id, UpdateCampusModel campus);
+        Task<CampusResponse> CreateCampusByAccountId(string accountId, CreateCampusByAccIdModel campus);
         
         void Delete(string id);
 

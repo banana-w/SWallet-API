@@ -9,6 +9,7 @@ namespace SWallet.Repository.Payload.Response.Campus
     public class CampusResponse
     {
         public string Id { get; set; }
+        public string AccountId { get; set; }
         public string AreaId { get; set; }
         public string AreaName { get; set; }
         public string CampusName { get; set; }

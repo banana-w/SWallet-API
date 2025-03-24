@@ -57,7 +57,7 @@ namespace SWallet.Repository.Services.Implements
 
             var newCampus = new Campus
             {
-                Id = campus.Id,
+                Id = Ulid.NewUlid().ToString(),
                 AreaId = campus.AreaId,
                 CampusName = campus.CampusName,
                 Address = campus.Address,
@@ -102,7 +102,74 @@ namespace SWallet.Repository.Services.Implements
             throw new ApiException("Create Campus Fail", 400, "BAD_REQUEST");
         }
 
-    
+        public async Task<CampusResponse> CreateCampusByAccountId(string accountId, CreateCampusByAccIdModel campus)
+        {
+            {
+                var existingArea = await _unitOfWork.GetRepository<Area>().SingleOrDefaultAsync(
+               predicate: b => b.Id == campus.AreaId);
+
+                if (existingArea == null)
+                {
+                    throw new ApiException("Area not found", 400, "BAD_REQUEST");
+                }
+
+                var imageUri = string.Empty;
+                if (campus.Image != null && campus.Image.Length > 0)
+                {
+                    var uploadResult = await _cloudinaryService.UploadImageAsync(campus.Image);
+                    imageUri = uploadResult.SecureUrl.AbsoluteUri;
+                }
+
+                var newCampus = new Campus
+                {
+                    Id = Ulid.NewUlid().ToString(),
+                    AreaId = campus.AreaId,
+                    CampusName = campus.CampusName,
+                    Address = campus.Address,
+                    Phone = campus.Phone,
+                    Email = campus.Email,
+                    LinkWebsite = campus.Link,
+                    Image = imageUri,
+                    FileName = !string.IsNullOrEmpty(imageUri)
+                          ? imageUri.Split('/')[imageUri.Split('/').Length - 1]
+                          : "default_cover.jpg",
+                    DateCreated = DateTime.Now,
+                    DateUpdated = DateTime.Now,
+                    Description = campus.Description,
+                    State = campus.State,
+                    Status = true,
+                    AccountId = accountId // Use the provided accountId
+                };
+
+                await _unitOfWork.GetRepository<Campus>().InsertAsync(newCampus);
+                var isSuccess = await _unitOfWork.CommitAsync() > 0;
+
+                if (isSuccess)
+                {
+                    return new CampusResponse
+                    {
+                        Id = newCampus.Id,
+                        AreaId = newCampus.AreaId,
+                        AreaName = existingArea.AreaName,
+                        CampusName = newCampus.CampusName,
+                        Address = newCampus.Address,
+                        Phone = newCampus.Phone,
+                        Email = newCampus.Email,
+                        Link = newCampus.LinkWebsite,
+                        Image = newCampus.Image,
+                        FileName = newCampus.FileName,
+                        DateCreated = newCampus.DateCreated,
+                        DateUpdated = newCampus.DateUpdated,
+                        Description = newCampus.Description,
+                        State = newCampus.State,
+                        Status = newCampus.Status,
+                        AccountId = newCampus.AccountId
+                    };
+                }
+
+                throw new ApiException("Create Brand Fail", 400, "BAD_REQUEST");
+            }
+        }
 
         public void Delete(string id)
         {

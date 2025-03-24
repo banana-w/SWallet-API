@@ -6,8 +6,6 @@ namespace SWallet.Repository.Payload.Request.Campus;
 
 public class CreateCampusModel
 {
-    [Required(ErrorMessage = "ID là bắt buộc")]
-    public string Id { get; set; }
 
     [Required(ErrorMessage = "Khu vực là bắt buộc")]
     public string AreaId { get; set; }
@@ -16,7 +14,6 @@ public class CreateCampusModel
     [StringLength(255, MinimumLength = 3,
             ErrorMessage = "Độ dài tên trường từ 3 đến 255 ký tự")]
     public string CampusName { get; set; }
-
 
     public string Address { get; set; }
 
