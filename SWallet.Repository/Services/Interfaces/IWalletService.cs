@@ -19,6 +19,7 @@ namespace SWallet.Repository.Services.Interfaces
 
         Task AddPointsToWallet(string campusId, int points);
         Task AddPointsToBrandWallet(string brandId, int points);
+        Task AddPointsToStudentWallet(string studentId, int points);
 
 
     }

@@ -276,6 +276,48 @@ namespace SWallet.Repository.Services.Implements
             throw new ApiException("Update Wallet Failed", 500, "WALLET_UPDATE_FAILED");
         }
 
-       
+        public async Task AddPointsToStudentWallet(string studentId, int points)
+        {
+            try
+            {
+                // Tìm Wallet dựa trên CampusId
+                var wallet = await _unitOfWork.GetRepository<Wallet>().SingleOrDefaultAsync(
+                 predicate: b => b.StudentId == studentId);
+
+
+                if (wallet != null)
+                {
+                    // Cộng điểm vào Wallet
+                    wallet.Balance += points;
+
+                    // Cập nhật Wallet trong cơ sở dữ liệu
+                    _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
+                    await _unitOfWork.CommitAsync();
+                }
+                else
+                {
+                    // Xử lý trường hợp không tìm thấy Wallet
+                    // Bạn có thể tạo mới Wallet hoặc ném exception
+                    // Ví dụ: tạo mới Wallet
+                    var newWallet = new Wallet
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        Balance = points,
+                        StudentId = studentId,
+                        DateCreated = DateTime.Now,
+                        DateUpdated = DateTime.Now,
+                        Status = true
+                    };
+                    _unitOfWork.GetRepository<Wallet>().InsertAsync(wallet);
+                    await _unitOfWork.CommitAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                // Xử lý lỗi (ví dụ: log lỗi)
+                Console.WriteLine($"Lỗi khi cộng điểm vào Wallet: {ex.Message}");
+                throw; // Ném lại exception để xử lý ở tầng trên
+            }
+        }
     }
 }
