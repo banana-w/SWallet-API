@@ -14,4 +14,6 @@ public partial class LuckyPrize
     public int? Quantity { get; set; }
 
     public bool? Status { get; set; }
+
+    public int? Value { get; set; }
 }
