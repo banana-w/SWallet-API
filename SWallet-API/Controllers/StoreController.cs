@@ -62,11 +62,26 @@ namespace SWallet_API.Controllers
         }
 
         [HttpGet("brand")]
-        public async Task<ActionResult<IPaginate<StoreResponse>>> GetAllStoresByBrandId(string searchName = "", int page = 1, int size = 10)
+        public async Task<ActionResult<IPaginate<StoreResponse>>> GetAllStoresInBrand(string searchName = "", int page = 1, int size = 10)
         {
             try
             {
-                var result = await _storeService.GetStoreByBrandId(searchName, page, size);
+                var result = await _storeService.GetStoreInBrand(searchName, page, size);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting stores");
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error getting stores");
+            }
+        }
+
+        [HttpGet("brand/{brandId}")]
+        public async Task<ActionResult<IPaginate<StoreResponse>>> GetStoresByBrandId(string brandId, string searchName = "", int page = 1, int size = 10)
+        {
+            try
+            {
+                var result = await _storeService.GetStoreByBrandId(brandId, searchName, page, size);
                 return Ok(result);
             }
             catch (Exception ex)

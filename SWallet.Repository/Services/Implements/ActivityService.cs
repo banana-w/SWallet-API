@@ -44,7 +44,7 @@ namespace SWallet.Repository.Services.Implements
                     StoreId = activityRequest.StoreId,
                     StudentId = activityRequest.StudentId,
                     VoucherItemId = activityRequest.VoucherItemId,
-                    Type = (int)activityRequest.Type,
+                    Type = (int?)ActivityType.Buy,
                     Description = activityRequest.Description,
                     State = true,
                     Status = true
@@ -57,7 +57,7 @@ namespace SWallet.Repository.Services.Implements
                 await _walletService.UpdateWallet(wallet.Id, -(decimal)activityRequest.Cost);
                 await _voucherItemService.RedeemVoucherAsync(activityRequest.VoucherItemId);
 
-                //add transaction
+                //add activitytransaction
                 await AddActivityTransactionAsync(activity.Id, wallet.Id, (decimal)activityRequest.Cost, "Redeem voucher");
 
                 await _unitOfWork.CommitTransactionAsync();
