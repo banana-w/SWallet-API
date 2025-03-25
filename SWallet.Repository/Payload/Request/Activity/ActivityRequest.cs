@@ -15,7 +15,7 @@ namespace SWallet.Repository.Payload.Request.Activity
         [Required(ErrorMessage = "Sinh viên là bắt buộc")]
         public string StudentId { get; set; }
 
-        [Required(ErrorMessage = "Sinh viên là bắt buộc")]
+        [Required(ErrorMessage = "voucher item id là bắt buộc")]
         public string VoucherItemId { get; set; }
 
         /// <summary>
