@@ -108,7 +108,6 @@ public partial class SwalletDbContext : DbContext
         return strConn;
     }
 
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Account>(entity =>
@@ -884,6 +883,7 @@ public partial class SwalletDbContext : DbContext
                 .HasColumnName("probability");
             entity.Property(e => e.Quantity).HasColumnName("quantity");
             entity.Property(e => e.Status).HasColumnName("status");
+            entity.Property(e => e.Value).HasColumnName("value");
         });
 
         modelBuilder.Entity<Order>(entity =>
