@@ -87,5 +87,22 @@ namespace SWallet_API.Controllers
             }
         }
 
+        [HttpPost("RedeemVoucher")]
+        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+        public async Task<ActionResult<bool>> RedeemVoucher([FromBody] ActivityRequest activity)
+        {
+            try
+            {
+                var newActivity = await _activityService.RedeemVoucherActivityAsync(activity);
+                if (newActivity)
+                    return Ok(newActivity);
+                throw new ApiException("Redeem voucher fail", StatusCodes.Status400BadRequest, "REDEEM_VOUCHER_FAIL");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Error redeeming voucher: {ex.Message}");
+            }
+        }
+
     }
 }

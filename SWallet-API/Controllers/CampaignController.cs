@@ -18,7 +18,7 @@ namespace SWallet_API.Controllers
     public class CampaignController : ControllerBase
     {
         private readonly ICampaignService _campaignService;
-        private readonly ILogger<CampaignController> _logger; 
+        private readonly ILogger<CampaignController> _logger;
 
         public CampaignController(ICampaignService campaignService, ILogger<CampaignController> logger)
         {
@@ -69,6 +69,22 @@ namespace SWallet_API.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, "Error getting campaigns");
             }
         }
+        [HttpGet("brand/{brandId}")]
+        [ProducesResponseType(typeof(IPaginate<CampaignResponse>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<IPaginate<CampaignResponse>>> GetCampaignsByBrandId(string brandId, string searchName = "", int page = 1, int size = 10) // Pagination parameters
+        {
+            try
+            {
+                var campaignRespone = await _campaignService.GetCampaignsByBrandId(brandId, searchName, page, size);
+                return Ok(campaignRespone);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting campaigns"); // Log the error
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error getting campaigns");
+            }
+        }
+
         [HttpGet("getAll")]
         public async Task<ActionResult<IPaginate<CampaignResponse>>> GetAllCampaigns(string searchName = "", int page = 1, int size = 10) // Pagination parameters
         {
@@ -123,6 +139,7 @@ namespace SWallet_API.Controllers
 
 
         [HttpGet("{id}")]
+        [ProducesResponseType(typeof(CampaignResponseExtra),StatusCodes.Status200OK)]
         public async Task<IActionResult> GetCampaignById(string id)
         {
             var typeResponse = await _campaignService.GetCampaignById(id);

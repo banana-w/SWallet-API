@@ -9,7 +9,10 @@ using SWallet.Repository.Interfaces;
 using SWallet.Repository.Payload.ExceptionModels;
 using SWallet.Repository.Payload.Request.Account;
 using SWallet.Repository.Payload.Request.Student;
+using SWallet.Repository.Payload.Request.Wallet;
 using SWallet.Repository.Payload.Response.Account;
+using SWallet.Repository.Payload.Response.Student;
+using SWallet.Repository.Payload.Response.Wallet;
 using SWallet.Repository.Services.Implements;
 using SWallet.Repository.Services.Interfaces;
 
@@ -28,6 +31,8 @@ namespace Swallet_UnitTest.Services
         private readonly Mock<IStudentService> _studentServiceMock;
         private readonly Mock<IRedisService> _redisServiceMock;
         private readonly Mock<IStoreService> _storeServiceMock;
+        private readonly Mock<IWalletService> _walletServiceMock;
+
         public AccountServiceTest()
         {
             _unitOfWorkMock = new Mock<IUnitOfWork<SwalletDbContext>>();
@@ -39,6 +44,8 @@ namespace Swallet_UnitTest.Services
             _studentServiceMock = new Mock<IStudentService>();
             _redisServiceMock = new Mock<IRedisService>();
             _storeServiceMock = new Mock<IStoreService>();
+            _walletServiceMock = new Mock<IWalletService>();
+            _cloudinaryServiceMock = new Mock<ICloudinaryService>();
 
             _accountService = new AccountService(
                 _unitOfWorkMock.Object, _loggerMock.Object,
@@ -46,7 +53,9 @@ namespace Swallet_UnitTest.Services
                 _brandServiceMock.Object,
                 _studentServiceMock.Object,
                 _redisServiceMock.Object,
-                _storeServiceMock.Object
+                _storeServiceMock.Object,
+                _walletServiceMock.Object,
+                _cloudinaryServiceMock.Object
                 );
         }
 
@@ -72,20 +81,22 @@ namespace Swallet_UnitTest.Services
                 Gender = 1,
             };
 
-            var account = new Account { Id = "1", Email = "student1@example.com" };
-            var student = new Student { AccountId = "1" };
-            var accountResponse = new AccountResponse { Id = "1", Email = "student1@example.com" };
+            var account = new Account { Id = "1", Email = "testuser@example.com" };
+            var student = new Student { AccountId = "1", Id = "1" };
+            var accountResponse = new AccountResponse { Id = "1", Email = "testuser@example.com" };
 
-            
             _cloudinaryServiceMock.Setup(c => c.UploadImageAsync(It.IsAny<IFormFile>(), null, null)).ReturnsAsync(new ImageUploadResult
             {
                 SecureUrl = new Uri("http://example.com/image.jpg"),
                 PublicId = "image123"
             });
-            _unitOfWorkMock.Setup(u => u.GetRepository<Account>().InsertAsync(account)).Returns(Task.CompletedTask);
-            _unitOfWorkMock.Setup(u => u.GetRepository<Student>().InsertAsync(student)).Returns(Task.CompletedTask);
-            _emailServiceMock.Setup(e => e.SendEmailStudentRegister(It.IsAny<string>()));
+            _unitOfWorkMock.Setup(u => u.GetRepository<Account>().InsertAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
+            _unitOfWorkMock.Setup(u => u.GetRepository<Student>().InsertAsync(It.IsAny<Student>())).Returns(Task.CompletedTask);
+            _emailServiceMock.Setup(e => e.SendVerificationEmail(It.IsAny<string>())).Returns(Task.FromResult(string.Empty));
+            _redisServiceMock.Setup(r => r.SaveVerificationCodeAsync(It.IsAny<string>(), It.IsAny<string>())).Returns(Task.FromResult(string.Empty));
             _unitOfWorkMock.Setup(u => u.CommitAsync()).ReturnsAsync(1);
+            _walletServiceMock.Setup(w => w.AddWallet(It.IsAny<WalletRequest>())).ReturnsAsync(new WalletResponse { Id = "1" });
+            _studentServiceMock.Setup(s => s.CreateStudentAsync(It.IsAny<string>(), It.IsAny<StudentRequest>())).ReturnsAsync(new StudentResponse { Id = "1" });
 
             // Act
             var result = await _accountService.CreateStudentAccount(accountRequest, studentRequest);
@@ -93,7 +104,7 @@ namespace Swallet_UnitTest.Services
             // Assert
             Assert.NotNull(result);
             Assert.Equal("testuser@example.com", result.Email);
-            //_emailServiceMock.Verify(e => e.SendEmailStudentRegister("testuser@example.com"), Times.Once);
+            _emailServiceMock.Verify(e => e.SendVerificationEmail("testuser@example.com"), Times.Once);
         }
         [Fact]
         public async Task CreateStudentAccount_ShouldThrowException_WhenCommitFails()

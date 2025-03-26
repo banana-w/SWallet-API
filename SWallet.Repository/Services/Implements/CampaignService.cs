@@ -554,10 +554,10 @@ namespace SWallet.Repository.Services.Implements
             throw new NotImplementedException();
         }
 
-        public async Task<CampaignResponse> GetCampaignById(string id)
+        public async Task<CampaignResponseExtra> GetCampaignById(string id)
         {
             var area = await _unitOfWork.GetRepository<Campaign>().SingleOrDefaultAsync(
-                selector: x => new CampaignResponse
+                selector: x => new CampaignResponseExtra
                 {
                     Id = x.Id,
                     BrandId = x.BrandId,
@@ -575,11 +575,12 @@ namespace SWallet.Repository.Services.Implements
                     Description = x.Description,
                     Status = x.Status,
                     TotalIncome = x.TotalIncome,
-                    TotalSpending = x.TotalSpending
-
+                    TotalSpending = x.TotalSpending,
+                    CampaignDetailId = x.CampaignDetails.Select(cd => cd.Id)
                 },
                 
-                predicate: x => x.Id == id);
+                predicate: x => x.Id == id,
+                include: x => x.Include(x => x.CampaignDetails));
             ;
             return area;
         }
@@ -688,6 +689,49 @@ namespace SWallet.Repository.Services.Implements
             else
             {
                 filterQuery = p => p.CampaignName.Contains(searchName);
+            }
+
+            var campaigns = await _unitOfWork.GetRepository<Campaign>().GetPagingListAsync(
+                selector: x => new CampaignResponse
+                {
+                    Id = x.Id,
+                    BrandId = x.BrandId,
+                    BrandName = x.Brand.BrandName,
+                    BrandAcronym = x.Brand.Acronym,
+                    TypeId = x.TypeId,
+                    TypeName = x.Type.TypeName,
+                    CampaignName = x.CampaignName,
+                    Image = x.Image,
+                    ImageName = x.ImageName,
+                    Condition = x.Condition,
+                    Link = x.Link,
+                    StartOn = x.StartOn,
+                    EndOn = x.EndOn,
+                    Duration = x.Duration,
+                    TotalIncome = x.TotalIncome,
+                    TotalSpending = x.TotalSpending,
+                    DateCreated = x.DateCreated,
+                    DateUpdated = x.DateUpdated,
+                    Description = x.Description,
+                    Status = x.Status
+                },
+                predicate: filterQuery,
+                page: page,
+                include: query => query.Include(x => x.Brand).Include(x => x.Type),
+                size: size);
+            return campaigns;
+        }
+
+        public async Task<IPaginate<CampaignResponse>> GetCampaignsByBrandId(string brandId, string? searchName, int page, int size)
+        {
+            Expression<Func<Campaign, bool>> filterQuery;
+            if (string.IsNullOrEmpty(searchName))
+            {
+                filterQuery = p => p.BrandId == brandId;
+            }
+            else
+            {
+                filterQuery = p => p.BrandId == brandId && p.CampaignName.Contains(searchName);
             }
 
             var campaigns = await _unitOfWork.GetRepository<Campaign>().GetPagingListAsync(

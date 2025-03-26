@@ -213,6 +213,96 @@ namespace SWallet.Repository.Services.Implements
 
             return stores;
         }
+        public async Task<IPaginate<StoreResponse>> GetStoreInBrand(string searchName, int page, int size)
+        {
+            var brandId = GetBrandIdFromJwt();
+            Expression<Func<Store, bool>> filterQuery;
+
+            if (string.IsNullOrEmpty(searchName))
+            {
+                filterQuery = p => p.BrandId == brandId;
+            }
+            else
+            {
+                filterQuery = p => p.BrandId == brandId && p.StoreName.Contains(searchName);
+            }
+
+            var stores = await _unitOfWork.GetRepository<Store>().GetPagingListAsync(
+                selector: x => new StoreResponse
+                {
+                    Id = x.Id,
+                    AccountId = x.AccountId,
+                    BrandId = x.BrandId,
+                    BrandName = x.Brand.BrandName,
+                    AreaId = x.AreaId,
+                    AreaName = x.Area.AreaName,
+                    StoreName = x.StoreName,
+                    Address = x.Address,
+                    OpeningHours = x.OpeningHours,
+                    ClosingHours = x.ClosingHours,
+                    DateCreated = x.DateCreated,
+                    DateUpdated = x.DateUpdated,
+                    Description = x.Description,
+                    State = x.State,
+                    Status = x.Account.Status,
+                    UserName = x.Account.UserName,
+                    Email = x.Account.Email,
+                    Phone = x.Account.Phone,
+                    Avatar = x.Account.Avatar,
+                    AvatarFileName = x.Account.FileName,
+                },
+                predicate: filterQuery,
+                include: x => x.Include(a => a.Account).Include(b => b.Brand).Include(c => c.Area),
+                page: page,
+                size: size);
+
+            return stores;
+        }
+        
+        public async Task<IPaginate<StoreResponse>> GetStoreByBrandId(string brandId, string searchName, int page, int size)
+        {
+            Expression<Func<Store, bool>> filterQuery;
+
+            if (string.IsNullOrEmpty(searchName))
+            {
+                filterQuery = p => p.BrandId == brandId;
+            }
+            else
+            {
+                filterQuery = p => p.BrandId == brandId && p.StoreName.Contains(searchName);
+            }
+
+            var stores = await _unitOfWork.GetRepository<Store>().GetPagingListAsync(
+                selector: x => new StoreResponse
+                {
+                    Id = x.Id,
+                    AccountId = x.AccountId,
+                    BrandId = x.BrandId,
+                    BrandName = x.Brand.BrandName,
+                    AreaId = x.AreaId,
+                    AreaName = x.Area.AreaName,
+                    StoreName = x.StoreName,
+                    Address = x.Address,
+                    OpeningHours = x.OpeningHours,
+                    ClosingHours = x.ClosingHours,
+                    DateCreated = x.DateCreated,
+                    DateUpdated = x.DateUpdated,
+                    Description = x.Description,
+                    State = x.State,
+                    Status = x.Account.Status,
+                    UserName = x.Account.UserName,
+                    Email = x.Account.Email,
+                    Phone = x.Account.Phone,
+                    Avatar = x.Account.Avatar,
+                    AvatarFileName = x.Account.FileName,
+                },
+                predicate: filterQuery,
+                include: x => x.Include(a => a.Account).Include(b => b.Brand).Include(c => c.Area),
+                page: page,
+                size: size);
+
+            return stores;
+        }
 
         public async Task<StoreResponse> GetStoreById(string id)
         {
