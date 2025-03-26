@@ -79,6 +79,16 @@ namespace SWallet_API.Controllers
             return Ok(result);
         }
 
+        [HttpPut("{id}/avatar")]
+        [ProducesResponseType(typeof(AccountResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> UpdateAccountAvatar(string id, IFormFile avatar)
+        {
+            var result = await _accountService.UpdateAccountAvatar(id, avatar);
+            return Ok(result);
+        }
+
         [HttpPost("validUsername/{username}")]
         [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
