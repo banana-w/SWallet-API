@@ -50,6 +50,11 @@ namespace SWallet.Repository.Services
             var id = _httpContextAccessor?.HttpContext?.User?.FindFirst("brandId");
             return id?.Value ?? string.Empty;
         }
+        protected string GetStudentIdFromJwt()
+        {
+            var id = _httpContextAccessor?.HttpContext?.User?.FindFirst("studentId");
+            return id?.Value ?? string.Empty;
+        }
         //protected string GetOrganizationIdFromJwt()
         //{
         //    return _httpContextAccessor?.HttpContext?.User?.FindFirstValue("organizationId");

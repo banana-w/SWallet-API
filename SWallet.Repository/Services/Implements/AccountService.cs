@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using SWallet.Domain.Models;
 using SWallet.Repository.Enums;
@@ -8,6 +9,7 @@ using SWallet.Repository.Payload.Request.Account;
 using SWallet.Repository.Payload.Request.Brand;
 using SWallet.Repository.Payload.Request.Store;
 using SWallet.Repository.Payload.Request.Student;
+using SWallet.Repository.Payload.Request.Wallet;
 using SWallet.Repository.Payload.Response.Account;
 using SWallet.Repository.Services.Interfaces;
 using SWallet.Repository.Utils;
@@ -23,9 +25,13 @@ namespace SWallet.Repository.Services.Implements
         private readonly IStudentService _studentService;
         private readonly IStoreService _storeService;
         private readonly IRedisService _redisService;
+        private readonly IWalletService _walletService;
+        private readonly ICloudinaryService _cloudinaryService;
 
         public AccountService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<AccountService> logger,
-            IEmailService emailService, IBrandService brandService, IStudentService studentService, IRedisService redisService, IStoreService storeService) : base(unitOfWork, logger)
+            IEmailService emailService, IBrandService brandService, IStudentService studentService,
+            IRedisService redisService, IStoreService storeService, IWalletService walletService, 
+            ICloudinaryService cloudinaryService) : base(unitOfWork, logger)
         {
             var config = new MapperConfiguration(cfg
                 =>
@@ -80,22 +86,22 @@ namespace SWallet.Repository.Services.Implements
                 .ReverseMap();
 
 
-           //     cfg.CreateMap<Student, CreateStudentAccount>()
-           //.ReverseMap()
-           //.ForMember(s => s.Id, opt => opt.MapFrom(src => Ulid.NewUlid()))
-           //.ForMember(s => s.TotalIncome, opt => opt.MapFrom(src => 0))
-           //.ForMember(s => s.TotalSpending, opt => opt.MapFrom(src => 0))
-           //.ForMember(s => s.DateCreated, opt => opt.MapFrom(src => DateTime.Now))
-           //.ForMember(s => s.DateUpdated, opt => opt.MapFrom(src => DateTime.Now))
-           //.ForMember(s => s.State, opt => opt.MapFrom(src => StudentState.Pending))
-           //.ForMember(s => s.Status, opt => opt.MapFrom(src => true));                
+                //     cfg.CreateMap<Student, CreateStudentAccount>()
+                //.ReverseMap()
+                //.ForMember(s => s.Id, opt => opt.MapFrom(src => Ulid.NewUlid()))
+                //.ForMember(s => s.TotalIncome, opt => opt.MapFrom(src => 0))
+                //.ForMember(s => s.TotalSpending, opt => opt.MapFrom(src => 0))
+                //.ForMember(s => s.DateCreated, opt => opt.MapFrom(src => DateTime.Now))
+                //.ForMember(s => s.DateUpdated, opt => opt.MapFrom(src => DateTime.Now))
+                //.ForMember(s => s.State, opt => opt.MapFrom(src => StudentState.Pending))
+                //.ForMember(s => s.Status, opt => opt.MapFrom(src => true));                
                 cfg.CreateMap<Account, AccountRequest>()
             .ReverseMap()
             .ForMember(t => t.Id, opt => opt.MapFrom(src => Ulid.NewUlid()))
             .ForMember(t => t.Password, opt => opt.MapFrom(src => BCryptNet.HashPassword(src.Password))) // HashPassword when create account
             .ForMember(t => t.IsVerify, opt => opt.MapFrom(src => false)) // Verify 1st
             .ForMember(t => t.DateCreated, opt => opt.MapFrom(src => DateTime.Now))
-            .ForMember(t => t.DateUpdated, opt => opt.MapFrom(src => DateTime.Now))           
+            .ForMember(t => t.DateUpdated, opt => opt.MapFrom(src => DateTime.Now))
             .ForMember(t => t.Status, opt => opt.MapFrom(src => true));
             });
             mapper ??= new Mapper(config);
@@ -104,6 +110,8 @@ namespace SWallet.Repository.Services.Implements
             _studentService = studentService;
             _redisService = redisService;
             _storeService = storeService;
+            _walletService = walletService;
+            _cloudinaryService = cloudinaryService;
         }
 
         public async Task<AccountResponse> CreateBrandAccount(AccountRequest accountRequest, CreateBrandByAccountId brandRequest)
@@ -124,13 +132,25 @@ namespace SWallet.Repository.Services.Implements
 
                 bool isSuccess = await _unitOfWork.CommitAsync() > 0;
                 if (isSuccess)
-                {                   
-                    await _brandService.CreateBrandAsync(ac.Id, brandRequest);
+                {
+                    var brand = await _brandService.CreateBrandAsync(ac.Id, brandRequest);
+
+
+                    await _walletService.AddWallet(new WalletRequest
+                    {
+                        BrandId = brand.Id,
+                        Type = (int)WalletType.Green,
+                        Balance = 0,
+                        Description = "Brand Wallet",
+                        State = true
+                    });
+
                     if (ac.Email != null)
                     {
                         var code = await _emailService.SendVerificationEmail(ac.Email);
                         await _redisService.SaveVerificationCodeAsync(ac.Email, code);
                     }
+
                     await _unitOfWork.CommitTransactionAsync();
                     return mapper.Map<AccountResponse>(ac);
                 }
@@ -195,14 +215,23 @@ namespace SWallet.Repository.Services.Implements
                 bool issuccessfull = await _unitOfWork.CommitAsync() > 0;
                 if (issuccessfull)
                 {
-                    var result = await _studentService.CreateStudentAsync(ac.Id, studentRequest);
+                    var student = await _studentService.CreateStudentAsync(ac.Id, studentRequest);
 
-                    if (ac.Email != null && result)
+
+                    await _walletService.AddWallet(new WalletRequest
+                    {
+                        StudentId = student.Id,
+                        Type = (int)WalletType.Green,
+                        Balance = 0,
+                        Description = "Student Wallet",
+                        State = true
+                    });
+
+                    if (ac.Email != null)
                     {
                         var code = await _emailService.SendVerificationEmail(ac.Email);
                         await _redisService.SaveVerificationCodeAsync(ac.Email, code);
                     }
-
                     await _unitOfWork.CommitTransactionAsync();
                     return mapper.Map<AccountResponse>(ac);
                 }
@@ -264,5 +293,51 @@ namespace SWallet.Repository.Services.Implements
             throw new ApiException("Update Account Failed", 400, "BAD_REQUEST");
         }
 
+        public async Task<AccountResponse> UpdateAccountAvatar(string id, IFormFile avatar)
+        {
+            var account = await _unitOfWork.GetRepository<Account>().SingleOrDefaultAsync(predicate: x => x.Id == id);
+            if (account == null)
+            {
+                throw new ApiException("Account not found", 404, "NOT_FOUND");
+            }
+            if (avatar != null && avatar.Length > 0)
+            {
+                if (!string.IsNullOrEmpty(account.Avatar))
+                {
+                    await _cloudinaryService.RemoveImageAsync(account.Avatar);
+                }
+                var uploadResult = await _cloudinaryService.UploadImageAsync(avatar);
+                account.Avatar = uploadResult.SecureUrl.AbsoluteUri;
+            }
+            account.DateUpdated = DateTime.Now;
+
+            _unitOfWork.GetRepository<Account>().UpdateAsync(account);
+            var result = await _unitOfWork.CommitAsync() > 0;
+            if (result)
+            {
+                return mapper.Map<AccountResponse>(account);
+            }
+            throw new ApiException("Update Account Avatar Failed", 400, "BAD_REQUEST");
+        }
+
+        public Task<bool> ValidEmail(string email)
+        {
+            var account = _unitOfWork.GetRepository<Account>().AnyAsync(x => x.Email == email);
+            if (account.Result)
+            {
+                throw new ApiException("Email already exists", 400, "BAD_REQUEST");
+            }
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> ValidUsername(string username)
+        {
+            var account = _unitOfWork.GetRepository<Account>().AnyAsync(x => x.UserName == username);
+            if (account.Result)
+            {
+                throw new ApiException("Username already exists", 400, "BAD_REQUEST");
+            }
+            return Task.FromResult(true);
+        }
     }
 }

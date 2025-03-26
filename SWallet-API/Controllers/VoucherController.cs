@@ -41,6 +41,19 @@ namespace SWallet_API.Controllers
             }
             throw new ApiException("Voucher not found.", StatusCodes.Status404NotFound, "VOUCHER_NOT_FOUND");
         }
+
+        [HttpGet("withCDid")]
+        [ProducesResponseType(typeof(VoucherResponse), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetVoucherByCDId(string id, string campaignDetailId)
+        {
+            var result = await _voucherService.GetVoucherWithCampaignDetailId(id, campaignDetailId);
+            if (result != null)
+            {
+                return Ok(result);
+            }
+            throw new ApiException("Voucher not found.", StatusCodes.Status404NotFound, "VOUCHER_NOT_FOUND");
+        }
+
         [HttpGet]
         [ProducesResponseType(typeof(IPaginate<VoucherResponse>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetVouchers(string brandId, string? search, bool? state, bool? isAsc, int page, int size)
