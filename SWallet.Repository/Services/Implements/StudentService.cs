@@ -3,7 +3,9 @@ using SWallet.Domain.Models;
 using SWallet.Domain.Paginate;
 using SWallet.Repository.Enums;
 using SWallet.Repository.Interfaces;
+using SWallet.Repository.Payload.ExceptionModels;
 using SWallet.Repository.Payload.Request.Student;
+using SWallet.Repository.Payload.Response.Store;
 using SWallet.Repository.Payload.Response.Student;
 using SWallet.Repository.Services.Interfaces;
 using System.Linq.Expressions;
@@ -164,7 +166,7 @@ namespace SWallet.Repository.Services.Implements
             return students;
         }
 
-        public async Task<bool> UpdateStudentAsync(string accountId, StudentRequest studentRequest)
+        public async Task<StudentResponse> UpdateStudentAsync(string accountId, StudentRequest studentRequest)
         {
             if (string.IsNullOrEmpty(accountId) || studentRequest == null)
             {
@@ -174,7 +176,7 @@ namespace SWallet.Repository.Services.Implements
             var student = await _unitOfWork.GetRepository<Student>().SingleOrDefaultAsync(predicate: x => x.AccountId == accountId);
             if (student == null)
             {
-                return false;
+                throw new ApiException("Student null", 400, "BAD_REQUEST");
             }
 
             var imageUri = student.StudentCardFront;
@@ -200,8 +202,31 @@ namespace SWallet.Repository.Services.Implements
 
             _unitOfWork.GetRepository<Student>().UpdateAsync(student);
             var result = await _unitOfWork.CommitAsync();
+            if (result > 0)
+            {
+                return new StudentResponse
+                {
+                    Id = student.Id,
+                    CampusId = student.CampusId,
+                    AccountId = student.AccountId,
+                    StudentCardFront = student.StudentCardFront,
+                    StudentCardBack = student.StudentCardBack,
+                    Address = student.Address,
+                    DateOfBirth = student.DateOfBirth,
+                    Code = student.Code,
+                    FullName = student.FullName,
+                    DateCreated = student.DateCreated,
+                    DateUpdated = student.DateUpdated,
+                    Gender = student.Gender,
+                    State = student.State,
+                    Status = student.Status,
+                    TotalIncome = student.TotalIncome,
+                    TotalSpending = student.TotalSpending,
 
-            return result > 0;
+                };
+            }
+            throw new ApiException("Update Student Fail", 400, "BAD_REQUEST");
+
         }
     }
 }
