@@ -176,7 +176,7 @@ namespace SWallet.Repository.Services.Implements
             var student = await _unitOfWork.GetRepository<Student>().SingleOrDefaultAsync(predicate: x => x.AccountId == accountId);
             if (student == null)
             {
-                throw new ApiException("Student null", 400, "BAD_REQUEST");
+                throw new ApiException("Student null, null null", 400, "BAD_REQUEST");
             }
 
             var imageUri = student.StudentCardFront;
