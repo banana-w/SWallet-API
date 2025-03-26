@@ -108,7 +108,8 @@ namespace SWallet.Repository.Services.Implements
                 Token = _jwtService.GenerateJwtToken(acc, guidClaim),
                 Role = acc.RoleName,
                 AccountId = acc.Id,
-                IsVerify = acc.IsVerify
+                IsVerify = acc.IsVerify,
+                Email = acc.Email,
             };
         }
 
