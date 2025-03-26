@@ -171,10 +171,49 @@ namespace SWallet.Repository.Services.Implements
                     State = v.State,
                     Status = v.Status,
                     NumberOfItemsAvailable = null,
-                    //v.VoucherItems.Where(i => !(bool)i.IsLocked && !(bool)i.IsBought && !(bool)i.IsUsed && i.CampaignDetailId.IsNullOrEmpty()).Count(),
                     NumberOfItems = v.VoucherItems.Count()
                 },
-                predicate: x => x.Id == id);
+                predicate: x => x.Id == id,
+                include: x => x.Include(x => x.VoucherItems));
+            if (voucher != null)
+            {
+                return voucher;
+            }
+            throw new ApiException("Voucher not found", 404, "NOT_FOUND");
+        }
+        
+        public async Task<VoucherResponse> GetVoucherWithCampaignDetailId(string id, string campaignDetailId)
+        {
+            var voucher = await _unitOfWork.GetRepository<Voucher>().SingleOrDefaultAsync(
+                selector: v => new VoucherResponse
+                {
+                    Id = v.Id,
+                    BrandId = v.BrandId,
+                    BrandName = v.Brand.BrandName,
+                    TypeId = v.TypeId,
+                    TypeName = v.Type.TypeName,
+                    VoucherName = v.VoucherName,
+                    Price = v.Price,
+                    Rate = v.Rate,
+                    Condition = v.Condition,
+                    Image = v.Image,
+                    ImageName = v.ImageName,
+                    File = v.File,
+                    FileName = v.FileName,
+                    DateCreated = v.DateCreated,
+                    DateUpdated = v.DateUpdated,
+                    Description = v.Description,
+                    State = v.State,
+                    Status = v.Status,
+                    NumberOfItemsAvailable = v.VoucherItems != null 
+                                                            ? v.VoucherItems
+                                                                .Where(i => !(bool)i.IsLocked && !(bool)i.IsBought && !(bool)i.IsUsed && i.CampaignDetailId == campaignDetailId)
+                                                                .Count() 
+                                                            : 0,
+                    NumberOfItems = v.VoucherItems.Where(i => i.CampaignDetailId == campaignDetailId).Count()
+                },
+                predicate: x => x.Id == id,
+                include: x => x.Include(x => x.VoucherItems));
             if (voucher != null)
             {
                 return voucher;
