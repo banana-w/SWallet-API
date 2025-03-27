@@ -46,6 +46,17 @@ namespace SWallet_API.Controllers
             return Ok(storeResponse);
         }
 
+        [HttpGet("account/{id}")]
+        public async Task<IActionResult> GetStoreByAccountId(string id)
+        {
+            var storeResponse = await _storeService.GetStoreByAccountId(id);
+            if (storeResponse == null)
+            {
+                return NotFound();
+            }
+            return Ok(storeResponse);
+        }
+
         [HttpGet]
         public async Task<ActionResult<IPaginate<StoreResponse>>> GetAllStores(string searchName = "", int page = 1, int size = 10)
         {
