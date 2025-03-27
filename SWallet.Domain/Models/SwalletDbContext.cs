@@ -95,7 +95,7 @@ public partial class SwalletDbContext : DbContext
     public virtual DbSet<Wallet> Wallets { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-     => optionsBuilder.UseSqlServer(GetConnectionString());
+                    => optionsBuilder.UseSqlServer(GetConnectionString());
 
     private string GetConnectionString()
     {
@@ -1486,6 +1486,9 @@ public partial class SwalletDbContext : DbContext
             entity.Property(e => e.StudentCardFront)
                 .HasColumnType("text")
                 .HasColumnName("student_card_front");
+            entity.Property(e => e.StudentEmail)
+                .HasMaxLength(300)
+                .HasColumnName("student_email");
             entity.Property(e => e.TotalIncome)
                 .HasColumnType("decimal(38, 2)")
                 .HasColumnName("total_income");

@@ -62,6 +62,7 @@ namespace SWallet.Repository.Services.Implements
                     Id = student.Id,
                     CampusId = student.CampusId,
                     AccountId = student.AccountId,
+                    StudentEmail = student.StudentEmail,
                     StudentCardFront = student.StudentCardFront,
                     StudentCardBack = student.StudentCardBack,
                     Address = student.Address,
@@ -70,6 +71,12 @@ namespace SWallet.Repository.Services.Implements
                     FullName = student.FullName,
                     DateCreated = student.DateCreated,
                     DateUpdated = student.DateUpdated,
+                    Gender = student.Gender,
+                    State = student.State,
+                    Status = student.Status,
+                    TotalIncome = student.TotalIncome,
+                    TotalSpending = student.TotalSpending,
+                    
                 };
             }
             throw new ApiException("Create student fail", 400, "STUDENT_FAIL");
@@ -92,6 +99,7 @@ namespace SWallet.Repository.Services.Implements
                     StudentCardBack = x.StudentCardBack,
                     Address = x.Address,
                     DateOfBirth = x.DateOfBirth,
+                    StudentEmail = x.StudentEmail,
                     Code = x.Code,
                     FullName = x.FullName,
                     DateCreated = x.DateCreated,
@@ -130,6 +138,7 @@ namespace SWallet.Repository.Services.Implements
                     DateOfBirth = x.DateOfBirth,
                     Code = x.Code,
                     FullName = x.FullName,
+                    StudentEmail = x.StudentEmail,
                     DateCreated = x.DateCreated,
                     DateUpdated = x.DateUpdated,
                     Gender = x.Gender,
@@ -161,6 +170,7 @@ namespace SWallet.Repository.Services.Implements
                     AccountId = x.AccountId,
                     StudentCardFront = x.StudentCardFront,
                     StudentCardBack = x.StudentCardBack,
+                    StudentEmail = x.StudentEmail,
                     Address = x.Address,
                     DateOfBirth = x.DateOfBirth,
                     Code = x.Code,

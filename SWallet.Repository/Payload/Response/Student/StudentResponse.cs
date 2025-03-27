@@ -23,6 +23,7 @@ namespace SWallet.Repository.Payload.Response.Student
         public string? FileNameBack { get; set; }
 
         public string? FullName { get; set; }
+        public string? StudentEmail { get; set; }
 
         public string? Code { get; set; }
 

@@ -127,6 +127,7 @@ namespace SWallet.Repository.Services.Implements
                 if (result)
                 {
                     student.State = (int)StudentState.Active;
+                    student.StudentEmail = email;
                     _unitOfWork.GetRepository<Student>().UpdateAsync(student);
                     return await _unitOfWork.CommitAsync() > 0;
                 }
