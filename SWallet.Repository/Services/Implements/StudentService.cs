@@ -230,6 +230,7 @@ namespace SWallet.Repository.Services.Implements
                     StudentCardBack = student.StudentCardBack,
                     Address = student.Address,
                     DateOfBirth = student.DateOfBirth,
+                    Gender = student.Gender,
                     Code = student.Code,
                     FullName = student.FullName,
                     DateCreated = student.DateCreated,
