@@ -19,6 +19,8 @@ public partial class Student
 
     public string? FileNameBack { get; set; }
 
+    public string? StudentEmail { get; set; }
+
     public string? FullName { get; set; }
 
     public string? Code { get; set; }
@@ -27,7 +29,7 @@ public partial class Student
 
     public DateOnly? DateOfBirth { get; set; }
 
-    public string Address { get; set; } = null!;
+    public string? Address { get; set; }
 
     public decimal? TotalIncome { get; set; }
 

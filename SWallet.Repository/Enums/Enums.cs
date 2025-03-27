@@ -33,7 +33,7 @@ namespace SWallet.Repository.Enums
     public enum StudentState
     {
         [Display(Name = "Chờ duyệt")]
-        [Description("Trạng thái chờ duyệt bởi quản trị viên")]
+        [Description("Trạng thái chờ duyệt")]
         Pending = 1,
 
         [Display(Name = "Hoạt động")]
