@@ -20,6 +20,7 @@ using System.Threading.Tasks;
 using static Org.BouncyCastle.Asn1.Cmp.Challenge;
 using BCryptNet = BCrypt.Net.BCrypt;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore.Query;
 
 namespace SWallet.Repository.Services.Implements
 {
@@ -448,30 +449,38 @@ namespace SWallet.Repository.Services.Implements
         public async Task<StoreResponse> GetStoreByAccountId(string id)
         {
             var area = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(
-              selector: x => new StoreResponse
-              {
-                  Id = x.Id,
-                  AccountId = x.AccountId,
-                  BrandId = x.BrandId,
-                  BrandName = x.Brand.BrandName,
-                  AreaId = x.AreaId,
-                  AreaName = x.Area.AreaName,
-                  StoreName = x.StoreName,
-                  Address = x.Address,
-                  OpeningHours = x.OpeningHours,
-                  ClosingHours = x.ClosingHours,
-                  DateCreated = x.DateCreated,
-                  DateUpdated = x.DateUpdated,
-                  Description = x.Description,
-                  State = x.State,
-                  Status = x.Account.Status,
-                  UserName = x.Account.UserName,
-                  Email = x.Account.Email,
-                  Phone = x.Account.Phone,
-                  Avatar = x.Account.Avatar,
-                  AvatarFileName = x.Account.FileName,
-              },
-              predicate: x => x.AccountId == id);
+                selector: x => new StoreResponse
+                {
+                    Id = x.Id,
+                    AccountId = x.AccountId,
+                    BrandLogo = x.Brand.CoverPhoto,
+                    AreaImage = x.Area.Image,
+                    Avatar = x.Account.Avatar,
+                    AvatarFileName = x.Account.FileName,
+                    File = x.File,
+                    FileName = x.FileName,
+                    BrandId = x.BrandId,
+                    BrandName = x.Brand.BrandName,
+                    AreaId = x.AreaId,
+                    AreaName = x.Area.AreaName,
+                    StoreName = x.StoreName,
+                    Address = x.Address,
+                    OpeningHours = x.OpeningHours,
+                    ClosingHours = x.ClosingHours,
+                    DateCreated = x.DateCreated,
+                    DateUpdated = x.DateUpdated,
+                    Description = x.Description,
+                    State = x.State,
+                    Status = x.Account.Status,
+                    UserName = x.Account.UserName,
+                    Email = x.Account.Email,
+                    Phone = x.Account.Phone,
+
+                },
+                predicate: x => x.AccountId == id,
+                include: x => x.Include(a => a.Account)
+                              .Include(a => a.Brand)
+                              .Include(a => a.Area));
             return area;
         }
     }
