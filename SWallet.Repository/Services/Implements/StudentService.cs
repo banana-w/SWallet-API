@@ -249,5 +249,15 @@ namespace SWallet.Repository.Services.Implements
             }
             throw new ApiException("Update student fail", 400, "STUDENT_FAIL");
         }
+
+        public Task<bool> ValidEmailStudent(string email)
+        {
+            var result = _unitOfWork.GetRepository<Student>().AnyAsync(x => x.StudentEmail == email);
+            if (result.Result)
+            {
+                throw new ApiException("Email already exists", 400, "BAD_REQUEST");
+            }
+            return Task.FromResult(true);
+        }
     }
 }
