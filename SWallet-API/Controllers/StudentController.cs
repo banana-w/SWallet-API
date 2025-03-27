@@ -62,5 +62,14 @@ namespace SWallet_API.Controllers
             var result = await _studentService.UpdateStudentAsync(id, studentRequest);
             return Ok(result);
         }
+
+        [HttpPost("validSudentEmail/{email}")]
+        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+        [ProducesDefaultResponseType(typeof(ErrorResponse))]
+        public async Task<IActionResult> ValidEmailStudent(string email)
+        {
+            var result = await _studentService.ValidEmailStudent(email);
+            return Ok(result);
+        }
     }
 }
