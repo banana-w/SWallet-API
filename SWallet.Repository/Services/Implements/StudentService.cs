@@ -182,7 +182,7 @@ namespace SWallet.Repository.Services.Implements
             return students;
         }
 
-        public async Task<bool> UpdateStudentAsync(string accountId, StudentRequest studentRequest)
+        public async Task<StudentResponse> UpdateStudentAsync(string accountId, StudentRequest studentRequest)
         {
             if (string.IsNullOrEmpty(accountId) || studentRequest == null)
             {
@@ -192,7 +192,7 @@ namespace SWallet.Repository.Services.Implements
             var student = await _unitOfWork.GetRepository<Student>().SingleOrDefaultAsync(predicate: x => x.AccountId == accountId);
             if (student == null)
             {
-                return false;
+                 throw new ApiException(" student null", 400, "STUDENT_FAIL"); ;
             }
 
             var imageUri = student.StudentCardFront;
@@ -219,7 +219,24 @@ namespace SWallet.Repository.Services.Implements
             _unitOfWork.GetRepository<Student>().UpdateAsync(student);
             var result = await _unitOfWork.CommitAsync();
 
-            return result > 0;
+            if (result > 0)
+            {
+                return new StudentResponse
+                {
+                    Id = student.Id,
+                    CampusId = student.CampusId,
+                    AccountId = student.AccountId,
+                    StudentCardFront = student.StudentCardFront,
+                    StudentCardBack = student.StudentCardBack,
+                    Address = student.Address,
+                    DateOfBirth = student.DateOfBirth,
+                    Code = student.Code,
+                    FullName = student.FullName,
+                    DateCreated = student.DateCreated,
+                    DateUpdated = student.DateUpdated,
+                };
+            }
+            throw new ApiException("Update student fail", 400, "STUDENT_FAIL");
         }
     }
 }
