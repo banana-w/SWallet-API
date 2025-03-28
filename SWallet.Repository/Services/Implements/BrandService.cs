@@ -204,10 +204,11 @@ namespace SWallet.Repository.Services.Implements
                     DateUpdated = x.DateUpdated,
                     Description = x.Description,
                     State = x.State,
-                    Status = x.Status
+                    Status = x.Status,
+                    NumberOfCampaigns = x.Campaigns.Where(c => c.BrandId == id).Count()
                 },
                 predicate: x => x.Id == id,
-                include: x => x.Include(a => a.Account));
+                include: x => x.Include(a => a.Account).Include(a => a.Campaigns));
             return area;
         }
 
@@ -242,7 +243,9 @@ namespace SWallet.Repository.Services.Implements
                     DateUpdated = x.DateUpdated,
                     Description = x.Description,
                     State = x.State,
-                    Status = x.Status
+                    Status = x.Status,
+                    NumberOfCampaigns = x.Campaigns.Where(c => c.BrandId == id).Count()
+
 
                 },
                 predicate: filterQuery,
