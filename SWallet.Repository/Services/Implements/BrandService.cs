@@ -244,13 +244,13 @@ namespace SWallet.Repository.Services.Implements
                     Description = x.Description,
                     State = x.State,
                     Status = x.Status,
-                    NumberOfCampaigns = x.Campaigns.Where(c => c.BrandId == id).Count()
+                    NumberOfCampaigns = x.Campaigns.Count
 
 
                 },
                 predicate: filterQuery,
                 page: page,
-                size: size);
+                size: size); ;
             return areas;
         }
 
