@@ -63,6 +63,18 @@ namespace SWallet_API.Controllers
         }
 
 
+        [HttpGet("account/{accountId}")]
+        public async Task<IActionResult> GetLecturerByAccountId(string accountId)
+        {
+            var lecturerResponse = await _lecturerService.GetLecturerByAccountId(accountId);
+            if (lecturerResponse == null)
+            {
+                return NotFound();
+            }
+            return Ok(lecturerResponse);
+        }
+
+
         [HttpPost("scan-qrcode")]
         public async Task<IActionResult> ScanQRCode([FromBody] ScanQRCodeRequest request)
         {

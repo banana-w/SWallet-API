@@ -102,6 +102,24 @@ namespace SWallet.Repository.Services.Implements
             return area;
         }
 
+        public async Task<LecturerResponse> GetLecturerByAccountId(string accountId)
+        {
+            var area = await _unitOfWork.GetRepository<Lecturer>().SingleOrDefaultAsync(
+                selector: x => new LecturerResponse
+                {
+                    Id = x.Id,
+                    AccountId = x.AccountId,
+                    FullName = x.FullName,
+                    DateCreated = x.DateCreated,
+                    DateUpdated = x.DateUpdated,
+                    State = x.State,
+                    Status = x.Status,
+
+                },
+                predicate: x => x.AccountId == accountId);
+            return area;
+        }
+
         public async Task<IPaginate<LecturerResponse>> GetLecturers(string searchName, int page, int size)
         {
             Expression<Func<Lecturer, bool>> filterQuery;
