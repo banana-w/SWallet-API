@@ -71,5 +71,14 @@ namespace SWallet_API.Controllers
             var result = await _studentService.ValidEmailStudent(email);
             return Ok(result);
         }
+
+        [HttpPut("{id}/studentCardFront")]
+        [ProducesResponseType(typeof(StudentResponse), StatusCodes.Status200OK)]
+        [ProducesDefaultResponseType(typeof(ErrorResponse))]
+        public async Task<IActionResult> UpdateStudentCardFront(string id, IFormFile studentCardFront)
+        {
+            var result = await _studentService.UpdateStudentCardFront(id, studentCardFront);
+            return Ok(result);
+        }
     }
 }

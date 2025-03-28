@@ -1,4 +1,5 @@
-﻿using SWallet.Domain.Paginate;
+﻿using Microsoft.AspNetCore.Http;
+using SWallet.Domain.Paginate;
 using SWallet.Repository.Payload.Request.Student;
 using SWallet.Repository.Payload.Response.Student;
 using System;
@@ -17,6 +18,7 @@ namespace SWallet.Repository.Services.Interfaces
         Task<StudentResponse> GetStudentAsync(string studentId);
         Task<StudentResponse> GetStudentByAccountIdAsync(string accountId);
         Task<bool> ValidEmailStudent(string email);
+        Task<StudentResponse> UpdateStudentCardFront(string studentId, IFormFile studentCardFront);
 
         //Task<bool> DeleteStudentAsync(string accountId, string studentId);
         //Task<bool> VerifyStudentAsync(string accountId, string studentId);

@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using Microsoft.Identity.Client;
 using SWallet.Domain.Models;
 using SWallet.Domain.Paginate;
 using SWallet.Repository.Enums;
@@ -225,6 +227,59 @@ namespace SWallet.Repository.Services.Implements
             student.DateUpdated = DateTime.Now;
             student.Gender = studentRequest.Gender;
             student.State = (int?)StudentState.Active;
+
+            _unitOfWork.GetRepository<Student>().UpdateAsync(student);
+            var result = await _unitOfWork.CommitAsync();
+
+            if (result > 0)
+            {
+                return new StudentResponse
+                {
+                    Id = student.Id,
+                    CampusId = student.CampusId,
+                    AccountId = student.AccountId,
+                    StudentCardFront = student.StudentCardFront,
+                    StudentCardBack = student.StudentCardBack,
+                    Address = student.Address,
+                    DateOfBirth = student.DateOfBirth,
+                    Gender = student.Gender,
+                    Code = student.Code,
+                    FullName = student.FullName,
+                    DateCreated = student.DateCreated,
+                    DateUpdated = student.DateUpdated,
+                };
+            }
+            throw new ApiException("Update student fail", 400, "STUDENT_FAIL");
+        }
+
+        public async Task<StudentResponse> UpdateStudentCardFront(string studentId, IFormFile studentCardFront)
+        {
+            if (string.IsNullOrEmpty(studentId))
+            {
+                throw new ArgumentException("Invalid Id");
+            }
+            var student = await _unitOfWork.GetRepository<Student>().SingleOrDefaultAsync(predicate: x => x.Id == studentId);
+            if (student == null)
+            {
+                throw new ApiException("Student not found", 400, "STUDENT_NOT_FOUND");
+            }
+
+            var imageUri = string.Empty;
+            if (studentCardFront != null && studentCardFront.Length > 0)
+            {
+                if (!string.IsNullOrEmpty(student.StudentCardFront))
+                {
+                    await _cloudinaryService.RemoveImageAsync(student.StudentCardFront);
+                }
+                var uploadResult = await _cloudinaryService.UploadImageAsync(studentCardFront);
+                imageUri = uploadResult.SecureUrl.AbsoluteUri;
+            }
+            else
+            {
+                throw new ApiException("StudentCardFront is null", 400, "STUDENT_FAIL");
+            }
+            student.StudentCardFront = imageUri;
+            student.DateUpdated = DateTime.Now;
 
             _unitOfWork.GetRepository<Student>().UpdateAsync(student);
             var result = await _unitOfWork.CommitAsync();
