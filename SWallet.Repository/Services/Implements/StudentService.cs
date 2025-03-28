@@ -300,6 +300,8 @@ namespace SWallet.Repository.Services.Implements
                     FullName = student.FullName,
                     DateCreated = student.DateCreated,
                     DateUpdated = student.DateUpdated,
+                    State = student.State,
+                    Status = student.Status,
                 };
             }
             throw new ApiException("Update student fail", 400, "STUDENT_FAIL");
