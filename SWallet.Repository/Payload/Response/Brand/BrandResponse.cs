@@ -24,6 +24,12 @@ namespace SWallet.Repository.Payload.Response.Brand
 
         public string Link { get; set; } = null!;
 
+        public string Email { get; set; } = null!;
+
+        public string PhoneNumber { get; set; } = null!;
+
+        public string Username { get; set; } = null!;
+
         public TimeOnly? OpeningHours { get; set; }
 
         public TimeOnly? ClosingHours { get; set; }
