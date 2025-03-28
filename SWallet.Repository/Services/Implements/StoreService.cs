@@ -206,6 +206,8 @@ namespace SWallet.Repository.Services.Implements
                     Phone = x.Account.Phone,
                     Avatar = x.Account.Avatar,
                     AvatarFileName = x.Account.FileName,
+                    NumberOfCampaigns = x.CampaignStores.Count,
+                    NumberOfVouchers = x.Activities.Count,
                 },
                 predicate: filterQuery,
                 include: x => x.Include(a => a.Account).Include(b => b.Brand).Include(c => c.Area),
@@ -251,6 +253,8 @@ namespace SWallet.Repository.Services.Implements
                     Phone = x.Account.Phone,
                     Avatar = x.Account.Avatar,
                     AvatarFileName = x.Account.FileName,
+                    NumberOfCampaigns = x.CampaignStores.Count,
+                    NumberOfVouchers = x.Activities.Count,
                 },
                 predicate: filterQuery,
                 include: x => x.Include(a => a.Account).Include(b => b.Brand).Include(c => c.Area),
@@ -296,6 +300,8 @@ namespace SWallet.Repository.Services.Implements
                     Phone = x.Account.Phone,
                     Avatar = x.Account.Avatar,
                     AvatarFileName = x.Account.FileName,
+                    NumberOfCampaigns = x.CampaignStores.Count,
+                    NumberOfVouchers = x.Activities.Count,
                 },
                 predicate: filterQuery,
                 include: x => x.Include(a => a.Account).Include(b => b.Brand).Include(c => c.Area),
@@ -330,6 +336,8 @@ namespace SWallet.Repository.Services.Implements
                    Phone = x.Account.Phone,
                    Avatar = x.Account.Avatar,
                    AvatarFileName = x.Account.FileName,
+                   NumberOfCampaigns = x.CampaignStores.Count,
+                   NumberOfVouchers = x.Activities.Count,
                },
                predicate: x => x.Id == id);
             return area;
@@ -370,9 +378,11 @@ namespace SWallet.Repository.Services.Implements
                     Phone = x.Account.Phone,
                     Avatar = x.Account.Avatar,
                     AvatarFileName = x.Account.FileName,
-                    
-                    
-                    
+                    NumberOfCampaigns = x.CampaignStores.Count,
+                    NumberOfVouchers = x.Activities.Count,
+
+
+
 
                 },
                 predicate: filterQuery,
@@ -475,6 +485,8 @@ namespace SWallet.Repository.Services.Implements
                     UserName = x.Account.UserName,
                     Email = x.Account.Email,
                     Phone = x.Account.Phone,
+                    NumberOfCampaigns = x.CampaignStores.Count,
+                    NumberOfVouchers = x.Activities.Count,
 
                 },
                 predicate: x => x.AccountId == id,
