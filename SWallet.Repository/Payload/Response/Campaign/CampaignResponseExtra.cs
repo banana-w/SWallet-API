@@ -31,5 +31,6 @@ namespace SWallet.Repository.Payload.Response.Campaign
         public string Description { get; set; }
         public bool? Status { get; set; }
         public IEnumerable<string> CampaignDetailId { get; set; }
+        public string? BrandLogo { get; set; }
     }
 }

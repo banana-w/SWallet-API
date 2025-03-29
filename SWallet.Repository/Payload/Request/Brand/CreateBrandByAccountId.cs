@@ -19,7 +19,7 @@ namespace SWallet.Repository.Payload.Request.Brand
 
         public string Address { get; set; }
 
-        //public IFormFile Logo { get; set; }
+        public IFormFile Logo { get; set; }
 
         public IFormFile CoverPhoto { get; set; }
 
