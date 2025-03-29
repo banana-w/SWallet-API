@@ -556,11 +556,12 @@ namespace SWallet.Repository.Services.Implements
 
         public async Task<CampaignResponseExtra> GetCampaignById(string id)
         {
-            var area = await _unitOfWork.GetRepository<Campaign>().SingleOrDefaultAsync(
+            var campaign = await _unitOfWork.GetRepository<Campaign>().SingleOrDefaultAsync(
                 selector: x => new CampaignResponseExtra
                 {
                     Id = x.Id,
                     BrandId = x.BrandId,
+                    BrandLogo = x.Brand.Account.Avatar,
                     TypeId = x.TypeId,
                     CampaignName = x.CampaignName,
                     Image = x.Image,
@@ -580,9 +581,14 @@ namespace SWallet.Repository.Services.Implements
                 },
                 
                 predicate: x => x.Id == id,
-                include: x => x.Include(x => x.CampaignDetails));
+                include: x => x.Include(x => x.CampaignDetails)
+                               .Include(x => x.Brand).ThenInclude(x => x.Account));
             ;
-            return area;
+            if (campaign == null)
+            {
+                throw new ApiException("Campaign not found", 404, "NOT_FOUND");
+            }
+            return campaign;
         }
 
         public async Task<IPaginate<CampaignResponse>> GetCampaignsInBrand(string? searchName, int page, int size)

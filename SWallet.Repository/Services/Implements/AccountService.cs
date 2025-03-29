@@ -130,6 +130,12 @@ namespace SWallet.Repository.Services.Implements
 
                 await _unitOfWork.GetRepository<Account>().InsertAsync(ac);
 
+                if (brandRequest.Logo != null && brandRequest.Logo.Length > 0)
+                {                   
+                    var uploadResult = await _cloudinaryService.UploadImageAsync(brandRequest.Logo);
+                    ac.Avatar = uploadResult.SecureUrl.AbsoluteUri;
+                }
+
                 bool isSuccess = await _unitOfWork.CommitAsync() > 0;
                 if (isSuccess)
                 {
