@@ -39,7 +39,7 @@ namespace SWallet.Repository.Services.Implements
 
         public async Task<QRCodeResponse> GenerateQRCode(GenerateQRCodeRequest request)
         {
-            // Kiểm tra request có null không
+            //// Kiểm tra request có null không
             if (request == null)
             {
                 throw new ApiException("Request cannot be null", 400, "BAD_REQUEST");
@@ -75,9 +75,9 @@ namespace SWallet.Repository.Services.Implements
             {
                 lecturerId = request.LecturerId,
                 points = request.Points,
-                startOnTime = request.StartOnTime,
+                startOnTime = DateTime.Now,
+                expirationTime = availableTime,
                 availableHours = request.AvailableHours,
-                expirationTime = availableTime
             });
 
 
@@ -148,7 +148,7 @@ namespace SWallet.Repository.Services.Implements
             }
 
             // Kiểm tra các trường bắt buộc
-            if (string.IsNullOrEmpty(qrCodeData.LecturerId) || qrCodeData.Points <= 0 || qrCodeData.ExpirationTime == null || qrCodeData.AvailableHours == null)
+            if (string.IsNullOrEmpty(qrCodeData.LecturerId) || qrCodeData.Points <= 0)
             {
                 throw new ApiException("QRCode data is incomplete", 400, "INVALID_QRCODE");
             }
