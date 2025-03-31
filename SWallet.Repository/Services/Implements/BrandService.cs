@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SWallet.Domain.Models;
 using SWallet.Domain.Paginate;
@@ -186,6 +187,9 @@ namespace SWallet.Repository.Services.Implements
                 {
                     Id = x.Id,
                     AccountId = x.AccountId,
+                    Email = x.Account.Email,
+                    PhoneNumber = x.Account.Phone,
+                    Username = x.Account.UserName,
                     BrandName = x.BrandName,
                     Acronym = x.Acronym,
                     Address = x.Address,
@@ -200,9 +204,11 @@ namespace SWallet.Repository.Services.Implements
                     DateUpdated = x.DateUpdated,
                     Description = x.Description,
                     State = x.State,
-                    Status = x.Status
+                    Status = x.Status,
+                    NumberOfCampaigns = x.Campaigns.Where(c => c.BrandId == id).Count()
                 },
-                predicate: x => x.Id == id);
+                predicate: x => x.Id == id,
+                include: x => x.Include(a => a.Account).Include(a => a.Campaigns));
             return area;
         }
 
@@ -237,12 +243,14 @@ namespace SWallet.Repository.Services.Implements
                     DateUpdated = x.DateUpdated,
                     Description = x.Description,
                     State = x.State,
-                    Status = x.Status
+                    Status = x.Status,
+                    NumberOfCampaigns = x.Campaigns.Count
+
 
                 },
                 predicate: filterQuery,
                 page: page,
-                size: size);
+                size: size); ;
             return areas;
         }
 
