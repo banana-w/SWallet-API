@@ -55,11 +55,11 @@ namespace SWallet.API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IPaginate<BrandResponse>>> GetAllBrands(string searchName = "", int page = 1, int size = 10) // Pagination parameters
+        public async Task<ActionResult<IPaginate<BrandResponse>>> GetAllBrands(string searchName = "", int page = 1, int size = 10, bool status = true) // Pagination parameters
         {
             try
             {
-                var brandResponses = await _brandService.GetBrands(searchName, page, size);
+                var brandResponses = await _brandService.GetBrands(searchName, page, size, status);
                 return Ok(brandResponses);
             }
             catch (Exception ex)

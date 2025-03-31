@@ -188,8 +188,8 @@ namespace SWallet.Repository.Services.Implements
            
 
             // Chuyển điểm
-            await _walletService.UpdateWallet(lecturerWallet.Id, (decimal)(lecturerWallet.Balance - qrCodeData.Points));
-            await _walletService.UpdateWallet(studentWallet.Id, (decimal)(studentWallet.Balance + qrCodeData.Points));
+            await _walletService.UpdateWallet(lecturerWallet.Id, (int)(lecturerWallet.Balance - qrCodeData.Points));
+            await _walletService.UpdateWallet(studentWallet.Id, (int)(studentWallet.Balance + qrCodeData.Points));
            
 
 
@@ -210,7 +210,7 @@ namespace SWallet.Repository.Services.Implements
             {
                 StudentId = request.StudentId,
                 PointsTransferred = qrCodeData.Points,
-                NewBalance = (decimal)studentWallet.Balance + qrCodeData.Points
+                NewBalance = (int)studentWallet.Balance + qrCodeData.Points
             };
         }
     }

@@ -212,16 +212,20 @@ namespace SWallet.Repository.Services.Implements
             return area;
         }
 
-        public async Task<IPaginate<BrandResponse>> GetBrands(string? searchName, int page, int size)
+        public async Task<IPaginate<BrandResponse>> GetBrands(string? searchName, int page, int size, bool status)
         {
             Expression<Func<Brand, bool>> filterQuery;
+
+            // Kết hợp điều kiện lọc theo searchName và status
             if (string.IsNullOrEmpty(searchName))
             {
-                filterQuery = p => true;
+                // Nếu searchName rỗng, chỉ lọc theo status
+                filterQuery = p => p.Status == status;
             }
             else
             {
-                filterQuery = p => p.BrandName.Contains(searchName);
+                // Nếu searchName không rỗng, lọc theo cả searchName và status
+                filterQuery = p => p.BrandName.Contains(searchName) && p.Status == status;
             }
 
             var areas = await _unitOfWork.GetRepository<Brand>().GetPagingListAsync(
@@ -245,12 +249,12 @@ namespace SWallet.Repository.Services.Implements
                     State = x.State,
                     Status = x.Status,
                     NumberOfCampaigns = x.Campaigns.Count
-
-
                 },
                 predicate: filterQuery,
                 page: page,
-                size: size); ;
+                size: size
+            );
+
             return areas;
         }
 
