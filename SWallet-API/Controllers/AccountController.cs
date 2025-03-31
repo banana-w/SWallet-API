@@ -56,6 +56,16 @@ namespace SWallet_API.Controllers
             return Ok(result);
         }
 
+        [HttpPost("campusRegister")]
+        [ProducesResponseType(typeof(AccountResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> CampusRegister([FromForm] AccountRequest accountRequest, string campusId)
+        {
+            var result = await _accountService.CreateCampusAccount(accountRequest, campusId)
+                ?? throw new ApiException("Account creation failed.", StatusCodes.Status400BadRequest, "ACCOUNT_CREATION_FAILED");
+            return Ok(result);
+        }
+
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(AccountResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]

@@ -87,6 +87,14 @@ namespace SWallet_API.Controllers
             }
         }
 
+        [HttpGet("campaign/{campaignId}")]
+        public async Task<ActionResult<IPaginate<StoreResponse>>> GetStoresInCampaign(string campaignId, string searchName = "", int page = 1, int size = 10)
+        {
+                var result = await _storeService.GetStoresInCampaign(campaignId, searchName, page, size);
+                return Ok(result);
+        }
+
+
         [HttpGet("brand/{brandId}")]
         public async Task<ActionResult<IPaginate<StoreResponse>>> GetStoresByBrandId(string brandId, string searchName = "", int page = 1, int size = 10)
         {

@@ -28,7 +28,11 @@ namespace SWallet.Repository.Enums
 
         [Display(Name = "Sinh viên")]
         [Description("Sinh viên của các trường đại học")]
-        Student = 5
+        Student = 5,
+            
+        [Display(Name = "Campus")]
+        [Description("Campus")]
+        Campus = 5
     }
     public enum StudentState
     {

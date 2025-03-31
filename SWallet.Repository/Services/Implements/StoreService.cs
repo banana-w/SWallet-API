@@ -206,6 +206,7 @@ namespace SWallet.Repository.Services.Implements
                     Phone = x.Account.Phone,
                     Avatar = x.Account.Avatar,
                     AvatarFileName = x.Account.FileName,
+                    
                 },
                 predicate: filterQuery,
                 include: x => x.Include(a => a.Account).Include(b => b.Brand).Include(c => c.Area),
@@ -482,6 +483,54 @@ namespace SWallet.Repository.Services.Implements
                               .Include(a => a.Brand)
                               .Include(a => a.Area));
             return area;
+        }
+
+        public async Task<IPaginate<StoreResponse>> GetStoresInCampaign(string campaignId, string searchName, int page, int size)
+        {
+            Expression<Func<Store, bool>> filterQuery;
+
+            if (string.IsNullOrEmpty(searchName))
+            {
+                filterQuery = p => p.CampaignStores.Any(cs => cs.CampaignId  == campaignId);
+            }
+            else
+            {
+                filterQuery = p => p.CampaignStores.Any(cs => cs.CampaignId == campaignId) && p.StoreName.Contains(searchName);
+            }
+            var stores = await _unitOfWork.GetRepository<Store>().GetPagingListAsync(
+                selector: x => new StoreResponse
+                {
+                    Id = x.Id,
+                    AccountId = x.AccountId,
+                    BrandId = x.BrandId,
+                    BrandName = x.Brand.BrandName,
+                    AreaId = x.AreaId,
+                    AreaName = x.Area.AreaName,
+                    StoreName = x.StoreName,
+                    Address = x.Address,
+                    OpeningHours = x.OpeningHours,
+                    ClosingHours = x.ClosingHours,
+                    DateCreated = x.DateCreated,
+                    DateUpdated = x.DateUpdated,
+                    Description = x.Description,
+                    State = x.State,
+                    Status = x.Account.Status,
+                    UserName = x.Account.UserName,
+                    Email = x.Account.Email,
+                    Phone = x.Account.Phone,
+                    Avatar = x.Account.Avatar,
+                    AvatarFileName = x.Account.FileName,
+
+                },
+                predicate: filterQuery,
+                include: x => x.Include(a => a.Account).Include(b => b.Brand).Include(c => c.Area),
+                page: page,
+                size: size);
+            if (stores == null)
+            {
+                throw new ApiException("Store not found", 404, "NOT_FOUND");
+            }
+            return stores;
         }
     }
 }
