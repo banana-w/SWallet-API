@@ -25,6 +25,8 @@ namespace SWallet.Repository.Payload.Response.Student
         public string? FullName { get; set; }
         public string? StudentEmail { get; set; }
 
+        public decimal? CoinBalance { get; set; }
+
         public string? Code { get; set; }
 
         public int? Gender { get; set; }
