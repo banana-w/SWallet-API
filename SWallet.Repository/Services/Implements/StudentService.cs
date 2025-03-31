@@ -148,6 +148,7 @@ namespace SWallet.Repository.Services.Implements
                     Status = x.Status,
                     TotalIncome = x.TotalIncome,
                     TotalSpending = x.TotalSpending,
+                    CoinBalance = x.Wallets.FirstOrDefault(w => w.Type == 1).Balance ?? 0
 
                 },
                     predicate: x => x.AccountId == accountId);
