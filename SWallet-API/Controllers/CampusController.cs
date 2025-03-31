@@ -160,6 +160,13 @@ namespace SWallet_API.Controllers
             return Ok(result);
         }
 
-        
+        [HttpGet("account/{id}")]
+        public async Task<IActionResult> GetCampusByAccountId(string id)
+        {
+            var result = await _campusService.GetCampusByAccountId(id);
+            return Ok(result);
+        }
+
+
     }
 }

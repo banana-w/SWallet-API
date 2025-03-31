@@ -193,6 +193,7 @@ namespace SWallet.Repository.Services.Implements
                 {
                     Id = x.Id,
                     AreaId = x.AreaId,
+                    AccountId = x.AccountId,
                     AreaName = x.Area.AreaName,
                     CampusName = x.CampusName,
                     Address = x.Address,
@@ -214,12 +215,13 @@ namespace SWallet.Repository.Services.Implements
             return areas;
         }
 
-        public async Task<CampusResponse> GetCampusById(string id)
+        public async Task<CampusResponse> GetCampusByAccountId(string accountId)
         {
             var area = await _unitOfWork.GetRepository<Campus>().SingleOrDefaultAsync(
                 selector: x => new CampusResponse
                 {
                     Id = x.Id,
+                    AccountId = x.AccountId,
                     AreaId = x.AreaId,
                     AreaName = x.Area.AreaName,
                     CampusName = x.CampusName,
@@ -233,7 +235,35 @@ namespace SWallet.Repository.Services.Implements
                     DateUpdated = x.DateUpdated,
                     Description = x.Description,
                     State = x.State,
-                    Status = x.Status
+                    Status = x.Status,
+                    NumberOfStudents = x.Students.Count
+                },
+                predicate: x => x.AccountId == accountId); 
+            return area;
+        }
+
+        public async Task<CampusResponse> GetCampusById(string id)
+        {
+            var area = await _unitOfWork.GetRepository<Campus>().SingleOrDefaultAsync(
+                selector: x => new CampusResponse
+                {
+                    Id = x.Id,
+                    AreaId = x.AreaId,
+                    AccountId = x.AccountId,
+                    AreaName = x.Area.AreaName,
+                    CampusName = x.CampusName,
+                    Address = x.Address,
+                    Phone = x.Phone,
+                    Email = x.Email,
+                    Link = x.LinkWebsite,
+                    Image = x.Image,
+                    FileName = x.FileName,
+                    DateCreated = x.DateCreated,
+                    DateUpdated = x.DateUpdated,
+                    Description = x.Description,
+                    State = x.State,
+                    Status = x.Status,
+                    NumberOfStudents = x.Students.Count
                 },
                 predicate: x => x.Id == id);
             return area;

@@ -18,6 +18,8 @@ namespace SWallet.Repository.Services.Interfaces
         Task<CampusResponse> CreateCampus(CreateCampusModel campus);
         Task<CampusResponse> UpdateCampus(string id, UpdateCampusModel campus);
         Task<CampusResponse> CreateCampusByAccountId(string accountId, CreateCampusByAccIdModel campus);
+
+        Task<CampusResponse> GetCampusByAccountId(string accountId);
         
         void Delete(string id);
 
