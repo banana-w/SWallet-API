@@ -11,6 +11,7 @@ namespace SWallet.Repository.Payload.Response.Student
         public string Id { get; set; } = null!;
 
         public string? CampusId { get; set; }
+        public string? CampusName { get; set; }
 
         public string AccountId { get; set; } = null!;
 

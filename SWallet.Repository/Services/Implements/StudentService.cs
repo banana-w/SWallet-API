@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Identity.Client;
 using SWallet.Domain.Models;
@@ -78,7 +79,7 @@ namespace SWallet.Repository.Services.Implements
                     Status = student.Status,
                     TotalIncome = student.TotalIncome,
                     TotalSpending = student.TotalSpending,
-                    
+
                 };
             }
             throw new ApiException("Create student fail", 400, "STUDENT_FAIL");
@@ -96,6 +97,7 @@ namespace SWallet.Repository.Services.Implements
                 {
                     Id = x.Id,
                     CampusId = x.CampusId,
+                    CampusName = x.Campus.CampusName,
                     AccountId = x.AccountId,
                     StudentCardFront = x.StudentCardFront,
                     StudentCardBack = x.StudentCardBack,
@@ -113,10 +115,11 @@ namespace SWallet.Repository.Services.Implements
                     TotalSpending = x.TotalSpending,
 
                 },
-                    predicate: x => x.Id == studentId);
+                    predicate: x => x.Id == studentId,
+                    include: x => x.Include(x => x.Campus));
             if (student == null)
             {
-                return null;
+                throw new ApiException("Student not found", 400, "STUDENT_NOT_FOUND");
             }
             return student;
         }
@@ -133,6 +136,7 @@ namespace SWallet.Repository.Services.Implements
                 {
                     Id = x.Id,
                     CampusId = x.CampusId,
+                    CampusName = x.Campus.CampusName,
                     AccountId = x.AccountId,
                     StudentCardFront = x.StudentCardFront,
                     StudentCardBack = x.StudentCardBack,
@@ -151,7 +155,8 @@ namespace SWallet.Repository.Services.Implements
                     CoinBalance = x.Wallets.FirstOrDefault(w => w.Type == 1).Balance ?? 0
 
                 },
-                    predicate: x => x.AccountId == accountId);
+                    predicate: x => x.AccountId == accountId,
+                    include: x => x.Include(c => c.Campus));
             if (student == null)
             {
                 return null;
@@ -205,7 +210,7 @@ namespace SWallet.Repository.Services.Implements
             var student = await _unitOfWork.GetRepository<Student>().SingleOrDefaultAsync(predicate: x => x.AccountId == accountId);
             if (student == null)
             {
-                 throw new ApiException(" student null", 400, "STUDENT_FAIL"); ;
+                throw new ApiException(" student null", 400, "STUDENT_FAIL"); ;
             }
 
             var imageUri = student.StudentCardFront;
