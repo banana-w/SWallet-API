@@ -14,6 +14,7 @@ namespace SWallet.Repository.Services.Interfaces
         Task<AccountResponse> GetAccountById(string id);
         Task<AccountResponse> CreateBrandAccount(AccountRequest accountRequest, CreateBrandByAccountId brandRequest);
         Task<AccountResponse> CreateStoreAccount(AccountRequest accountRequest, CreateStoreModel storeRequest);
+        Task<AccountResponse> CreateCampusAccount(AccountRequest accountRequest, string campusId);
         Task<AccountResponse> UpdateAccount(string id, string phone, string email, string oldPassword, string newPassword);
         Task<AccountResponse> UpdateAccountAvatar(string id, IFormFile avatar);
         Task<bool> ValidUsername(string username);

@@ -169,6 +169,65 @@ namespace SWallet.Repository.Services.Implements
             }
         }
 
+        public async Task<AccountResponse> CreateCampusAccount(AccountRequest accountRequest, string campusId)
+        {
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                var account = await _unitOfWork.GetRepository<Account>().AnyAsync(x => x.UserName == accountRequest.UserName);
+                if (account)
+                {
+                    throw new ApiException("Account already exists", 400, "BAD_REQUEST");
+                }
+                Account ac = mapper.Map<Account>(accountRequest);
+                ac.Role = (int)Role.Campus;
+                ac.Description = "Campus Account";
+
+                await _unitOfWork.GetRepository<Account>().InsertAsync(ac);
+
+                bool isSuccess = await _unitOfWork.CommitAsync() > 0;
+                if (isSuccess)
+                {
+                    var campus = await _unitOfWork.GetRepository<Campus>().SingleOrDefaultAsync(predicate: x => x.Id == campusId);
+
+                    if (campus == null)
+                    {
+                        throw new ApiException("Campus not found", 404, "NOT_FOUND");
+                    }
+
+                    campus.AccountId = ac.Id;
+                    campus.DateUpdated = DateTime.Now;  
+
+                    await _walletService.AddWallet(new WalletRequest
+                    {
+                        CampusId = campus.Id,
+                        Type = (int)WalletType.Green,
+                        Balance = 0,
+                        Description = "Campus Wallet",
+                        State = true
+                    });
+
+                    //if (ac.Email != null)
+                    //{
+                    //    var code = await _emailService.SendVerificationEmail(ac.Email);
+                    //    await _redisService.SaveVerificationCodeAsync(ac.Email, code);
+                    //}
+
+                    _unitOfWork.GetRepository<Campus>().UpdateAsync(campus);
+
+                    await _unitOfWork.CommitAsync();
+                    await _unitOfWork.CommitTransactionAsync();
+                    return mapper.Map<AccountResponse>(ac);
+                }
+                throw new ApiException("Campus Account Creation Failed", 400, "BAD_REQUEST");
+            }
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
+        }
+
         public async Task<AccountResponse> CreateStoreAccount(AccountRequest accountRequest, CreateStoreModel storeRequest)
         {
             await _unitOfWork.BeginTransactionAsync();

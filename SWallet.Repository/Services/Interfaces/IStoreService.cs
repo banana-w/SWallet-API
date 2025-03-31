@@ -14,6 +14,7 @@ namespace SWallet.Repository.Services.Interfaces
     public interface IStoreService
     {
         Task<IPaginate<StoreResponse>> GetStores(string searchName, int page, int size);
+        Task<IPaginate<StoreResponse>> GetStoresInCampaign(string campaignId, string searchName, int page, int size);
 
         Task<StoreResponse> GetStoreById(string id);
         Task<StoreResponse> GetStoreByAccountId(string id);
