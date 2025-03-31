@@ -82,7 +82,7 @@ namespace SWallet_API.Controllers
         [ProducesResponseType(typeof(IEnumerable<VoucherResponse>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetVoucherByCampaignId(string campaignId)
         {
-            var result = await _voucherService.GetVoucherByCampaignId(campaignId);
+            var result = await _voucherService.GetVouchersByCampaignId(campaignId);
             if (result != null)
             {
                 return Ok(result);
