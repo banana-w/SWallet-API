@@ -23,6 +23,7 @@ namespace SWallet.Repository.Services.Implements
         private readonly IEmailService _emailService;
         private readonly IBrandService _brandService;
         private readonly IStudentService _studentService;
+        private readonly ILecturerService _lecturerService;
         private readonly IStoreService _storeService;
         private readonly IRedisService _redisService;
         private readonly IWalletService _walletService;
@@ -31,7 +32,7 @@ namespace SWallet.Repository.Services.Implements
         public AccountService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<AccountService> logger,
             IEmailService emailService, IBrandService brandService, IStudentService studentService,
             IRedisService redisService, IStoreService storeService, IWalletService walletService, 
-            ICloudinaryService cloudinaryService) : base(unitOfWork, logger)
+            ICloudinaryService cloudinaryService, ILecturerService lecturerService) : base(unitOfWork, logger)
         {
             var config = new MapperConfiguration(cfg
                 =>
@@ -112,6 +113,7 @@ namespace SWallet.Repository.Services.Implements
             _storeService = storeService;
             _walletService = walletService;
             _cloudinaryService = cloudinaryService;
+            _lecturerService = lecturerService;
         }
 
         public async Task<AccountResponse> CreateBrandAccount(AccountRequest accountRequest, CreateBrandByAccountId brandRequest)
@@ -182,6 +184,7 @@ namespace SWallet.Repository.Services.Implements
                 Account ac = mapper.Map<Account>(accountRequest);
                 ac.Role = (int)Role.Campus;
                 ac.Description = "Campus Account";
+                ac.IsVerify = true;
 
                 await _unitOfWork.GetRepository<Account>().InsertAsync(ac);
 
@@ -220,6 +223,41 @@ namespace SWallet.Repository.Services.Implements
                     return mapper.Map<AccountResponse>(ac);
                 }
                 throw new ApiException("Campus Account Creation Failed", 400, "BAD_REQUEST");
+            }
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
+        }
+
+        public async Task<AccountResponse> CreateLecturerAccount(AccountRequest accountRequest, CreateLecturerModel lecturerReq)
+        {
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                var account = await _unitOfWork.GetRepository<Account>().AnyAsync(x => x.UserName == accountRequest.UserName);
+                if (account)
+                {
+                    throw new ApiException("Account already exists", 400, "BAD_REQUEST");
+                }
+                Account ac = mapper.Map<Account>(accountRequest);
+                ac.Role = (int)Role.Lecturer;
+                ac.Description = "Lecturer Account";
+                ac.IsVerify = true;
+
+                await _unitOfWork.GetRepository<Account>().InsertAsync(ac);
+
+                bool isSuccess = await _unitOfWork.CommitAsync() > 0;
+                if (isSuccess)
+                {   
+                    lecturerReq.AccountId = ac.Id;
+                    await _lecturerService.CreateLecturerAccount(lecturerReq);
+
+                    await _unitOfWork.CommitTransactionAsync();
+                    return mapper.Map<AccountResponse>(ac);
+                }
+                throw new ApiException("Lecturer Account Creation Failed", 400, "BAD_REQUEST");
             }
             catch
             {

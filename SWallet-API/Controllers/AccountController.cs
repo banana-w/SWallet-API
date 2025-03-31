@@ -66,6 +66,16 @@ namespace SWallet_API.Controllers
             return Ok(result);
         }
 
+        [HttpPost("lecturerRegister")]
+        [ProducesResponseType(typeof(AccountResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> LecturerRegister([FromForm] AccountRequest accountRequest, CreateLecturerModel lecturerReq)
+        {
+            var result = await _accountService.CreateLecturerAccount(accountRequest, lecturerReq)
+                ?? throw new ApiException("Account creation failed.", StatusCodes.Status400BadRequest, "ACCOUNT_CREATION_FAILED");
+            return Ok(result);
+        }
+
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(AccountResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]

@@ -32,7 +32,7 @@ namespace SWallet.Repository.Enums
             
         [Display(Name = "Campus")]
         [Description("Campus")]
-        Campus = 5
+        Campus = 6
     }
     public enum StudentState
     {
