@@ -115,7 +115,7 @@ namespace SWallet.Repository.Services.Implements
             return vouchers;
         }
 
-        public async Task<IEnumerable<VoucherResponse>> GetVoucherByCampaignId(string campaignId)
+        public async Task<IEnumerable<VoucherResponse>> GetVouchersByCampaignId(string campaignId)
         {
             var vouchers = await _unitOfWork.GetRepository<Voucher>().GetListAsync(
                 selector: x => new VoucherResponse
@@ -138,9 +138,12 @@ namespace SWallet.Repository.Services.Implements
                     Description = x.Description,
                     State = x.State,
                     Status = x.Status,
-                    NumberOfItemsAvailable = null,
-                    //x.VoucherItems.Where(i => !(bool)i.IsLocked && !(bool)i.IsBought && !(bool)i.IsUsed && i.CampaignDetailId.IsNullOrEmpty()).Count(),
-                    NumberOfItems = x.VoucherItems.Count()
+                    NumberOfItemsAvailable = x.VoucherItems != null
+                                                            ? x.VoucherItems
+                                                                .Where(i => !(bool)i.IsLocked && !(bool)i.IsBought && !(bool)i.IsUsed && i.CampaignDetail.CampaignId == campaignId)
+                                                                .Count()
+                                                            : 0,
+                    NumberOfItems = x.VoucherItems.Where(i => i.CampaignDetail.CampaignId == campaignId).Count()
                 },
                 predicate: x => x.CampaignDetails.Any(c => c.CampaignId == campaignId),
                 include: x => x.Include(x => x.CampaignDetails));

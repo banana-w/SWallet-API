@@ -18,6 +18,6 @@ namespace SWallet.Repository.Services.Interfaces
         Task<VoucherResponse> GetVoucherWithCampaignDetailId(string id, string campaignDetailId);
         Task<IPaginate<VoucherResponse>> GetVouchers(string brandId, string? search, bool? state, bool? isAsc, int page, int size);
         Task<IPaginate<VoucherResponse>> GetAllVouchers(string? search, int page, int size);
-        Task<IEnumerable<VoucherResponse>> GetVoucherByCampaignId(string campaignId);
+        Task<IEnumerable<VoucherResponse>> GetVouchersByCampaignId(string campaignId);
     }
 }
