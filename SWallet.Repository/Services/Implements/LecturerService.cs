@@ -13,6 +13,7 @@ using SWallet.Repository.Payload.Response.Store;
 using SWallet.Repository.Services.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
@@ -218,5 +219,81 @@ namespace SWallet.Repository.Services.Implements
             }
             throw new ApiException("Update Lecturer Fail", 400, "BAD_REQUEST");
         }
+
+        public async  Task<LecturerResponse> CreateCampusLecture(List<string> campusIds, CreateLecturerModel lecturer)
+        {
+            // 1. Validate input
+            if (lecturer == null)
+            {
+                throw new ArgumentNullException(nameof(lecturer), "Lecturer model cannot be null.");
+            }
+
+            if (campusIds == null || !campusIds.Any())
+            {
+                throw new ArgumentException("At least one campus ID must be provided.", nameof(campusIds));
+            }
+
+            // Validate CreateLecturerModel
+            var validationResults = new List<ValidationResult>();
+            var validationContext = new ValidationContext(lecturer);
+            if (!Validator.TryValidateObject(lecturer, validationContext, validationResults, true))
+            {
+                var errors = string.Join(", ", validationResults.Select(v => v.ErrorMessage));
+                throw new ArgumentException($"Validation failed: {errors}");
+            }
+
+            // 2. Kiểm tra xem các campusId có tồn tại không
+            foreach (var campusId in campusIds)
+            {
+                var campusExists = await _unitOfWork.GetRepository<Campus>()
+                    .AnyAsync(c => c.Id == campusId);
+
+                if (!campusExists)
+                {
+                    throw new ArgumentException($"Campus with ID {campusId} does not exist.");
+                }
+            }
+
+            // 3. Tạo Lecturer entity từ CreateLecturerModel
+            var lecturerEntity = new Lecturer
+            {
+                Id = Ulid.NewUlid().ToString(), // Tạo ID mới cho Lecturer
+                AccountId = lecturer.AccountId,
+                FullName = lecturer.FullName,
+                DateCreated = lecturer.DateCreated ?? DateTime.UtcNow, // Gán thời gian hiện tại nếu null
+                DateUpdated = lecturer.DateUpdated,
+                State = lecturer.State,
+                Status = lecturer.Status
+            };
+
+            // 4. Tạo liên kết với các campus
+            lecturerEntity.CampusLecturers = campusIds.Select(campusId => new CampusLecturer
+            {
+                Id = Ulid.NewUlid().ToString(), // Tạo ID mới cho CampusLecturer
+                LecturerId = lecturerEntity.Id,
+                CampusId = campusId,
+                Status = true // Gán mặc định Status là true, có thể thay đổi theo yêu cầu
+            }).ToList();
+
+            // 5. Lưu Lecturer vào database
+            await _unitOfWork.GetRepository<Lecturer>().InsertAsync(lecturerEntity);
+            await _unitOfWork.CommitAsync();
+
+            // 6. Tạo LecturerResponse để trả về
+            var lecturerResponse = new LecturerResponse
+            {
+                Id = lecturerEntity.Id,
+                AccountId = lecturerEntity.AccountId,
+                FullName = lecturerEntity.FullName,
+                DateCreated = lecturerEntity.DateCreated,
+                DateUpdated = lecturerEntity.DateUpdated,
+                State = lecturerEntity.State,
+                Status = lecturerEntity.Status,
+                CampusIds = campusIds // Trả về danh sách campusId đã liên kết
+            };
+
+            return lecturerResponse;
+        }
     }
+    
 }

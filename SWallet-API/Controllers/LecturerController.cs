@@ -44,6 +44,21 @@ namespace SWallet_API.Controllers
             }
         }
 
+        [HttpPost("create-campus-lecture")]
+        public async Task<ActionResult<LecturerResponse>> CreateCampusLecturer([FromQuery]List<string> campusIds, CreateLecturerModel creation)
+        {
+            try
+            {
+                var lecturerResponse = await _lecturerService.CreateCampusLecture(campusIds, creation);
+                return Ok(lecturerResponse);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating lecturer");
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error creating lecturer");
+            }
+        }
+
         [HttpPost("generate-qrcode")]
         public async Task<ActionResult<QRCodeResponse>> GenerateQRCode([FromBody] GenerateQRCodeRequest request)
         {

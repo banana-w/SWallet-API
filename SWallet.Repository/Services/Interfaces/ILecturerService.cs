@@ -19,6 +19,7 @@ namespace SWallet.Repository.Services.Interfaces
         Task<LecturerResponse> GetLecturerByAccountId(string accountId);
         Task<LecturerResponse> CreateLecturerAccount(CreateLecturerModel lecturer);
         Task<LecturerResponse> UpdateLecturer(string id, UpdateLecturerModel lecturer);
+        Task<LecturerResponse> CreateCampusLecture(List<string> campusIds, CreateLecturerModel lecturer);
 
         Task<IPaginate<LecturerResponse>> GetLecturersByCampusId(string campusId, string searchName, int page, int size);
         void Delete(string id);

@@ -21,5 +21,7 @@ namespace SWallet.Repository.Payload.Response.Lecturer
         public bool? State { get; set; }
 
         public bool? Status { get; set; }
+
+        public List<string> CampusIds { get; set; } = new List<string>();
     }
 }
