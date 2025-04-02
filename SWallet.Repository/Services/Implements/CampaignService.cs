@@ -561,6 +561,8 @@ namespace SWallet.Repository.Services.Implements
                 {
                     Id = x.Id,
                     BrandId = x.BrandId,
+                    BrandName = x.Brand.BrandName,
+                    BrandAcronym = x.Brand.Acronym,
                     BrandLogo = x.Brand.Account.Avatar,
                     TypeId = x.TypeId,
                     CampaignName = x.CampaignName,
