@@ -113,6 +113,21 @@ namespace SWallet_API.Controllers
 
         }
 
+
+        [HttpGet("qr-history")]
+        public async Task<ActionResult<IPaginate<LecturerResponse>>> GetQrHistory(string lectureId, string searchName = "", int page = 1, int size = 10)
+        {
+
+            var result = await _qrCodeService.GetQrHistoryByLectureId(lectureId, searchName, page, size);
+            if (result == null)
+            {
+                return NotFound("Không tìm thấy lịch sử tạo mã của giảng viên này");
+            }
+            return Ok(result);
+
+
+        }
+
         [HttpGet]
         public async Task<ActionResult<IPaginate<LecturerResponse>>> GetAllLecturers(string searchName = "", int page = 1, int size = 10)
         {
