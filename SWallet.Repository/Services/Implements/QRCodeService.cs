@@ -17,6 +17,10 @@ using SWallet.Repository.Payload.ExceptionModels;
 using System.Drawing;
 using System.IO;
 using System.Drawing.Imaging;
+using SWallet.Domain.Paginate;
+using Microsoft.EntityFrameworkCore;
+using SWallet.Repository.Payload.Response.Lecturer;
+using System.Linq.Expressions;
 
 
 
@@ -39,7 +43,7 @@ namespace SWallet.Repository.Services.Implements
 
         public async Task<QRCodeResponse> GenerateQRCode(GenerateQRCodeRequest request)
         {
-            //// Kiểm tra request có null không
+            // Kiểm tra request có null không
             if (request == null)
             {
                 throw new ApiException("Request cannot be null", 400, "BAD_REQUEST");
@@ -51,12 +55,11 @@ namespace SWallet.Repository.Services.Implements
                 throw new ApiException("Cloudinary service is not initialized", 500, "INTERNAL_SERVER_ERROR");
             }
 
-
             var lecturerWallet = await _unitOfWork.GetRepository<Wallet>().SingleOrDefaultAsync(
-                predicate: w => w.LecturerId == request.LecturerId // Điều kiện tìm wallet theo LecturerId
+                predicate: w => w.LecturerId == request.LecturerId
             );
 
-            if (lecturerWallet.Balance == null)
+            if (lecturerWallet == null || lecturerWallet.Balance == null)
             {
                 throw new ApiException("Wallet not found for this lecturer", 404, "NOT_FOUND");
             }
@@ -79,7 +82,6 @@ namespace SWallet.Repository.Services.Implements
                 expirationTime = availableTime,
                 availableHours = request.AvailableHours,
             });
-
 
             using (QRCodeGenerator qrGenerator = new QRCodeGenerator())
             using (QRCodeData qrCodeData = qrGenerator.CreateQrCode(qrCodeJson, QRCodeGenerator.ECCLevel.Q))
@@ -105,6 +107,22 @@ namespace SWallet.Repository.Services.Implements
                     {
                         throw new ApiException("Failed to upload QR code to Cloudinary", 500, "INTERNAL_SERVER_ERROR");
                     }
+
+                    // Lưu lịch sử tạo mã QR
+                    var qrCodeHistory = new QrCodeHistory
+                    {
+                        Id = Ulid.NewUlid().ToString(),
+                        LectureId = request.LecturerId,
+                        Points = request.Points,
+                        StartOnTime = DateTime.Now,
+                        ExpirationTime = availableTime,
+                        QrCodeData = qrCodeJson,
+                        QrCodeImageUrl = uploadResult.Url.ToString(),
+                        CreatedAt = DateTime.Now
+                    };
+
+                    await _unitOfWork.GetRepository<QrCodeHistory>().InsertAsync(qrCodeHistory);
+                    await _unitOfWork.CommitAsync();
 
                     return new QRCodeResponse
                     {
@@ -212,6 +230,45 @@ namespace SWallet.Repository.Services.Implements
                 PointsTransferred = qrCodeData.Points,
                 NewBalance = (int)studentWallet.Balance + qrCodeData.Points
             };
+        }
+
+        public async Task<IPaginate<QrCodeHistoryResponse>> GetQrHistoryByLectureId(string lectureId, string searchName, int page, int size)
+        {
+            if (string.IsNullOrEmpty(lectureId))
+            {
+                throw new ApiException("LectureId cannot be empty", 400, "BAD_REQUEST");
+            }
+            Expression<Func<QrCodeHistory, bool>> filterQuery;
+
+            if (string.IsNullOrEmpty(searchName))
+            {
+                filterQuery = p => p.LectureId == lectureId;
+            }
+            else
+            {
+                filterQuery = p => p.LectureId == lectureId && p.LectureId.Contains(searchName);
+            }
+
+            var history = await _unitOfWork.GetRepository<QrCodeHistory>().GetPagingListAsync(
+                selector: x => new QrCodeHistoryResponse
+                {
+                    Id = x.Id,
+                    LecturerId = x.LectureId,
+                    Points = x.Points,
+                    StartOnTime = x.StartOnTime,
+                    ExpirationTime = x.ExpirationTime,
+                    QRCodeData = x.QrCodeData,
+                    QRCodeImageUrl = x.QrCodeImageUrl,
+                    CreatedAt = x.CreatedAt
+
+
+                },
+                predicate: filterQuery,
+                
+                page: page,
+                size: size);
+
+            return history;
         }
     }
 }

@@ -68,6 +68,8 @@ public partial class SwalletDbContext : DbContext
 
     public virtual DbSet<Product> Products { get; set; }
 
+    public virtual DbSet<QrCodeHistory> QrCodeHistories { get; set; }
+
     public virtual DbSet<QrcodeUsage> QrcodeUsages { get; set; }
 
     public virtual DbSet<Request> Requests { get; set; }
@@ -95,7 +97,7 @@ public partial class SwalletDbContext : DbContext
     public virtual DbSet<Wallet> Wallets { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-                    => optionsBuilder.UseSqlServer(GetConnectionString());
+     => optionsBuilder.UseSqlServer(GetConnectionString());
 
     private string GetConnectionString()
     {
@@ -1113,6 +1115,26 @@ public partial class SwalletDbContext : DbContext
             entity.HasOne(d => d.Category).WithMany(p => p.Products)
                 .HasForeignKey(d => d.CategoryId)
                 .HasConstraintName("FK_tbl_product_tbl_category_category_id");
+        });
+
+        modelBuilder.Entity<QrCodeHistory>(entity =>
+        {
+            entity.ToTable("qr_code_history");
+
+            entity.Property(e => e.Id)
+                .HasMaxLength(26)
+                .IsUnicode(false)
+                .HasColumnName("id");
+            entity.Property(e => e.CreatedAt).HasColumnName("createdAt");
+            entity.Property(e => e.ExpirationTime).HasColumnName("expirationTime");
+            entity.Property(e => e.LectureId)
+                .HasMaxLength(26)
+                .IsUnicode(false)
+                .HasColumnName("lectureId");
+            entity.Property(e => e.Points).HasColumnName("points");
+            entity.Property(e => e.QrCodeData).HasColumnName("qrCodeData");
+            entity.Property(e => e.QrCodeImageUrl).HasColumnName("qrCodeImageUrl");
+            entity.Property(e => e.StartOnTime).HasColumnName("startOnTime");
         });
 
         modelBuilder.Entity<QrcodeUsage>(entity =>
