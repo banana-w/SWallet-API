@@ -11,7 +11,7 @@ using SWallet.Repository.Services.Implements;
 using SWallet.Repository.Services.Interfaces;
 using System.Threading.Tasks;
 
-namespace SWallet.API.Controllers
+namespace SWallet_API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
@@ -41,7 +41,7 @@ namespace SWallet.API.Controllers
             }
         }
 
-       
+
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetBrandById(string id)

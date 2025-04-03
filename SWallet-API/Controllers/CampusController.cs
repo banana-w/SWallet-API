@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Logging;
-using SWallet.API.Controllers;
 using SWallet.Domain.Paginate;
 using SWallet.Repository.Payload.Request.Brand;
 using SWallet.Repository.Payload.Request.Campus;

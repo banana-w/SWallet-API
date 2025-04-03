@@ -25,7 +25,7 @@ namespace SWallet.Repository.Services.Interfaces
 
         //bool SendEmailCreateOrder(string receiver, string studentCode, string studentName, Order order);
 
-        //bool SendEmailCamapaign(CampaignState state, string receiver,
-        //    string brandName, string campaignName, string note);
+        bool SendEmailCamapaign(bool state, string receiver,
+            string brandName, string campaignName, string note);
     }
 }

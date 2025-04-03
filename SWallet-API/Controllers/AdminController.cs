@@ -5,7 +5,7 @@ using SWallet.Repository.Payload.Response.Admin; // Import your response models
 using SWallet.Repository.Services.Interfaces; // Import your service interface
 using System.Threading.Tasks;
 
-namespace SWallet.API.Controllers
+namespace SWallet_API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")] // Or a more specific route
