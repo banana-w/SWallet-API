@@ -1,6 +1,7 @@
 ﻿using CloudinaryDotNet.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Logging;
 using SWallet.API.Controllers;
 using SWallet.Domain.Paginate;
@@ -164,6 +165,14 @@ namespace SWallet_API.Controllers
         public async Task<IActionResult> GetCampusByAccountId(string id)
         {
             var result = await _campusService.GetCampusByAccountId(id);
+            return Ok(result);
+        }
+
+
+        [HttpGet("lecture/{id}")]
+        public async Task<IActionResult> GetCampusByLectureId(string id, string searchName = "", int page = 1, int size = 10)
+        {
+            var result = await _campusService.GetCampusByLectureId(id, searchName, page, size);
             return Ok(result);
         }
 

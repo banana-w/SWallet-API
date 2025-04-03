@@ -17,6 +17,7 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using static Org.BouncyCastle.Asn1.Cmp.Challenge;
+using SWallet.Repository.Payload.Response.QRCodeResponse;
 
 namespace SWallet.Repository.Services.Implements
 {
@@ -267,6 +268,53 @@ namespace SWallet.Repository.Services.Implements
                 },
                 predicate: x => x.Id == id);
             return area;
+        }
+
+        public async Task<IPaginate<CampusResponse>> GetCampusByLectureId(string lectureId, string searchName, int page, int size)
+        {
+            if (string.IsNullOrEmpty(lectureId))
+            {
+                throw new ApiException("LectureId cannot be empty", 400, "BAD_REQUEST");
+            }
+            Expression<Func<CampusLecturer, bool>> filterQuery;
+
+            if (string.IsNullOrEmpty(searchName))
+            {
+                filterQuery = p => p.LecturerId == lectureId;
+            }
+            else
+            {
+                filterQuery = p => p.LecturerId == lectureId && p.LecturerId.Contains(searchName);
+            }
+
+            var history = await _unitOfWork.GetRepository<CampusLecturer>().GetPagingListAsync(
+                selector: x => new CampusResponse
+                {
+                    Id = x.Id,
+                    AreaId = x.Campus.AreaId,
+                    AreaName = x.Campus.Area.AreaName,
+                    CampusName = x.Campus.CampusName,
+                    Address = x.Campus.Address,
+                    Phone = x.Campus.Phone,
+                    Email = x.Campus.Email,
+                    Link = x.Campus.LinkWebsite,
+                    Image = x.Campus.Image,
+                    DateCreated = x.Campus.DateCreated,
+                    DateUpdated = x.Campus.DateUpdated,
+                    Description = x.Campus.Description,
+                    State = x.Campus.State,
+                    Status = x.Campus.Status,
+
+                 
+
+                },
+                predicate: filterQuery,
+                include: query => query.Include(x => x.Campus).ThenInclude(x => x.Area),
+
+                page: page,
+                size: size);
+
+            return history;
         }
 
         public async Task<CampusResponse> UpdateCampus(string id, UpdateCampusModel campus)

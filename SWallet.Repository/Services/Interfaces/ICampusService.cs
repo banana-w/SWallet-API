@@ -3,6 +3,7 @@ using SWallet.Repository.Payload.Request.Brand;
 using SWallet.Repository.Payload.Request.Campus;
 using SWallet.Repository.Payload.Response.Brand;
 using SWallet.Repository.Payload.Response.Campus;
+using SWallet.Repository.Payload.Response.QRCodeResponse;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,6 +19,7 @@ namespace SWallet.Repository.Services.Interfaces
         Task<CampusResponse> CreateCampus(CreateCampusModel campus);
         Task<CampusResponse> UpdateCampus(string id, UpdateCampusModel campus);
         Task<CampusResponse> CreateCampusByAccountId(string accountId, CreateCampusByAccIdModel campus);
+        Task<IPaginate<CampusResponse>> GetCampusByLectureId(string lectureId, string searchName, int page, int size);
 
         Task<CampusResponse> GetCampusByAccountId(string accountId);
         
