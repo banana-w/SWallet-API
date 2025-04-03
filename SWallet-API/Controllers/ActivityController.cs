@@ -51,22 +51,22 @@ namespace SWallet_API.Controllers
         //    }
         //}
 
-        [HttpPost]
-        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
-        public async Task<ActionResult<ActivityResponse>> CreateActivity([FromBody] ActivityRequest activity)
-        {
-            try
-            {
-                var newActivity = await _activityService.RedeemVoucherActivityAsync(activity);
-                if (newActivity)
-                return Ok(newActivity);
-                throw new ApiException("Create activity fail", StatusCodes.Status400BadRequest, "ACTIVITY_FAIL");
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, $"Error creating activity: {ex.Message}");
-            }
-        }
+        //[HttpPost]
+        //[ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+        //public async Task<ActionResult<ActivityResponse>> CreateActivity([FromBody] ActivityRequest activity)
+        //{
+        //    try
+        //    {
+        //        var newActivity = await _activityService.RedeemVoucherActivityAsync(activity);
+        //        if (newActivity)
+        //        return Ok(newActivity);
+        //        throw new ApiException("Create activity fail", StatusCodes.Status400BadRequest, "ACTIVITY_FAIL");
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(StatusCodes.Status500InternalServerError, $"Error creating activity: {ex.Message}");
+        //    }
+        //}
 
         [HttpPut("{id}")]
         [ProducesResponseType(typeof(ActivityResponse), StatusCodes.Status200OK)]

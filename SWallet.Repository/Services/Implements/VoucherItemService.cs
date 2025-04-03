@@ -91,5 +91,42 @@ namespace SWallet.Repository.Services.Implements
                 throw new ApiException("Redeem voucher failed", 500);
             return result;
         }
+
+        public async Task<List<VoucherItem>> RedeemVoucherAsync(string campaignId, int quantity)
+        {
+            if (quantity <= 0)
+            {
+                throw new ApiException("Quantity must be greater than 0", 400);
+            }
+
+            var availableVouchers = await _unitOfWork.GetRepository<VoucherItem>()
+                .GetListWithTakeAsync(
+                    predicate: x => x.CampaignDetail.CampaignId.Equals(campaignId)
+                        && x.IsBought == false
+                        && (x.IsLocked == false || x.IsLocked == null)
+                        && (x.ExpireOn == null || x.ExpireOn >= DateOnly.FromDateTime(DateTime.Today)),
+                    take: quantity
+                );
+
+            if (availableVouchers == null || availableVouchers.Count < quantity)
+            {
+                throw new ApiException($"Not enough available vouchers. Requested: {quantity}, Available: {availableVouchers?.Count ?? 0}", 400,"REDEEM_VOUCHER_FAIL");
+            }
+
+            foreach (var voucherItem in availableVouchers)
+            {
+                voucherItem.IsBought = true;
+                voucherItem.DateIssued = DateTime.UtcNow;
+                _unitOfWork.GetRepository<VoucherItem>().UpdateAsync(voucherItem);
+            }
+
+            var result = await _unitOfWork.CommitAsync() > 0;
+            if (!result)
+            {
+                throw new ApiException("Redeem vouchers failed", 500);
+            }
+
+            return availableVouchers.ToList(); // Trả về danh sách voucher đã redeem
+        }
     }
 }

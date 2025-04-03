@@ -4,6 +4,7 @@ using SWallet.Domain.Models;
 using SWallet.Domain.Paginate;
 using SWallet.Repository.Enums;
 using SWallet.Repository.Interfaces;
+using SWallet.Repository.Payload.ExceptionModels;
 using SWallet.Repository.Payload.Request.Activity;
 using SWallet.Repository.Payload.Response.Activity;
 using SWallet.Repository.Services.Interfaces;
@@ -32,48 +33,65 @@ namespace SWallet.Repository.Services.Implements
             await _unitOfWork.BeginTransactionAsync();
             try
             {
+                // Kiểm tra wallet
                 var wallet = await _walletService.GetWalletByStudentId(activityRequest.StudentId, (int)WalletType.Green);
                 if (wallet == null || wallet.Balance < activityRequest.Cost)
                 {
+                    await _unitOfWork.RollbackTransactionAsync();
                     return false;
                 }
 
-                var activity = new Activity
+                // Redeem voucher và lấy danh sách voucher đã redeem
+                var redeemedVouchers = await _voucherItemService.RedeemVoucherAsync(activityRequest.CampaignId, activityRequest.Quantity);
+                if (redeemedVouchers == null || redeemedVouchers.Count < activityRequest.Quantity)
+                {
+                    await _unitOfWork.RollbackTransactionAsync();
+                    return false;
+                }
+
+                // Tạo activity cho từng voucher
+                var activities = redeemedVouchers.Select(voucher => new Activity
                 {
                     Id = Ulid.NewUlid().ToString(),
-                    StoreId = activityRequest.StoreId,
+                    StoreId = null,
                     StudentId = activityRequest.StudentId,
-                    VoucherItemId = activityRequest.VoucherItemId,
+                    VoucherItemId = voucher.Id,
                     Type = (int?)ActivityType.Buy,
-                    Description = activityRequest.Description,
+                    Description = $"Buy Voucher {voucher.VoucherCode}",
                     State = true,
-                    Status = true
-                };
+                    Status = true,
+                    DateCreated = DateTime.UtcNow
+                }).ToList();
 
-                await _unitOfWork.GetRepository<Activity>().InsertAsync(activity);
+                // Thêm tất cả activities
+                await _unitOfWork.GetRepository<Activity>().InsertRangeAsync(activities);
                 await _unitOfWork.CommitAsync();
 
-                //tru diem
-                await _walletService.UpdateWallet(wallet.Id, -(decimal)activityRequest.Cost);
-                await _voucherItemService.RedeemVoucherAsync(activityRequest.VoucherItemId);
+                // Trừ điểm từ wallet
+                await _walletService.UpdateWalletForRedeem(wallet.Id, -(decimal)activityRequest.Cost);
 
-                //add activitytransaction
-                await AddActivityTransactionAsync(activity.Id, wallet.Id, (decimal)activityRequest.Cost, "Redeem voucher");
+                // Thêm activity transaction
+                await AddActivityTransactionAsync(
+                    activities.First().Id,
+                    wallet.Id,
+                    (decimal)activityRequest.Cost,
+                    $"Redeem {activityRequest.Quantity} vouchers"
+                );
 
                 await _unitOfWork.CommitTransactionAsync();
                 return true;
             }
-            catch (Exception ex)
+            catch
             {
                 await _unitOfWork.RollbackTransactionAsync();
-                throw ex;
+                throw;
             }
         }
         public async Task<ActivityTransaction> AddActivityTransactionAsync(string activityId, string walletId, decimal amount, string description)
         {
             var transaction = new ActivityTransaction
             {
-                Id = Guid.NewGuid().ToString(),
+                Id = Ulid.NewUlid().ToString(),
                 ActivityId = activityId,
                 WalletId = walletId,
                 Amount = amount,
@@ -82,7 +100,11 @@ namespace SWallet.Repository.Services.Implements
             };
 
             await _unitOfWork.GetRepository<ActivityTransaction>().InsertAsync(transaction);
-            await _unitOfWork.CommitAsync();
+            var  result = await _unitOfWork.CommitAsync() > 0;
+            if(!result)
+            {
+                throw new ApiException("Add activity transaction failed");
+            }
             return transaction;
         }
 
@@ -139,7 +161,7 @@ namespace SWallet.Repository.Services.Implements
                 return false;
             }
 
-            activity.Description = activityRequest.Description;
+            //activity.Description = activityRequest.Description;
             activity.DateUpdated = DateTime.Now;
             //activity.ActivityTransactions = activityRequest.ActivityTransactions;
 

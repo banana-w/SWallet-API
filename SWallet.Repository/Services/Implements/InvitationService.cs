@@ -92,7 +92,7 @@ namespace SWallet.Repository.Services.Implements
                 }
                 else
                 {
-                    var invitations = await repository.GetListAsync();
+                    var invitations = await repository.GetListAsync(x => x);
                     return invitations.Any(x => x.InviteeId == invitee);
                 }
             }

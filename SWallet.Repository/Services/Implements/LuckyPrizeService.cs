@@ -15,11 +15,8 @@ namespace SWallet.Repository.Services.Implements
 {
     public class LuckyPrizeService : BaseService<LuckyPrizeService>, ILuckyPrizeService
     {
-        private readonly IUnitOfWork _unitOfWork;
-
         public LuckyPrizeService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<LuckyPrizeService> logger) : base(unitOfWork, logger)
         {
-            _unitOfWork = unitOfWork;
         }
 
         public async Task<LuckyPrize> AddLuckyPrize(LuckyPrizeRequest luckyPrize)
@@ -54,7 +51,7 @@ namespace SWallet.Repository.Services.Implements
         {
             try
             {
-                var result = await _unitOfWork.GetRepository<Domain.Models.LuckyPrize>().GetListAsync();
+                var result = await _unitOfWork.GetRepository<Domain.Models.LuckyPrize>().GetListAsync(x => x);
                 return result.ToList();
             }
             catch (Exception ex)

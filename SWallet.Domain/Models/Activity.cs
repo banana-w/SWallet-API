@@ -7,7 +7,7 @@ public partial class Activity
 {
     public string Id { get; set; } = null!;
 
-    public string StoreId { get; set; } = null!;
+    public string? StoreId { get; set; }
 
     public string StudentId { get; set; } = null!;
 
@@ -27,7 +27,7 @@ public partial class Activity
 
     public virtual ICollection<ActivityTransaction> ActivityTransactions { get; set; } = new List<ActivityTransaction>();
 
-    public virtual Store Store { get; set; } = null!;
+    public virtual Store? Store { get; set; }
 
     public virtual Student Student { get; set; } = null!;
 
