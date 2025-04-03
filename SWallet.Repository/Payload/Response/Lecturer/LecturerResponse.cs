@@ -14,6 +14,14 @@ namespace SWallet.Repository.Payload.Response.Lecturer
 
         public string FullName { get; set; } = null!;
 
+        public string Email { get; set; } = null!;
+
+        public string Phone { get; set; } = null!;
+
+        public List<string> CampusName { get; set; } = null!;
+
+        public decimal Balance { get; set; } = 0;
+
         public DateTime? DateCreated { get; set; }
 
         public DateTime? DateUpdated { get; set; }
@@ -22,6 +30,6 @@ namespace SWallet.Repository.Payload.Response.Lecturer
 
         public bool? Status { get; set; }
 
-        public List<string> CampusIds { get; set; } = new List<string>();
+        //public List<string> CampusIds { get; set; } = new List<string>();
     }
 }
