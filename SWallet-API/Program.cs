@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using SWallet.Repository.Payload;
 using SWallet.Repository.VNPAY;
+using SWallet_API.Backgrounds;
 using SWallet_API.Extentions;
 using VNPAY.NET;
 
@@ -53,6 +54,14 @@ builder.Services.AddSingleton<IVnpay>(sp =>
 
 
 builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddLogging(logging =>
+{
+    logging.AddConsole(); // Ghi log ra console
+    logging.AddDebug();   // Ghi log ra debug output (nếu dùng IDE như Visual Studio)
+});
+
+builder.Services.AddHostedService<BackgroundWorkerService>();
 
 var app = builder.Build();
 
