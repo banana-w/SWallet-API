@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using CloudinaryDotNet.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SWallet.Domain.Models;
@@ -87,20 +88,35 @@ namespace SWallet.Repository.Services.Implements
 
         public async Task<LecturerResponse> GetLecturerById(string id)
         {
-            var area = await _unitOfWork.GetRepository<Lecturer>().SingleOrDefaultAsync(
+            var lecturer = await _unitOfWork.GetRepository<Lecturer>().SingleOrDefaultAsync(
                 selector: x => new LecturerResponse
                 {
                     Id = x.Id,
                     AccountId = x.AccountId,
                     FullName = x.FullName,
+                    Email = x.Account.Email,
+                    Phone = x.Account.Phone,
+                    CampusName = x.CampusLecturers.Select(lc => lc.Campus.CampusName).ToList(), // Lấy danh sách tên campus
+                    Balance = (decimal)(x.Wallets != null && x.Wallets.Any() ? x.Wallets.FirstOrDefault().Balance : 0), // Lấy Balance từ Wallet đầu tiên
                     DateCreated = x.DateCreated,
-                    DateUpdated = x.DateUpdated,                    
+                    DateUpdated = x.DateUpdated,
                     State = x.State,
                     Status = x.Status,
-                    
                 },
-                predicate: x => x.Id == id);
-            return area;
+                predicate: x => x.Id == id,
+                include: x => x
+                    .Include(l => l.Wallets) // Include Wallets để lấy Balance
+                    .Include(l => l.CampusLecturers)
+                    .ThenInclude(lc => lc.Campus)
+                    .Include(l => l.Account) // Include Account để lấy Email và Phone
+            );
+
+            if (lecturer == null)
+            {
+                throw new Exception($"Lecturer with ID {id} not found.");
+            }
+
+            return lecturer;
         }
 
         public async Task<LecturerResponse> GetLecturerByAccountId(string accountId)
@@ -111,13 +127,22 @@ namespace SWallet.Repository.Services.Implements
                     Id = x.Id,
                     AccountId = x.AccountId,
                     FullName = x.FullName,
+                    Email = x.Account.Email,
+                    Phone = x.Account.Phone,
+                    CampusName = x.CampusLecturers.Select(lc => lc.Campus.CampusName).ToList(), // Lấy danh sách tên campus
+                    Balance = (decimal)(x.Wallets != null && x.Wallets.Any() ? x.Wallets.FirstOrDefault().Balance : 0), // Lấy Balance từ Wallet đầu tiên
                     DateCreated = x.DateCreated,
                     DateUpdated = x.DateUpdated,
                     State = x.State,
                     Status = x.Status,
 
                 },
-                predicate: x => x.AccountId == accountId);
+                predicate: x => x.AccountId == accountId,
+                include: x => x
+                    .Include(l => l.Wallets) // Include Wallets để lấy Balance
+                    .Include(l => l.CampusLecturers)
+                    .ThenInclude(lc => lc.Campus)
+                    .Include(l => l.Account)); // Include Account để lấy Email và Phone);
             return area;
         }
 
@@ -289,7 +314,7 @@ namespace SWallet.Repository.Services.Implements
                 DateUpdated = lecturerEntity.DateUpdated,
                 State = lecturerEntity.State,
                 Status = lecturerEntity.Status,
-                CampusIds = campusIds // Trả về danh sách campusId đã liên kết
+                //CampusIds = campusIds // Trả về danh sách campusId đã liên kết
             };
 
             return lecturerResponse;
