@@ -97,7 +97,7 @@ public partial class SwalletDbContext : DbContext
     public virtual DbSet<Wallet> Wallets { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-     => optionsBuilder.UseSqlServer(GetConnectionString());
+            => optionsBuilder.UseSqlServer(GetConnectionString());
 
     private string GetConnectionString()
     {
@@ -190,6 +190,7 @@ public partial class SwalletDbContext : DbContext
 
             entity.HasOne(d => d.Store).WithMany(p => p.Activities)
                 .HasForeignKey(d => d.StoreId)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("FK_tbl_activity_tbl_store_store_id");
 
             entity.HasOne(d => d.Student).WithMany(p => p.Activities)

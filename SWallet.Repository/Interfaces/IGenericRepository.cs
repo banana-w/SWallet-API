@@ -32,7 +32,12 @@ namespace SWallet.Repository.Interfaces
             Expression<Func<T, bool>> predicate = null,
             Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null,
             Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null);
-
+        Task<ICollection<T>> GetListWithTakeAsync(
+                            Expression<Func<T, bool>> predicate = null,
+                            Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null,
+                            Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null,
+                            int? take = null,
+                            int skip = 0);
         Task<IPaginate<T>> GetPagingListAsync(
             Expression<Func<T, bool>> predicate = null,
             Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null,

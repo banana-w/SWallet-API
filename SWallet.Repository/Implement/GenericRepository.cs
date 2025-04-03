@@ -75,6 +75,33 @@ namespace SWallet.Repository.Implement
             return await query.AsNoTracking().ToListAsync();
         }
 
+        public virtual async Task<ICollection<T>> GetListWithTakeAsync(
+                            Expression<Func<T, bool>> predicate = null,
+                            Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null,
+                            Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null,
+                            int? take = null,
+                            int skip = 0)
+        {
+            IQueryable<T> query = _dbSet;
+
+            if (include != null)
+                query = include(query);
+
+            if (predicate != null)
+                query = query.Where(predicate);
+
+            if (orderBy != null)
+                query = orderBy(query);
+
+            if (skip > 0)
+                query = query.Skip(skip);
+
+            if (take.HasValue)
+                query = query.Take(take.Value);
+
+            return await query.AsNoTracking().ToListAsync();
+        }
+
         public virtual async Task<ICollection<TResult>> GetListAsync<TResult>(Expression<Func<T, TResult>> selector, Expression<Func<T, bool>> predicate = null, Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null, Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null)
         {
             IQueryable<T> query = _dbSet;
@@ -155,6 +182,6 @@ namespace SWallet.Repository.Implement
 
         #endregion
     }
-        
+
 }
 

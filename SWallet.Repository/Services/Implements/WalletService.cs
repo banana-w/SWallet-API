@@ -276,6 +276,61 @@ namespace SWallet.Repository.Services.Implements
             throw new ApiException("Update Wallet Failed", 500, "WALLET_UPDATE_FAILED");
         }
 
+        public async Task<WalletResponse> UpdateWalletForRedeem(string id, decimal balanceChange)
+        {
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                var wallet = await _unitOfWork.GetRepository<Wallet>()
+                    .SingleOrDefaultAsync(predicate: x => x.Id == id);
+
+                if (wallet == null)
+                {
+                    throw new ApiException("Wallet not found for this student", 404, "WALLET_NOT_FOUND");
+                }
+
+                // Kiểm tra số dư sau khi thay đổi
+                decimal newBalance = (decimal)(wallet.Balance + balanceChange);
+                if (newBalance < 0)
+                {
+                    throw new ApiException("Insufficient balance", 400, "INSUFFICIENT_BALANCE");
+                }
+
+                // Cập nhật wallet
+                wallet.Balance = newBalance;
+                wallet.DateUpdated = DateTime.UtcNow;
+
+                _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
+                var result = await _unitOfWork.CommitAsync();
+                if (result <= 0)
+                {
+                    throw new ApiException("Failed to update wallet", 500, "WALLET_UPDATE_FAILED");
+                }
+
+                await _unitOfWork.CommitTransactionAsync();
+
+                // Trả về response
+                return new WalletResponse
+                {
+                    Id = wallet.Id,
+                    CampaignId = wallet.CampaignId,
+                    StudentId = wallet.StudentId,
+                    BrandId = wallet.BrandId,
+                    Type = wallet.Type,
+                    Balance = wallet.Balance,
+                    DateCreated = wallet.DateCreated,
+                    DateUpdated = wallet.DateUpdated,
+                    Description = wallet.Description,
+                    Status = wallet.Status
+                };
+            }
+            catch (Exception ex)
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
+        }
+
         public async Task AddPointsToStudentWallet(string studentId, int points)
         {
             try

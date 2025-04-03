@@ -13,6 +13,7 @@ namespace SWallet.Repository.Services.Interfaces
     {
         Task<bool> GenerateVoucherItemsAsync(VoucherItemRequest voucherItemRequest);
         Task<bool> RedeemVoucherAsync(string voucherId);
+        Task<List<VoucherItem>> RedeemVoucherAsync(string campaignId, int quantity);
         Task<VoucherItem> GetVoucherItemByIdAsync(string voucherId);
         Task<IEnumerable<VoucherItemResponse>> GetVoucherItemsByCampaignDetailIdAsync(IEnumerable<string> campaignDetailId);
     }
