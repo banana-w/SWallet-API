@@ -7,6 +7,7 @@ using SWallet.Repository.Interfaces;
 using SWallet.Repository.Payload.ExceptionModels;
 using SWallet.Repository.Payload.Request.Activity;
 using SWallet.Repository.Payload.Response.Activity;
+using SWallet.Repository.Payload.Response.ActivityTransaction;
 using SWallet.Repository.Services.Interfaces;
 using SWallet.Repository.Utils;
 using System;
@@ -74,7 +75,7 @@ namespace SWallet.Repository.Services.Implements
                 await AddActivityTransactionAsync(
                     activities.First().Id,
                     wallet.Id,
-                    (decimal)activityRequest.Cost,
+                    -(decimal)activityRequest.Cost,
                     $"Redeem {activityRequest.Quantity} vouchers"
                 );
 
@@ -100,12 +101,58 @@ namespace SWallet.Repository.Services.Implements
             };
 
             await _unitOfWork.GetRepository<ActivityTransaction>().InsertAsync(transaction);
-            var  result = await _unitOfWork.CommitAsync() > 0;
-            if(!result)
+            var result = await _unitOfWork.CommitAsync() > 0;
+            if (!result)
             {
                 throw new ApiException("Add activity transaction failed");
             }
             return transaction;
+        }
+
+        public async Task<IPaginate<ActivityTransactionResponse>> GetAllActivityTransactionAsync(
+                     string studentId,
+                     string search,
+                     int page,
+                     int size)
+        {
+            if (page < 1)
+                throw new ApiException("Page number must be greater than 0", 400, "INVALID_PAGE");
+            if (size < 1)
+                throw new ApiException("Page size must be greater than 0", 400, "INVALID_SIZE");
+            if (size > 100) // Giới hạn kích thước tối đa
+                size = 100;
+            if (string.IsNullOrEmpty(studentId))
+                throw new ApiException("Student ID is required", 400, "WALLET_ID_REQUIRED");
+
+            var walletId = await _unitOfWork.GetRepository<Wallet>().SingleOrDefaultAsync(
+                selector: x => x.Id, 
+                predicate: x => x.StudentId == studentId && x.Type == (int)WalletType.Green);
+
+            Expression<Func<ActivityTransaction, bool>> filter = x =>
+                x.WalletId == walletId
+                && (string.IsNullOrEmpty(search) || (x.Activity != null && x.Activity.VoucherItem != null && x.Activity.VoucherItem.Voucher.VoucherName.Contains(search)));
+
+            var transactions = await _unitOfWork.GetRepository<ActivityTransaction>()
+                .GetPagingListAsync(
+                    selector: x => new ActivityTransactionResponse
+                    {
+                        Id = x.Id,
+                        ActivityId = x.ActivityId,
+                        WalletId = x.WalletId,
+                        Amount = x.Amount,
+                        Description = x.Description,
+                        Status = x.Status ?? false,
+                        VoucherName = x.Activity.VoucherItem.Voucher.VoucherName,
+                        CreatedAt = x.Activity.DateCreated
+                    },
+                    predicate: filter,
+                    include: q => q.Include(x => x.Activity).ThenInclude(a => a.VoucherItem).ThenInclude(v => v.Voucher),
+                    orderBy: q => q.OrderByDescending(x => x.Activity.DateCreated),
+                    page: page,
+                    size: size
+                );
+
+            return transactions;
         }
 
         public Task<bool> DeleteActivityAsync()
