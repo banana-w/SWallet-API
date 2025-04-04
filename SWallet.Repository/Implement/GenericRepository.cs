@@ -178,6 +178,8 @@ namespace SWallet.Repository.Implement
             return _dbSet.AsQueryable();
         }
 
+     
+
 
 
         #endregion
