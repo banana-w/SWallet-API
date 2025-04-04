@@ -27,19 +27,17 @@ public class BackgroundWorkerService : BackgroundService
         {
             try
             {
-                // Tính thời gian chờ đến 0:00 UTC ngày tiếp theo
+                // Tính thời gian chờ đến 00:01 UTC ngày tiếp theo
                 DateTime now = DateTime.UtcNow;
-                DateTime nextRun = now.Date.AddDays(1); // 0:00 UTC ngày tiếp theo
+                DateTime nextRun = now.Date.AddDays(1).AddMinutes(1); // 00:01 UTC ngày tiếp theo
                 TimeSpan delay = nextRun - now;
 
                 _logger.LogInformation("Worker scheduled to run next at: {time}. Waiting for {delay} ms", nextRun, delay.TotalMilliseconds);
 
-                // Chờ đến thời điểm chạy tiếp theo
-
-
+                // Để triển khai thực tế:
                 await Task.Delay((int)delay.TotalMilliseconds, stoppingToken);
-
-                // await Task.Delay(10000, stoppingToken);
+                // Để test nhanh:
+                //await Task.Delay(10000, stoppingToken);
 
                 if (stoppingToken.IsCancellationRequested)
                 {
@@ -54,29 +52,62 @@ public class BackgroundWorkerService : BackgroundService
                 var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
                 var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork<SwalletDbContext>>();
 
-                // Lấy repository từ UnitOfWork trong scope
                 var campaignRepository = unitOfWork.GetRepository<Campaign>();
                 var campaignActivityRepository = unitOfWork.GetRepository<CampaignActivity>();
 
-                // Lấy danh sách campaign với Status = false
-                Expression<Func<Campaign, bool>> predicate = c => c.Status == false;
-                List<Campaign> campaigns = (await campaignRepository.GetListAsync(
-                    predicate: predicate,
+                // Lấy tất cả campaign để kiểm tra cả StartOn và EndOn
+                List<Campaign> allCampaigns = (await campaignRepository.GetListAsync(
                     include: q => q.Include(c => c.Brand).ThenInclude(b => b.Account)
                 )).ToList();
 
-                if (campaigns?.Count > 0)
+                if (allCampaigns?.Count > 0)
                 {
-                    _logger.LogInformation("Found {count} campaigns to process.", campaigns.Count);
+                    _logger.LogInformation("Found {count} campaigns to check.", allCampaigns.Count);
+                    bool hasChanges = false;
 
-                    foreach (Campaign campaign in campaigns)
+                    foreach (Campaign campaign in allCampaigns)
                     {
-                        try
+                        // Kiểm tra StartOn: Nếu chưa active và đã đến ngày bắt đầu
+                        if (campaign.Status == false && campaign.StartOn.HasValue &&
+                            campaign.StartOn.Value.ToDateTime(TimeOnly.MinValue) <= DateTime.UtcNow)
                         {
+                            campaign.Status = true;
+                            hasChanges = true; // Đánh dấu có thay đổi để commit
+
+                            _logger.LogInformation("Campaign {CampaignId} has started. Status updated to true.", campaign.Id);
+
                             if (campaign?.Brand?.Account?.Email != null)
                             {
                                 bool emailSent = emailService.SendEmailCamapaign(
-                                    false, // Giả sử false là "Closed"
+                                    true, // Trạng thái "Started"
+                                    campaign.Brand.Account.Email,
+                                    campaign.Brand.BrandName,
+                                    campaign.CampaignName,
+                                    null);
+
+                                if (emailSent)
+                                {
+                                    _logger.LogInformation("Email sent for campaign {CampaignId} start notification.", campaign.Id);
+                                }
+                                else
+                                {
+                                    _logger.LogError("Failed to send email for campaign {CampaignId}", campaign.Id);
+                                }
+                            }
+                        }
+                        // Kiểm tra EndOn: Nếu đang active và đã đến ngày kết thúc
+                        else if (campaign.Status == true && campaign.EndOn.HasValue &&
+                                 campaign.EndOn.Value.ToDateTime(TimeOnly.MinValue) <= DateTime.UtcNow)
+                        {
+                            campaign.Status = false;
+                            hasChanges = true; // Đánh dấu có thay đổi để commit
+
+                            _logger.LogInformation("Campaign {CampaignId} has ended. Status updated to false.", campaign.Id);
+
+                            if (campaign?.Brand?.Account?.Email != null)
+                            {
+                                bool emailSent = emailService.SendEmailCamapaign(
+                                    false, // Trạng thái "Ended"
                                     campaign.Brand.Account.Email,
                                     campaign.Brand.BrandName,
                                     campaign.CampaignName,
@@ -85,29 +116,20 @@ public class BackgroundWorkerService : BackgroundService
                                 if (emailSent)
                                 {
                                     _logger.LogInformation("Email sent for campaign {CampaignId}", campaign.Id);
-                                    // Ví dụ: Cập nhật trạng thái nếu cần
-                                    // campaign.Status = true;
-                                    // campaignRepository.Update(campaign);
                                 }
                                 else
                                 {
                                     _logger.LogError("Failed to send email for campaign {CampaignId}", campaign.Id);
                                 }
                             }
-                            else
-                            {
-                                _logger.LogWarning("Campaign {CampaignId} has missing Brand or Account data.", campaign.Id);
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(ex, "Error processing campaign {CampaignId}", campaign.Id);
                         }
                     }
 
-                    // Commit thay đổi nếu có
-                    await unitOfWork.CommitAsync();
-                    _logger.LogInformation("Changes committed to database.");
+                    if (hasChanges)
+                    {
+                        await unitOfWork.CommitAsync();
+                        _logger.LogInformation("Changes committed to database.");
+                    }
                 }
                 else
                 {
