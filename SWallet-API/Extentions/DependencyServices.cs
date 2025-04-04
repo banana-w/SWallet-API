@@ -7,6 +7,7 @@ using StackExchange.Redis;
 using SWallet.Domain.Models;
 using SWallet.Repository.Implement;
 using SWallet.Repository.Interfaces;
+using SWallet.Repository.Interfaces.CampaignRepository;
 using SWallet.Repository.Services.Implements;
 using SWallet.Repository.Services.Interfaces;
 using System.Text;
@@ -49,6 +50,7 @@ namespace SWallet_API.Extentions
             services.AddScoped<IPointPackageService, PointPackageService>();
             services.AddScoped<IQRCodeService, QRCodeService>();
             services.AddScoped<ILuckyPrizeService, LuckyPrizeService>();
+            services.AddScoped<ICampaignRepository, CampaignRepository>();
 
 
             return services;
