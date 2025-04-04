@@ -37,9 +37,9 @@ public class BackgroundWorkerService : BackgroundService
                 // Chờ đến thời điểm chạy tiếp theo
 
 
-                //await Task.Delay((int)delay.TotalMilliseconds, stoppingToken);
+                await Task.Delay((int)delay.TotalMilliseconds, stoppingToken);
 
-                await Task.Delay(10000, stoppingToken);
+                // await Task.Delay(10000, stoppingToken);
 
                 if (stoppingToken.IsCancellationRequested)
                 {
