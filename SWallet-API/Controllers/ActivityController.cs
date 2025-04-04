@@ -4,6 +4,7 @@ using SWallet.Domain.Paginate;
 using SWallet.Repository.Payload.ExceptionModels;
 using SWallet.Repository.Payload.Request.Activity;
 using SWallet.Repository.Payload.Response.Activity;
+using SWallet.Repository.Payload.Response.ActivityTransaction;
 using SWallet.Repository.Services.Interfaces;
 
 namespace SWallet_API.Controllers
@@ -104,5 +105,12 @@ namespace SWallet_API.Controllers
             }
         }
 
+        [HttpGet("ActivityTransaction")]
+        [ProducesResponseType(typeof(IPaginate<ActivityTransactionResponse>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<IPaginate<ActivityTransactionResponse>>> GetActivityTransactions(string? searchName = "", string studentId = "", int page = 1, int size = 10)
+        {
+            var transactions = await _activityService.GetAllActivityTransactionAsync(studentId, searchName!, page, size);
+            return Ok(transactions);
+        }
     }
 }
