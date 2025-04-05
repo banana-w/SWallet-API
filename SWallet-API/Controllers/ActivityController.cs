@@ -5,6 +5,7 @@ using SWallet.Repository.Payload.ExceptionModels;
 using SWallet.Repository.Payload.Request.Activity;
 using SWallet.Repository.Payload.Response.Activity;
 using SWallet.Repository.Payload.Response.ActivityTransaction;
+using SWallet.Repository.Payload.Response.Voucher;
 using SWallet.Repository.Services.Interfaces;
 
 namespace SWallet_API.Controllers
@@ -104,6 +105,24 @@ namespace SWallet_API.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, $"Error redeeming voucher: {ex.Message}");
             }
         }
+
+        [HttpGet("RedeemedVouchersByStudent")]
+        [ProducesResponseType(typeof(IPaginate<VoucherStorageResponse>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<IPaginate<VoucherStorageResponse>>> GetRedeemedVouchersByStudent(string? searchName = "", string studentId = "", bool? isUsed = null, int page = 1, int size = 10)
+        {
+            var vouchers = await _activityService.GetRedeemedVouchersByStudentAsync(searchName, studentId, isUsed, page, size);
+            return Ok(vouchers);
+        }
+
+        [HttpGet("RedeemedVouchersGroupByStudent")]
+        [ProducesResponseType(typeof(IPaginate<VoucherStorageGroupByBrandResponse>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<IPaginate<VoucherStorageGroupByBrandResponse>>> GetRedeemedVouchersByStudentGroupedByBrand(string? searchName = "", string studentId = "", bool? isUsed = null, int page = 1, int size = 10)
+        {
+            var vouchers = await _activityService.GetRedeemedVouchersByStudentGroupedByBrandAsync(searchName, studentId, isUsed, page, size);
+            return Ok(vouchers);
+        }
+
+
 
         [HttpGet("ActivityTransaction")]
         [ProducesResponseType(typeof(IPaginate<ActivityTransactionResponse>), StatusCodes.Status200OK)]

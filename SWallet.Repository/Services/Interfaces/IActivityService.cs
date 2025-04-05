@@ -2,6 +2,7 @@
 using SWallet.Repository.Payload.Request.Activity;
 using SWallet.Repository.Payload.Response.Activity;
 using SWallet.Repository.Payload.Response.ActivityTransaction;
+using SWallet.Repository.Payload.Response.Voucher;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,6 +21,9 @@ namespace SWallet.Repository.Services.Interfaces
                      string search,
                      int page,
                      int size);
+        Task<IPaginate<VoucherStorageResponse>> GetRedeemedVouchersByStudentAsync(string search, string studentId, bool? isUsed, int page, int size);
+        Task<IPaginate<VoucherStorageGroupByBrandResponse>> GetRedeemedVouchersByStudentGroupedByBrandAsync(
+            string search, string studentId, bool? isUsed, int page, int size);
         Task<bool> DeleteActivityAsync();
 
     }
