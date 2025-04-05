@@ -18,14 +18,6 @@ namespace SWallet_API.Controllers
             _voucherItemService = voucherItemService;
         }
 
-        [HttpPut("{id}")]
-        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
-        public async Task<IActionResult> RedeemVoucher(string id)
-        {
-            var result = await _voucherItemService.RedeemVoucherAsync(id);
-            return Ok(result);
-        }
-
         [HttpPost]
         [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
         public async Task<IActionResult> GenerateVoucherItems([FromBody] VoucherItemRequest voucherItemRequest)

@@ -254,6 +254,7 @@ namespace SWallet.Repository.Services.Implements
                     Phone = x.Account.Phone,
                     Avatar = x.Account.Avatar,
                     AvatarFileName = x.Account.FileName,
+                    File = x.File,
                     NumberOfCampaigns = x.CampaignStores.Count,
                     NumberOfVouchers = x.Activities.Count,
                 },
@@ -299,6 +300,7 @@ namespace SWallet.Repository.Services.Implements
                     UserName = x.Account.UserName,
                     Email = x.Account.Email,
                     Phone = x.Account.Phone,
+                    File = x.File,
                     Avatar = x.Account.Avatar,
                     AvatarFileName = x.Account.FileName,
                     NumberOfCampaigns = x.CampaignStores.Count,
@@ -333,6 +335,7 @@ namespace SWallet.Repository.Services.Implements
                    State = x.State,
                    Status = x.Account.Status,
                    UserName = x.Account.UserName,
+                   File = x.File,
                    Email = x.Account.Email,
                    Phone = x.Account.Phone,
                    Avatar = x.Account.Avatar,
@@ -377,6 +380,7 @@ namespace SWallet.Repository.Services.Implements
                     UserName = x.Account.UserName,
                     Email = x.Account.Email,
                     Phone = x.Account.Phone,
+                    File = x.File,
                     Avatar = x.Account.Avatar,
                     AvatarFileName = x.Account.FileName,
                     NumberOfCampaigns = x.CampaignStores.Count,
@@ -410,8 +414,19 @@ namespace SWallet.Repository.Services.Implements
             }
             if (store.Avatar != null && store.Avatar.Length > 0)
             {
+                    var image = await _cloudinaryService.UploadImageAsync(store.Avatar);
+                    if (image != null)
+                    {
+                        // Xóa ảnh cũ trên Cloudinary
+                        if (!string.IsNullOrEmpty(updateStore.FileName))
+                        {
+                            await _cloudinaryService.RemoveImageAsync(updateStore.FileName);
+                        }
 
-                var f = await _cloudinaryService.UploadImageAsync(store.Avatar);
+                        updateStore.File = image.SecureUrl.AbsoluteUri;
+                        updateStore.FileName = image.PublicId;
+                    }
+                
 
             }
             updateStore.AreaId = store.AreaId;
@@ -448,6 +463,7 @@ namespace SWallet.Repository.Services.Implements
                     UserName = updateStore.Account.UserName,
                     Email = updateStore.Account.Email,
                     Phone = updateStore.Account.Phone,
+                    File = updateStore.File,
                     Avatar = updateStore.Account.Avatar,
                     AvatarFileName = updateStore.Account.FileName,
                     Status = updateStore.Status
@@ -530,6 +546,7 @@ namespace SWallet.Repository.Services.Implements
                     UserName = x.Account.UserName,
                     Email = x.Account.Email,
                     Phone = x.Account.Phone,
+                    File = x.File,
                     Avatar = x.Account.Avatar,
                     AvatarFileName = x.Account.FileName,
 

@@ -1410,9 +1410,7 @@ public partial class SwalletDbContext : DbContext
                 .IsUnicode(false)
                 .IsFixedLength()
                 .HasColumnName("account_id");
-            entity.Property(e => e.Address)
-                .HasColumnType("text")
-                .HasColumnName("address");
+            entity.Property(e => e.Address).HasColumnName("address");
             entity.Property(e => e.AreaId)
                 .HasMaxLength(26)
                 .IsUnicode(false)
@@ -1426,9 +1424,7 @@ public partial class SwalletDbContext : DbContext
             entity.Property(e => e.ClosingHours).HasColumnName("closing_hours");
             entity.Property(e => e.DateCreated).HasColumnName("date_created");
             entity.Property(e => e.DateUpdated).HasColumnName("date_updated");
-            entity.Property(e => e.Description)
-                .HasColumnType("text")
-                .HasColumnName("description");
+            entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.File)
                 .HasColumnType("text")
                 .HasColumnName("file");
