@@ -34,6 +34,21 @@ namespace SWallet_API.Controllers
             }
         }
 
+        [HttpGet("get-all-campaign-detail-by-storeId")]
+        public async Task<ActionResult<IPaginate<CampaignDetailResponse>>> GetAllCampaignDetailByStoreId(string storeId, string searchName = "", int page = 1, int size = 10) // Pagination parameters
+        {
+            try
+            {
+                var campaignDetailRespone = await _campaignDetailService.GetAllCampaignDetailByStore(storeId, searchName, page, size);
+                return Ok(campaignDetailRespone);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting campaign details"); // Log the error
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error getting campaign details");
+            }
+        }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetCampaignDetailById(string id)
         {

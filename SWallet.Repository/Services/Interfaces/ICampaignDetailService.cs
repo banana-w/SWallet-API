@@ -12,8 +12,9 @@ namespace SWallet.Repository.Services.Interfaces
     public interface ICampaignDetailService
     {
         Task<IPaginate<CampaignDetailResponse>> GetCampaignDetails(string searchName, int page, int size);
-        //Task<IPaginate<CampaignDetailResponse>> GetAllByStore(string searchName, int page, int size);
+        Task<IPaginate<CampaignDetailResponse>> GetAllCampaignDetailByStore(string storeId, string searchName, int page, int size);
         List<string> GetAllVoucherItemByCampaignDetail(string id);
         Task<CampaignDetailExtra> GetById(string id);
+
     }
 }

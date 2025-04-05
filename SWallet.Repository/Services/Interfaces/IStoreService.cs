@@ -22,6 +22,9 @@ namespace SWallet.Repository.Services.Interfaces
         Task<StoreResponse> UpdateStore(string id, UpdateStoreModel store);
         Task<IPaginate<StoreResponse>> GetStoreByBrandId(string brandId, string searchName, int page, int size);
         Task<IPaginate<StoreResponse>> GetStoreInBrand(string searchName, int page, int size);
+
+
+
         void Delete(string id);
         
     }
