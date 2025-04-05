@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Org.BouncyCastle.Security;
 using SWallet.Domain.Models;
@@ -64,7 +65,90 @@ namespace SWallet.Repository.Services.Implements
             mapper = new Mapper(config);
         }
 
-        
+        public async Task<IPaginate<CampaignDetailResponse>> GetAllCampaignDetailByStore(
+    string storeId, string searchName, int page, int size)
+        {
+            // Kiểm tra tham số đầu vào
+            if (string.IsNullOrEmpty(storeId))
+            {
+                throw new ArgumentException("StoreId không được để trống", nameof(storeId));
+            }
+            if (page <= 0)
+            {
+                throw new ArgumentException("Số trang phải lớn hơn 0", nameof(page));
+            }
+            if (size <= 0)
+            {
+                throw new ArgumentException("Kích thước trang phải lớn hơn 0", nameof(size));
+            }
+
+            // Bước 1: Lấy danh sách CampaignId liên quan đến StoreId từ CampaignStore
+            var campaignStoreRepo = _unitOfWork.GetRepository<CampaignStore>();
+            Expression<Func<CampaignStore, bool>> campaignStoreFilter = cs => cs.StoreId == storeId;
+            var campaignStores = await campaignStoreRepo.GetListAsync(
+                predicate: campaignStoreFilter,
+                selector: cs => cs.CampaignId);
+
+            if (!campaignStores.Any())
+            {
+                // Nếu không tìm thấy CampaignStore nào liên quan đến StoreId, trả về danh sách rỗng
+                return new Paginate<CampaignDetailResponse>
+                {
+                    Items = new List<CampaignDetailResponse>(),
+                    Page = page,
+                    Size = size,
+                    Total = 0,
+                    TotalPages = 0
+                };
+            }
+
+            // Bước 2: Lấy danh sách CampaignDetail dựa trên CampaignId
+            var campaignDetailRepo = _unitOfWork.GetRepository<CampaignDetail>();
+            Expression<Func<CampaignDetail, bool>> filterQuery;
+            if (string.IsNullOrEmpty(searchName))
+            {
+                filterQuery = cd => campaignStores.Contains(cd.CampaignId);
+            }
+            else
+            {
+                filterQuery = cd => campaignStores.Contains(cd.CampaignId) &&
+                                   (cd.Campaign.CampaignName.Contains(searchName) ||
+                                    cd.Description.Contains(searchName));
+            }
+
+            var campaignDetails = await campaignDetailRepo.GetPagingListAsync(
+                selector: x => new CampaignDetailResponse
+                {
+                    Id = x.Id,
+                    VoucherId = x.VoucherId,
+                    CampaignId = x.CampaignId,
+                    Price = x.Price,
+                    Rate = x.Rate,
+                    Quantity = x.Quantity,
+                    FromIndex = x.FromIndex,
+                    ToIndex = x.ToIndex,
+                    DateCreated = x.DateCreated,
+                    DateUpdated = x.DateUpdated,
+                    Description = x.Description,
+                    State = x.State,
+                    Status = x.Status,
+                    VoucherName = x.Voucher.VoucherName,
+                    VoucherImage = x.Voucher.Image,
+                    CampaignName = x.Campaign.CampaignName,
+                    QuantityInStock = x.VoucherItems.Count(v => v.IsLocked == true && v.IsBought != true && v.IsUsed != true),
+                    QuantityInBought = x.VoucherItems.Count(v => v.IsLocked == true && v.IsBought == true),
+                    QuantityInUsed = x.VoucherItems.Count(v => v.IsLocked == true && v.IsUsed == true)
+                },
+                predicate: filterQuery,
+                include: source => source
+                    .Include(x => x.Campaign)
+                    .Include(x => x.Voucher)
+                    .Include(x => x.VoucherItems),
+                page: page,
+                size: size);
+
+            return campaignDetails;
+        }
 
         public List<string> GetAllVoucherItemByCampaignDetail(string id)
         {
