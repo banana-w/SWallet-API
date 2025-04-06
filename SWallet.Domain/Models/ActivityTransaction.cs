@@ -9,7 +9,7 @@ public partial class ActivityTransaction
 
     public string ActivityId { get; set; } = null!;
 
-    public string WalletId { get; set; } = null!;
+    public string? WalletId { get; set; }
 
     public decimal? Amount { get; set; }
 
@@ -17,11 +17,9 @@ public partial class ActivityTransaction
 
     public string Description { get; set; } = null!;
 
-    public bool? State { get; set; }
-
     public bool? Status { get; set; }
 
     public virtual Activity Activity { get; set; } = null!;
 
-    public virtual Wallet Wallet { get; set; } = null!;
+    public virtual Wallet? Wallet { get; set; }
 }

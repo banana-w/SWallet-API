@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using SWallet.Domain.Paginate;
 using SWallet.Repository.Payload.ExceptionModels;
 using SWallet.Repository.Payload.Request.Activity;
+using SWallet.Repository.Payload.Request.Voucher;
 using SWallet.Repository.Payload.Response.Activity;
 using SWallet.Repository.Payload.Response.ActivityTransaction;
 using SWallet.Repository.Payload.Response.Voucher;
@@ -105,6 +106,24 @@ namespace SWallet_API.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, $"Error redeeming voucher: {ex.Message}");
             }
         }
+        [HttpPost("UseVoucher")]
+        [ProducesResponseType(typeof(UseVoucherResponse), StatusCodes.Status200OK)]
+        public async Task<ActionResult<UseVoucherResponse>> UseVoucher([FromBody] UseVoucherRequest request)
+        {
+            try
+            {
+                var response = await _activityService.UseVoucherActivityAsync(request);
+                if (response == null)
+                {
+                    return NotFound();
+                }
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Error using voucher: {ex.Message}");
+            }
+        }
 
         [HttpGet("RedeemedVouchersByStudent")]
         [ProducesResponseType(typeof(IPaginate<VoucherStorageResponse>), StatusCodes.Status200OK)]
@@ -122,13 +141,19 @@ namespace SWallet_API.Controllers
             return Ok(vouchers);
         }
 
-
-
         [HttpGet("ActivityTransaction")]
         [ProducesResponseType(typeof(IPaginate<ActivityTransactionResponse>), StatusCodes.Status200OK)]
         public async Task<ActionResult<IPaginate<ActivityTransactionResponse>>> GetActivityTransactions(string? searchName = "", string studentId = "", int page = 1, int size = 10)
         {
             var transactions = await _activityService.GetAllActivityTransactionAsync(studentId, searchName!, page, size);
+            return Ok(transactions);
+        }
+
+        [HttpGet("UseVoucherTransaction")]
+        [ProducesResponseType(typeof(IPaginate<ActivityTransactionResponse>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<IPaginate<ActivityTransactionResponse>>> GetUseVoucherTransactions(string? searchName = "", string studentId = "", int page = 1, int size = 10)
+        {
+            var transactions = await _activityService.GetAllUseVoucherTransactionAsync(studentId, searchName!, page, size);
             return Ok(transactions);
         }
     }

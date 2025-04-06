@@ -1,5 +1,6 @@
 ﻿using SWallet.Domain.Paginate;
 using SWallet.Repository.Payload.Request.Activity;
+using SWallet.Repository.Payload.Request.Voucher;
 using SWallet.Repository.Payload.Response.Activity;
 using SWallet.Repository.Payload.Response.ActivityTransaction;
 using SWallet.Repository.Payload.Response.Voucher;
@@ -14,9 +15,15 @@ namespace SWallet.Repository.Services.Interfaces
     public interface IActivityService
     {
         Task<bool> RedeemVoucherActivityAsync(ActivityRequest activityRequest);
+        Task<UseVoucherResponse> UseVoucherActivityAsync(UseVoucherRequest request);
         Task<bool> UpdateActivityAsync(string id, ActivityRequest activityRequest);
         Task<IPaginate<ActivityResponse>> GetActivityAsync(string search, bool? isAsc, int page, int size);
         Task<IPaginate<ActivityTransactionResponse>> GetAllActivityTransactionAsync(
+                     string studentId,
+                     string search,
+                     int page,
+                     int size);
+        Task<IPaginate<ActivityTransactionResponse>> GetAllUseVoucherTransactionAsync(
                      string studentId,
                      string search,
                      int page,

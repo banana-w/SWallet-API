@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using CloudinaryDotNet;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SWallet.Domain.Models;
 using SWallet.Domain.Paginate;
@@ -6,6 +7,7 @@ using SWallet.Repository.Enums;
 using SWallet.Repository.Interfaces;
 using SWallet.Repository.Payload.ExceptionModels;
 using SWallet.Repository.Payload.Request.Activity;
+using SWallet.Repository.Payload.Request.Voucher;
 using SWallet.Repository.Payload.Response.Activity;
 using SWallet.Repository.Payload.Response.ActivityTransaction;
 using SWallet.Repository.Payload.Response.Voucher;
@@ -247,6 +249,104 @@ namespace SWallet.Repository.Services.Implements
                 throw;
             }
         }
+        public async Task<UseVoucherResponse> UseVoucherActivityAsync(UseVoucherRequest request)
+        {
+            if (string.IsNullOrEmpty(request.StudentId))
+                throw new ApiException("Student ID is required", 400, "STUDENT_ID_REQUIRED");
+            if (string.IsNullOrEmpty(request.VoucherId))
+                throw new ApiException("Voucher ID is required", 400, "VOUCHER_ID_REQUIRED");
+            if (string.IsNullOrEmpty(request.StoreId))
+                throw new ApiException("Store ID is required", 400, "STORE_ID_REQUIRED");
+
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                // Lấy VoucherItem chưa dùng
+                var voucherItemId = await _unitOfWork.GetRepository<Activity>()
+                    .SingleOrDefaultAsync(
+                        selector: x => x.VoucherItem.Id,
+                        predicate: x => x.VoucherItem.Voucher.Id == request.VoucherId
+                            && x.VoucherItem.IsBought == true
+                            && x.VoucherItem.IsUsed == false
+                            && x.StudentId == request.StudentId,
+                        include: q => q.Include(x => x.VoucherItem).ThenInclude(v => v.Voucher)
+
+                    );
+                var voucherItem = await _unitOfWork.GetRepository<VoucherItem>()
+                    .SingleOrDefaultAsync(
+                        selector: x => x,
+                        predicate: x => x.Id == voucherItemId,
+                        include: q => q.Include(x => x.Voucher)
+                                       .Include(x => x.CampaignDetail)
+                                           .ThenInclude(c => c.Campaign)
+                                           .ThenInclude(c => c.CampaignStores)
+                    );
+
+                if (voucherItem == null)
+                    throw new ApiException("No available voucher found", 404, "VOUCHER_NOT_FOUND");
+
+                // Kiểm tra ExpireOn
+                if (voucherItem.ExpireOn.HasValue && voucherItem.ExpireOn.Value < DateOnly.FromDateTime(DateTime.UtcNow))
+                    throw new ApiException("Voucher has expired", 400, "VOUCHER_EXPIRED");
+
+                // Kiểm tra StoreId
+                var campaign = voucherItem.CampaignDetail?.Campaign;
+                if (campaign == null || !campaign.CampaignStores.Any(cs => cs.StoreId == request.StoreId))
+                    throw new ApiException($"Voucher cannot be used at store {request.StoreId}", 400, "INVALID_STORE");
+
+                var storeName = await _unitOfWork.GetRepository<Store>()
+                    .SingleOrDefaultAsync(
+                        selector: x => x.StoreName,
+                        predicate: x => x.Id == request.StoreId
+                    );
+
+                // Cập nhật VoucherItem
+                voucherItem.IsUsed = true;
+                _unitOfWork.GetRepository<VoucherItem>().UpdateAsync(voucherItem);
+
+                // Tạo Activity mới cho hành động "Use"
+                var useActivity = new Activity
+                {
+                    Id = Ulid.NewUlid().ToString(),
+                    StoreId = request.StoreId,
+                    StudentId = request.StudentId,
+                    VoucherItemId = voucherItem.Id,
+                    Type = (int?)ActivityType.Use,
+                    Description = $"Use Voucher {voucherItem.Voucher.VoucherName} at store {storeName}",
+                    State = true,
+                    Status = true,
+                    DateCreated = DateTime.UtcNow
+                };
+                await _unitOfWork.GetRepository<Activity>().InsertAsync(useActivity);
+                await _unitOfWork.CommitAsync();
+
+
+                // Thêm ActivityTransaction cho hành động "Use"
+                var activityTransaction =
+
+                await AddActivityTransactionAsync(
+                    useActivity.Id,
+                    null,
+                    0,
+                    $"Sử dụng Voucher {voucherItem.Voucher.VoucherName} tại {storeName}"
+                );
+                // Commit transaction
+                await _unitOfWork.CommitAsync();
+                await _unitOfWork.CommitTransactionAsync();
+
+                return new UseVoucherResponse
+                {
+                    VoucherItemId = voucherItem.Id,
+                    VoucherCode = voucherItem.VoucherCode,
+                    DateUsed = DateTime.UtcNow,
+                };
+            }
+            catch (Exception ex)
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
+        }
         public async Task<ActivityTransaction> AddActivityTransactionAsync(string activityId, string walletId, decimal amount, string description)
         {
             var transaction = new ActivityTransaction
@@ -256,7 +356,7 @@ namespace SWallet.Repository.Services.Implements
                 WalletId = walletId,
                 Amount = amount,
                 Description = description,
-                State = true
+                Status = true
             };
 
             await _unitOfWork.GetRepository<ActivityTransaction>().InsertAsync(transaction);
@@ -289,6 +389,49 @@ namespace SWallet.Repository.Services.Implements
 
             Expression<Func<ActivityTransaction, bool>> filter = x =>
                 x.WalletId == walletId
+                && (string.IsNullOrEmpty(search) || (x.Activity != null && x.Activity.VoucherItem != null && x.Activity.VoucherItem.Voucher.VoucherName.Contains(search)));
+
+            var transactions = await _unitOfWork.GetRepository<ActivityTransaction>()
+                .GetPagingListAsync(
+                    selector: x => new ActivityTransactionResponse
+                    {
+                        Id = x.Id,
+                        ActivityId = x.ActivityId,
+                        WalletId = x.WalletId,
+                        Amount = x.Amount,
+                        Description = x.Description,
+                        Status = x.Status ?? false,
+                        VoucherName = x.Activity.VoucherItem.Voucher.VoucherName,
+                        CreatedAt = x.Activity.DateCreated
+                    },
+                    predicate: filter,
+                    include: q => q.Include(x => x.Activity).ThenInclude(a => a.VoucherItem).ThenInclude(v => v.Voucher),
+                    orderBy: q => q.OrderByDescending(x => x.Activity.DateCreated),
+                    page: page,
+                    size: size
+                );
+
+            return transactions;
+        }
+        public async Task<IPaginate<ActivityTransactionResponse>> GetAllUseVoucherTransactionAsync(
+                     string studentId,
+                     string search,
+                     int page,
+                     int size)
+        {
+            if (page < 1)
+                throw new ApiException("Page number must be greater than 0", 400, "INVALID_PAGE");
+            if (size < 1)
+                throw new ApiException("Page size must be greater than 0", 400, "INVALID_SIZE");
+            if (size > 100) // Giới hạn kích thước tối đa
+                size = 100;
+            if (string.IsNullOrEmpty(studentId))
+                throw new ApiException("Student ID is required", 400, "WALLET_ID_REQUIRED");
+
+            Expression<Func<ActivityTransaction, bool>> filter = x =>
+                x.Activity.StudentId == studentId 
+                && string.IsNullOrEmpty(x.WalletId) 
+                && x.Amount == 0
                 && (string.IsNullOrEmpty(search) || (x.Activity != null && x.Activity.VoucherItem != null && x.Activity.VoucherItem.Voucher.VoucherName.Contains(search)));
 
             var transactions = await _unitOfWork.GetRepository<ActivityTransaction>()

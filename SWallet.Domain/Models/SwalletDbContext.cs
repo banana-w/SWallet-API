@@ -97,7 +97,7 @@ public partial class SwalletDbContext : DbContext
     public virtual DbSet<Wallet> Wallets { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-            => optionsBuilder.UseSqlServer(GetConnectionString());
+        => optionsBuilder.UseSqlServer(GetConnectionString());
 
     private string GetConnectionString()
     {
@@ -231,7 +231,6 @@ public partial class SwalletDbContext : DbContext
             entity.Property(e => e.Rate)
                 .HasColumnType("decimal(38, 2)")
                 .HasColumnName("rate");
-            entity.Property(e => e.State).HasColumnName("state");
             entity.Property(e => e.Status).HasColumnName("status");
             entity.Property(e => e.WalletId)
                 .HasMaxLength(26)
@@ -245,7 +244,6 @@ public partial class SwalletDbContext : DbContext
 
             entity.HasOne(d => d.Wallet).WithMany(p => p.ActivityTransactions)
                 .HasForeignKey(d => d.WalletId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_tbl_activity_transaction_tbl_wallet_wallet_id");
         });
 
