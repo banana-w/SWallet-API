@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SWallet.Domain.Models;
 
@@ -11,9 +12,11 @@ using SWallet.Domain.Models;
 namespace SWallet.Domain.Migrations
 {
     [DbContext(typeof(SwalletDbContext))]
-    partial class SwalletDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250407155616_InitialCreate2")]
+    partial class InitialCreate2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
