@@ -23,7 +23,7 @@ namespace SWallet.Repository.Services.Interfaces
         Task<IPaginate<StoreResponse>> GetStoreByBrandId(string brandId, string searchName, int page, int size);
         Task<IPaginate<StoreResponse>> GetStoreInBrand(string searchName, int page, int size);
 
-
+        Task<long> CountParticipantToday(string storeId, DateOnly date);
 
         void Delete(string id);
         

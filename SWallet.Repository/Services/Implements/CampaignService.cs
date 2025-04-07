@@ -29,6 +29,7 @@ namespace SWallet.Repository.Services.Implements
         private readonly Mapper mapper;
         private readonly ICloudinaryService _cloudinaryService;
         private readonly IVoucherItemService _voucherItemService;
+        private readonly SwalletDbContext _swalletDB;
 
         public record ItemIndex
         {
@@ -36,10 +37,11 @@ namespace SWallet.Repository.Services.Implements
             public int? ToIndex { get; set; }
         }
 
-        public CampaignService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<CampaignService> logger, ICloudinaryService cloudinaryService, IVoucherItemService voucherItemService, IHttpContextAccessor httpContextAccessor) : base(unitOfWork, logger, httpContextAccessor)
+        public CampaignService(IUnitOfWork<SwalletDbContext> unitOfWork, SwalletDbContext swalletDB , ILogger<CampaignService> logger, ICloudinaryService cloudinaryService, IVoucherItemService voucherItemService, IHttpContextAccessor httpContextAccessor) : base(unitOfWork, logger, httpContextAccessor)
         {
             _cloudinaryService = cloudinaryService;
             _voucherItemService = voucherItemService;
+            _swalletDB = swalletDB;
 
             var config = new MapperConfiguration(cfg =>
             {
@@ -77,6 +79,25 @@ namespace SWallet.Repository.Services.Implements
             });
 
             mapper = new Mapper(config);
+        }
+
+
+        
+
+
+        public long CountCampaign()
+        {
+            long count = 0;
+            try
+            {
+                var db = _swalletDB;
+                count = db.Campaigns.Where(c => (bool)c.Status).Count();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+            return count;
         }
 
 
@@ -771,6 +792,27 @@ namespace SWallet.Repository.Services.Implements
                 include: query => query.Include(x => x.Brand).Include(x => x.Type),
                 size: size);
             return campaigns;
+        }
+
+        public async Task<List<Campaign>> GetRanking(string brandId, int limit)
+        {
+            if (string.IsNullOrEmpty(brandId))
+                throw new ArgumentException("BrandId không được để trống", nameof(brandId));
+            if (limit <= 0)
+                throw new ArgumentException("Giới hạn phải lớn hơn 0", nameof(limit));
+
+            try
+            {
+                return await _swalletDB.Campaigns
+                    .Where(c => c.BrandId.Equals(brandId) && (bool)c.Status)
+                    .OrderByDescending(c => c.TotalSpending)
+                    .Take(limit)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Lỗi khi lấy danh sách xếp hạng chiến dịch: {ex.Message}", ex);
+            }
         }
 
         //public async Task<IPaginate<CampaignResponse>> GetStoresByCampaignId(string campaignId, int page, int size)

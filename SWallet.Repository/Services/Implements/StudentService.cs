@@ -11,16 +11,71 @@ using SWallet.Repository.Payload.Request.Student;
 using SWallet.Repository.Payload.Response.Student;
 using SWallet.Repository.Services.Interfaces;
 using System.Linq.Expressions;
+using static SWallet.Repository.Repository.IStudentRepository;
 
 namespace SWallet.Repository.Services.Implements
 {
     public class StudentService : BaseService<StudentService>, IStudentService
     {
         private readonly ICloudinaryService _cloudinaryService;
-        public StudentService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<StudentService> logger, ICloudinaryService cloudinaryService) : base(unitOfWork, logger)
+        private readonly SwalletDbContext _dbContext;
+        public StudentService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<StudentService> logger, ICloudinaryService cloudinaryService, SwalletDbContext dbContext) : base(unitOfWork, logger)
         {
             _cloudinaryService = cloudinaryService;
+            _dbContext = dbContext;
+
         }
+
+        public async Task<List<Student>> GetRanking(int limit)
+        {
+            if (limit <= 0)
+            {
+                throw new ArgumentException("Giới hạn phải lớn hơn 0", nameof(limit));
+            }
+
+            try
+            {
+                _logger.LogInformation("Bắt đầu lấy danh sách xếp hạng sinh viên với giới hạn {Limit}", limit);
+
+                var result = await _dbContext.Students
+                    .Where(s => (bool)s.Status)
+                    .OrderByDescending(s => s.TotalSpending)
+                    .Take(limit)
+                    .Include(s => s.Account)
+                    .ToListAsync();
+
+                _logger.LogInformation("Lấy thành công {Count} sinh viên", result.Count);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi lấy danh sách xếp hạng sinh viên với giới hạn {Limit}", limit);
+                throw new Exception($"Lỗi khi lấy danh sách xếp hạng sinh viên: {ex.Message}", ex);
+            }
+        }
+        
+
+        public async Task<long> CountStudentToday(DateOnly date)
+    {
+        if (date == default)
+        {
+            throw new ArgumentException("Ngày không được để trống", nameof(date));
+        }
+
+        try
+        {
+            return await _dbContext.Students
+                .Where(c => (bool)c.Status && c.DateCreated.HasValue
+                           && DateOnly.FromDateTime(c.DateCreated.Value).Equals(date))
+                .CountAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi khi đếm số lượng sinh viên vào ngày {Date}", date);
+            throw new Exception("Lỗi khi đếm số lượng sinh viên: " + ex.Message, ex);
+        }
+    }
+
         public async Task<StudentResponse> CreateStudentAsync(string accountId, StudentRequest studentRequest)
         {
             if (string.IsNullOrEmpty(accountId) || studentRequest == null)
@@ -321,6 +376,50 @@ namespace SWallet.Repository.Services.Implements
                 throw new ApiException("Email already exists", 400, "BAD_REQUEST");
             }
             return Task.FromResult(true);
+        }
+
+        public long CountStudent()
+        {
+            long count = 0;
+            try
+            {
+                var db = _dbContext;
+                count = db.Students.Where(c => (bool)c.Status).Count();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+            return count;
+        }
+
+
+        public async Task<List<StudentRanking>> GetRankingByStore(string storeId, int limit)
+        {
+            if (string.IsNullOrEmpty(storeId))
+                throw new ArgumentException("StoreId không được để trống", nameof(storeId));
+            if (limit <= 0)
+                throw new ArgumentException("Giới hạn phải lớn hơn 0", nameof(limit));
+
+            try
+            {
+                return await _dbContext.Students
+                    .Where(s => (bool)s.Status) // Lọc theo Status của Student
+                    .Include(s => s.Account)
+                    .OrderByDescending(s => s.TotalSpending) // Sắp xếp theo TotalSpending
+                    .Take(limit)
+                    .Select(s => new StudentRanking
+                    {
+                        Name = s.FullName,
+                        Image = s.Account.Avatar,
+                        TotalSpending = s.TotalSpending
+                    })
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Lỗi khi lấy danh sách xếp hạng sinh viên theo cửa hàng: {ex.Message}", ex);
+            }
         }
     }
 }

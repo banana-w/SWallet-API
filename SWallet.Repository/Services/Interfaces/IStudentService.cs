@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using SWallet.Domain.Models;
 using SWallet.Domain.Paginate;
 using SWallet.Repository.Payload.Request.Student;
 using SWallet.Repository.Payload.Response.Student;
@@ -7,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static SWallet.Repository.Repository.IStudentRepository;
 
 namespace SWallet.Repository.Services.Interfaces
 {
@@ -19,6 +21,14 @@ namespace SWallet.Repository.Services.Interfaces
         Task<StudentResponse> GetStudentByAccountIdAsync(string accountId);
         Task<bool> ValidEmailStudent(string email);
         Task<StudentResponse> UpdateStudentCardFront(string studentId, IFormFile studentCardFront);
+
+        Task<List<Student>> GetRanking(int limit);
+
+        Task<List<StudentRanking>> GetRankingByStore(string storeId, int limit);
+
+        Task<long> CountStudentToday(DateOnly date);
+
+        long CountStudent();
 
         //Task<bool> DeleteStudentAsync(string accountId, string studentId);
         //Task<bool> VerifyStudentAsync(string accountId, string studentId);

@@ -28,8 +28,9 @@ namespace SWallet.Repository.Services.Implements
     {
         private readonly Mapper mapper;
         private readonly ICloudinaryService _cloudinaryService;
+        private readonly SwalletDbContext _swalletDB;
 
-        public StoreService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<StoreService> logger, ICloudinaryService cloudinaryService, IHttpContextAccessor httpContextAccessor) : base(unitOfWork, logger, httpContextAccessor)
+        public StoreService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<StoreService> logger, ICloudinaryService cloudinaryService, IHttpContextAccessor httpContextAccessor, SwalletDbContext swalletDB) : base(unitOfWork, logger, httpContextAccessor)
         {
             _cloudinaryService = cloudinaryService;
             var config = new MapperConfiguration(cfg
@@ -70,11 +71,41 @@ namespace SWallet.Repository.Services.Implements
                 .ForPath(s => s.Account.DateUpdated, opt => opt.MapFrom(src => DateTime.Now))
                 .ForPath(s => s.Account.Description, opt => opt.MapFrom(src => src.Description))
                 .ForPath(s => s.Account.State, opt => opt.MapFrom(src => src.State));
-                
+
             });
             mapper = new Mapper(config);
-
+            _swalletDB = swalletDB;
         }
+
+        public async Task<long> CountParticipantToday(string storeId, DateOnly date)
+        {
+            if (string.IsNullOrEmpty(storeId))
+            {
+                throw new ArgumentException("StoreId không được để trống", nameof(storeId));
+            }
+            if (date == default)
+            {
+                throw new ArgumentException("Ngày không được để trống", nameof(date));
+            }
+
+            try
+            {
+                return await _swalletDB.Activities
+                    .Where(c => (bool)c.Status
+                                && c.StoreId.Equals(storeId)
+                                && c.DateCreated.HasValue
+                                && DateOnly.FromDateTime(c.DateCreated.Value).Equals(date))
+                    .Select(a => a.StudentId)
+                    .Distinct()
+                    .CountAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi đếm số lượng người tham gia tại cửa hàng {StoreId} vào ngày {Date}", storeId, date);
+                throw new Exception($"Lỗi khi đếm số lượng người tham gia: {ex.Message}", ex);
+            }
+        }
+
 
         public async Task<StoreResponse> CreateStore(string accountId, CreateStoreModel store)
         {
