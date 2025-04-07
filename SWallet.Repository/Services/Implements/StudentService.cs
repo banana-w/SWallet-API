@@ -411,8 +411,9 @@ namespace SWallet.Repository.Services.Implements
                     .Select(s => new StudentRanking
                     {
                         Name = s.FullName,
-                        Image = s.Account.Avatar,
-                        TotalSpending = s.TotalSpending
+                        Image = s.StudentCardFront,
+                        TotalSpending = s.TotalSpending,
+
                     })
                     .ToListAsync();
             }
