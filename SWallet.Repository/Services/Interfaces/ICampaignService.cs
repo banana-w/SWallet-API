@@ -24,7 +24,12 @@ namespace SWallet.Repository.Services.Interfaces
         Task<IPaginate<CampaignStore>> GetStoresByCampaignId(string campaignId, string searchName, int page, int size);
 
         Task<IEnumerable<CampaignDetailResponse>> GetAllCampaignDetails();
+
+        Task<List<Campaign>> GetRanking(string brandId, int limit);
+
         void Delete(string id);
+
+        long CountCampaign();
 
     }
 }

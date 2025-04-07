@@ -24,7 +24,8 @@ namespace SWallet.Repository.Services.Implements
     {
         private readonly Mapper mapper;
         private readonly ICloudinaryService _cloudinaryService;
-        public BrandService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<BrandService> logger, ICloudinaryService cloudinaryService) : base(unitOfWork, logger)
+        private readonly SwalletDbContext _swalletDB;
+        public BrandService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<BrandService> logger, ICloudinaryService cloudinaryService, SwalletDbContext swalletDB) : base(unitOfWork, logger)
         {
             _cloudinaryService = cloudinaryService;
             var config = new MapperConfiguration(cfg
@@ -42,9 +43,37 @@ namespace SWallet.Repository.Services.Implements
             .ForMember(p => p.Status, opt => opt.MapFrom(src => true));
             });
             mapper = new Mapper(config);
+            _swalletDB = swalletDB;
         }
 
-            public async Task<BrandResponse> CreateBrand(CreateBrandModel brand)
+        public async Task<long> CountVoucherItemToday(string brandId, DateOnly date)
+        {
+            if (string.IsNullOrEmpty(brandId))
+            {
+                throw new ArgumentException("BrandId không được để trống", nameof(brandId));
+            }
+            if (date == default)
+            {
+                throw new ArgumentException("Ngày không được để trống", nameof(date));
+            }
+
+            try
+            {
+                return await _swalletDB.VoucherItems
+                    .Where(vi => vi.Voucher.BrandId == brandId
+                                && (bool)vi.Status
+                                && vi.DateCreated.HasValue
+                                && DateOnly.FromDateTime(vi.DateCreated.Value).Equals(date))
+                    .CountAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi đếm số lượng voucher item của thương hiệu {BrandId} vào ngày {Date}", brandId, date);
+                throw new Exception($"Lỗi khi đếm số lượng voucher item: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<BrandResponse> CreateBrand(CreateBrandModel brand)
             {
                 var existingAccount = await _unitOfWork.GetRepository<Account>().SingleOrDefaultAsync(
                 predicate: b => b.UserName == brand.UserName);
@@ -256,6 +285,49 @@ namespace SWallet.Repository.Services.Implements
             );
 
             return areas;
+        }
+
+        public async Task<List<Brand>> GetRanking(int limit)
+        {
+            if (limit <= 0)
+            {
+                throw new ArgumentException("Giới hạn phải lớn hơn 0", nameof(limit));
+            }
+
+            try
+            {
+                _logger.LogInformation("Bắt đầu lấy danh sách xếp hạng thương hiệu với giới hạn {Limit}", limit);
+
+                var result = await _swalletDB.Brands
+                    .Where(b => (bool)b.Status)
+                    .OrderByDescending(b => b.TotalSpending)
+                    .Take(limit)
+                    .Include(b => b.Account)
+                    .ToListAsync();
+
+                _logger.LogInformation("Lấy thành công {Count} thương hiệu", result.Count);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi lấy danh sách xếp hạng thương hiệu với giới hạn {Limit}", limit);
+                throw new Exception($"Lỗi khi lấy danh sách xếp hạng thương hiệu: {ex.Message}", ex);
+            }
+        }
+
+        public long CountBrand()
+        {
+            long count = 0;
+            try
+            {
+                var db = _swalletDB;
+                count = db.Brands.Where(c => (bool)c.Status).Count();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+            return count;
         }
 
         public async Task<BrandResponse> UpdateBrand(string id, UpdateBrandModel brand)
