@@ -106,33 +106,37 @@ namespace SWallet.Repository.Services.Implements
             if (size < 1) throw new ApiException("Page size must be greater than 0", 400, "INVALID_SIZE");
             if (size > 100) size = 100;
 
-            // Bộ lọc cơ bản
             Expression<Func<Activity, bool>> filter = x => x.StudentId == studentId
                 && x.VoucherItem.IsBought == true
                 && (isUsed == null || x.VoucherItem.IsUsed == isUsed)
                 && (string.IsNullOrEmpty(search) || x.VoucherItem.VoucherCode.Contains(search))
                 && x.Type == (int?)ActivityType.Buy;
 
-            // Bước 1: Lấy danh sách Brand phân trang
+            // Bước 1: Lấy danh sách Brand với Max(DateIssued)
             var brandQuery = await _unitOfWork.GetRepository<Activity>()
-                .GetPagingListAsyncWithDistinct(
-                    selector: x => new
+                .GetGroupedPagingListAsync(
+                    groupByKey: x => new
                     {
-                        BrandId = x.VoucherItem.Voucher.BrandId,
+                        x.VoucherItem.Voucher.BrandId,
                         BrandName = x.VoucherItem.Voucher.Brand != null ? x.VoucherItem.Voucher.Brand.BrandName : null,
                         BrandImage = x.VoucherItem.Voucher.Brand != null ? x.VoucherItem.Voucher.Brand.CoverPhoto : null
                     },
+                    groupSelector: g => new
+                    {
+                        BrandId = g.Key.BrandId,
+                        BrandName = g.Key.BrandName,
+                        BrandImage = g.Key.BrandImage,
+                    },
                     predicate: filter,
+                    orderBy: q => q.OrderByDescending(g => g.Max(x => x.VoucherItem.DateIssued)),
                     include: q => q.Include(x => x.VoucherItem)
                                    .ThenInclude(v => v.Voucher)
                                    .ThenInclude(v => v.Brand),
-                    orderBy: q => q.OrderBy(b => b.VoucherItem.Voucher.BrandId),
                     page: page,
-                    size: size,
-                    distinct: true
+                    size: size
                 );
 
-            var brandIds = brandQuery.Items.Select(b => b.BrandId).Distinct().ToList();
+            var brandIds = brandQuery.Items.Select(b => b.BrandId).ToList();
 
             // Bước 2: Lấy tất cả voucher thuộc các Brand trong trang hiện tại
             var vouchers = await _unitOfWork.GetRepository<Activity>()
@@ -158,15 +162,15 @@ namespace SWallet.Repository.Services.Implements
                                    .ThenInclude(c => c.Campaign)
                 );
 
-            // Bước 3: Nhóm dữ liệu
-            var groupedVouchers = vouchers
-                .GroupBy(v => new { v.BrandId, v.BrandName, v.BrandImage })
-                .Select(g => new VoucherStorageGroupByBrandResponse
+            // Bước 3: Nhóm dữ liệu và giữ thứ tự từ brandQuery
+            var groupedVouchers = brandQuery.Items
+                .Select(b => new VoucherStorageGroupByBrandResponse
                 {
-                    BrandId = g.Key.BrandId,
-                    BrandName = g.Key.BrandName,
-                    BrandImage = g.Key.BrandImage,
-                    VoucherGroups = g
+                    BrandId = b.BrandId,
+                    BrandName = b.BrandName,
+                    BrandImage = b.BrandImage,
+                    VoucherGroups = vouchers
+                        .Where(v => v.BrandId == b.BrandId)
                         .GroupBy(v => new { v.VoucherId, v.VoucherName, v.VoucherImage, v.ExpireOn, v.CampaignId })
                         .Select(vg => new VoucherGroup
                         {
@@ -186,7 +190,7 @@ namespace SWallet.Repository.Services.Implements
                 Items = groupedVouchers,
                 Page = page,
                 Size = size,
-                Total = brandQuery.Total, // Tổng số Brand
+                Total = brandQuery.Total,
                 TotalPages = (int)Math.Ceiling(brandQuery.Total / (double)size)
             };
         }

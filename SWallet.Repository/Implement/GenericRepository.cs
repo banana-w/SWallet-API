@@ -162,6 +162,33 @@ namespace SWallet.Repository.Implement
 
             return resultQuery.ToPaginateAsync(page, size, 1);
         }
+        public async Task<IPaginate<TResult>> GetGroupedPagingListAsync<TGroupKey, TResult>(
+    Expression<Func<T, TGroupKey>> groupByKey,
+    Expression<Func<IGrouping<TGroupKey, T>, TResult>> groupSelector,
+    Expression<Func<T, bool>> predicate = null,
+    Func<IQueryable<IGrouping<TGroupKey, T>>, IOrderedQueryable<IGrouping<TGroupKey, T>>> orderBy = null,
+    Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null,
+    int page = 1,
+    int size = 10)
+        {
+            IQueryable<T> query = _dbSet;
+            if (include != null) query = include(query);
+            if (predicate != null) query = query.Where(predicate);
+
+            var groupedQuery = query.GroupBy(groupByKey);
+
+            IQueryable<TResult> resultQuery;
+            if (orderBy != null)
+            {
+                resultQuery = orderBy(groupedQuery).Select(groupSelector);
+            }
+            else
+            {
+                resultQuery = groupedQuery.AsNoTracking().Select(groupSelector);
+            }
+
+            return await resultQuery.ToPaginateAsync(page, size, 1);
+        }
 
         #endregion
 
