@@ -7,10 +7,6 @@ public partial class Wallet
 {
     public string Id { get; set; } = null!;
 
-    public string? LecturerId { get; set; }
-
-    public string? CampusId { get; set; }
-
     public string? CampaignId { get; set; }
 
     public string? StudentId { get; set; }
@@ -28,6 +24,10 @@ public partial class Wallet
     public string? Description { get; set; }
 
     public bool? Status { get; set; }
+
+    public string? CampusId { get; set; }
+
+    public string? LecturerId { get; set; }
 
     public virtual ICollection<ActivityTransaction> ActivityTransactions { get; set; } = new List<ActivityTransaction>();
 

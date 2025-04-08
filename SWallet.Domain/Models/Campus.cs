@@ -7,8 +7,6 @@ public partial class Campus
 {
     public string Id { get; set; } = null!;
 
-    public string? AccountId { get; set; }
-
     public string AreaId { get; set; } = null!;
 
     public string CampusName { get; set; } = null!;
@@ -34,6 +32,8 @@ public partial class Campus
     public bool? State { get; set; }
 
     public bool? Status { get; set; }
+
+    public string? AccountId { get; set; }
 
     public virtual Account? Account { get; set; }
 

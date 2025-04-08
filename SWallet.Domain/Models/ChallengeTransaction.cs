@@ -9,8 +9,6 @@ public partial class ChallengeTransaction
 
     public string WalletId { get; set; } = null!;
 
-    public string? StudentId { get; set; }
-
     public string? ChallengeId { get; set; }
 
     public decimal? Amount { get; set; }
@@ -24,6 +22,8 @@ public partial class ChallengeTransaction
     public bool State { get; set; }
 
     public bool? Status { get; set; }
+
+    public string? StudentId { get; set; }
 
     public virtual StudentChallenge? StudentChallenge { get; set; }
 
