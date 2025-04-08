@@ -83,19 +83,7 @@ namespace SWallet.Repository.Services.Implements
                 var admin = await _unitOfWork.GetRepository<Admin>().SingleOrDefaultAsync(
                     selector: x => new AdminResponse
                     {
-                        Id = x.Id,
-                        AccountId = x.AccountId,
-                        UserName = x.Account.UserName,
-                        FullName = x.FullName,
-                        Phone = x.Account.Phone,
-                        Email = x.Account.Email,
-                        Avatar = x.Account.Avatar,
-                        FileName = x.Account.FileName,
-                        DateCreated = x.DateCreated,
-                        DateUpdated = x.DateUpdated,
-                        Description = x.Account.Description,
-                        State = x.State,
-                        Status = x.Status
+                        Id = x.Id
                     },
                     predicate: x => x.Id == id);
 
@@ -124,13 +112,7 @@ namespace SWallet.Repository.Services.Implements
                 var brand = await _unitOfWork.GetRepository<Brand>().SingleOrDefaultAsync(
                     selector: x => new BrandResponse
                     {
-                        Id = x.Id,
-                        BrandName = x.BrandName,
-                        Description = x.Description,
-                        State = x.State,
-                        Status = x.Status,
-                        DateCreated = x.DateCreated,
-                        DateUpdated = x.DateUpdated,
+                        Id = x.Id
                     },
                     predicate: x => x.Id == id);
 
@@ -162,15 +144,10 @@ namespace SWallet.Repository.Services.Implements
                     selector: x => new StoreResponse
                     {
                         Id = x.Id,
-                        StoreName = x.StoreName,
-                        Description = x.Description,
-                        State = x.State,
-                        Status = x.Status,
-                        DateCreated = x.DateCreated,
-                        DateUpdated = x.DateUpdated,
-                        FileName = x.FileName
+
                     },
                     predicate: x => x.Id == id);
+
 
                     if (store != null)
                     {

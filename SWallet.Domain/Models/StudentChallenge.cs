@@ -17,8 +17,6 @@ public partial class StudentChallenge
 
     public bool? IsCompleted { get; set; }
 
-    public DateTime? DateCompleted { get; set; }
-
     public DateTime? DateCreated { get; set; }
 
     public DateTime? DateUpdated { get; set; }
@@ -26,6 +24,8 @@ public partial class StudentChallenge
     public string? Description { get; set; }
 
     public bool? Status { get; set; }
+
+    public DateTime? DateCompleted { get; set; }
 
     public virtual Challenge Challenge { get; set; } = null!;
 

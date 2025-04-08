@@ -80,6 +80,8 @@ public partial class SwalletDbContext : DbContext
 
     public virtual DbSet<RewardTransaction> RewardTransactions { get; set; }
 
+    public virtual DbSet<SpinHistory> SpinHistories { get; set; }
+
     public virtual DbSet<Station> Stations { get; set; }
 
     public virtual DbSet<Store> Stores { get; set; }
@@ -97,7 +99,7 @@ public partial class SwalletDbContext : DbContext
     public virtual DbSet<Wallet> Wallets { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlServer(GetConnectionString());
+     => optionsBuilder.UseSqlServer(GetConnectionString());
 
     private string GetConnectionString()
     {
@@ -607,6 +609,8 @@ public partial class SwalletDbContext : DbContext
 
             entity.ToTable("campus");
 
+            entity.HasIndex(e => e.AccountId, "IX_campus_account_id");
+
             entity.HasIndex(e => e.AreaId, "IX_tbl_campus_area_id");
 
             entity.Property(e => e.Id)
@@ -657,6 +661,10 @@ public partial class SwalletDbContext : DbContext
         modelBuilder.Entity<CampusLecturer>(entity =>
         {
             entity.ToTable("campus_lecturer");
+
+            entity.HasIndex(e => e.CampusId, "IX_campus_lecturer_campus_id");
+
+            entity.HasIndex(e => e.LecturerId, "IX_campus_lecturer_lecturer_id");
 
             entity.Property(e => e.Id)
                 .HasMaxLength(26)
@@ -750,6 +758,8 @@ public partial class SwalletDbContext : DbContext
             entity.HasKey(e => e.Id).HasName("PK_tbl_challenge_transaction");
 
             entity.ToTable("challenge_transaction");
+
+            entity.HasIndex(e => new { e.ChallengeId, e.StudentId }, "IX_challenge_transaction_challenge_id_student_id");
 
             entity.HasIndex(e => e.ChallengeId, "IX_tbl_challenge_transaction_challenge_id");
 
@@ -1344,6 +1354,31 @@ public partial class SwalletDbContext : DbContext
                 .HasConstraintName("FK_tbl_bonus_transaction_tbl_wallet_wallet_id");
         });
 
+        modelBuilder.Entity<SpinHistory>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__SpinHist__3213E83F578A77FF");
+
+            entity.ToTable("spin_history");
+
+            entity.HasIndex(e => new { e.StudentId, e.Date }, "UQ_SpinHistory_Student_Date").IsUnique();
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Date).HasColumnName("date");
+            entity.Property(e => e.SpinCount)
+                .HasDefaultValue(0)
+                .HasColumnName("spinCount");
+            entity.Property(e => e.StudentId)
+                .HasMaxLength(26)
+                .IsUnicode(false)
+                .IsFixedLength()
+                .HasColumnName("studentId");
+
+            entity.HasOne(d => d.Student).WithMany(p => p.SpinHistories)
+                .HasForeignKey(d => d.StudentId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_SpinHistory_Student");
+        });
+
         modelBuilder.Entity<Station>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK_tbl_station");
@@ -1717,6 +1752,10 @@ public partial class SwalletDbContext : DbContext
             entity.HasIndex(e => e.CampaignId, "IX_tbl_wallet_campaign_id");
 
             entity.HasIndex(e => e.StudentId, "IX_tbl_wallet_student_id");
+
+            entity.HasIndex(e => e.CampusId, "IX_wallet_campus_id");
+
+            entity.HasIndex(e => e.LecturerId, "IX_wallet_lecturer_id");
 
             entity.Property(e => e.Id)
                 .HasMaxLength(26)
