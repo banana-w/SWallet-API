@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -52,7 +53,7 @@ namespace SWallet.Repository.Interfaces
             Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null,
             int page = 1,
             int size = 10);
-        public Task<IPaginate<TResult>> GetPagingListAsyncWithDistinct<TResult>(
+        Task<IPaginate<TResult>> GetPagingListAsyncWithDistinct<TResult>(
             Expression<Func<T, TResult>> selector,
             Expression<Func<T, bool>> predicate = null,
             Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null,
@@ -60,6 +61,14 @@ namespace SWallet.Repository.Interfaces
             int page = 1,
             int size = 10,
             bool distinct = false);
+        Task<IPaginate<TResult>> GetGroupedPagingListAsync<TGroupKey, TResult>(
+    Expression<Func<T, TGroupKey>> groupByKey,
+    Expression<Func<IGrouping<TGroupKey, T>, TResult>> groupSelector,
+    Expression<Func<T, bool>> predicate = null,
+    Func<IQueryable<IGrouping<TGroupKey, T>>, IOrderedQueryable<IGrouping<TGroupKey, T>>> orderBy = null,
+    Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null,
+    int page = 1,
+    int size = 10);
         #endregion
 
         #region Insert
