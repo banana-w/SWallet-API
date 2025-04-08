@@ -135,6 +135,34 @@ namespace SWallet.Repository.Implement
             return query.AsNoTracking().Select(selector).ToPaginateAsync(page, size, 1);
         }
 
+        public Task<IPaginate<TResult>> GetPagingListAsyncWithDistinct<TResult>(
+            Expression<Func<T, TResult>> selector,
+            Expression<Func<T, bool>> predicate = null,
+            Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null,
+            Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null,
+            int page = 1,
+            int size = 10,
+            bool distinct = false)
+        {
+            IQueryable<T> query = _dbSet;
+            if (include != null) query = include(query);
+            if (predicate != null) query = query.Where(predicate);
+
+            IQueryable<TResult> resultQuery;
+            if (orderBy != null)
+            {
+                resultQuery = orderBy(query).Select(selector);
+            }
+            else
+            {
+                resultQuery = query.AsNoTracking().Select(selector);
+            }
+
+            if (distinct) resultQuery = resultQuery.Distinct();
+
+            return resultQuery.ToPaginateAsync(page, size, 1);
+        }
+
         #endregion
 
         #region Insert
@@ -178,7 +206,7 @@ namespace SWallet.Repository.Implement
             return _dbSet.AsQueryable();
         }
 
-     
+
 
 
 
