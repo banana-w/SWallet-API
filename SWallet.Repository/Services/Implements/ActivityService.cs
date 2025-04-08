@@ -115,7 +115,7 @@ namespace SWallet.Repository.Services.Implements
 
             // Bước 1: Lấy danh sách Brand phân trang
             var brandQuery = await _unitOfWork.GetRepository<Activity>()
-                .GetPagingListAsync(
+                .GetPagingListAsyncWithDistinct(
                     selector: x => new
                     {
                         BrandId = x.VoucherItem.Voucher.BrandId,
@@ -126,15 +126,15 @@ namespace SWallet.Repository.Services.Implements
                     include: q => q.Include(x => x.VoucherItem)
                                    .ThenInclude(v => v.Voucher)
                                    .ThenInclude(v => v.Brand),
-                    orderBy: q => q.OrderBy(b => b.VoucherItem.Voucher.BrandId), // Sắp xếp theo BrandId
+                    orderBy: q => q.OrderBy(b => b.VoucherItem.Voucher.BrandId),
                     page: page,
-                    size: size
+                    size: size,
+                    distinct: true
                 );
 
-            var brandIds = brandQuery.Items.Select(b => b.BrandId).ToList();
+            var brandIds = brandQuery.Items.Select(b => b.BrandId).Distinct().ToList();
 
-            filter.AndAlso(x => brandIds.Contains(x.VoucherItem.Voucher.BrandId)); // Lọc theo danh sách BrandId
-
+            // Bước 2: Lấy tất cả voucher thuộc các Brand trong trang hiện tại
             var vouchers = await _unitOfWork.GetRepository<Activity>()
                 .GetListAsync(
                     selector: x => new
@@ -147,15 +147,15 @@ namespace SWallet.Repository.Services.Implements
                         VoucherImage = x.VoucherItem.Voucher.Image,
                         IsUsed = x.VoucherItem.IsUsed,
                         ExpireOn = x.VoucherItem.ExpireOn,
-                        CampaignId = x.VoucherItem.CampaignDetail.CampaignId,
+                        CampaignId = x.VoucherItem.CampaignDetail.CampaignId
                     },
-                    predicate: filter,
+                    predicate: filter.AndAlso(x => brandIds.Contains(x.VoucherItem.Voucher.BrandId)),
                     include: q => q.Include(x => x.VoucherItem)
-                                      .ThenInclude(v => v.Voucher)
-                                         .ThenInclude(v => v.Brand)
+                                   .ThenInclude(v => v.Voucher)
+                                   .ThenInclude(v => v.Brand)
                                    .Include(x => x.VoucherItem)
-                                      .ThenInclude(v => v.CampaignDetail)
-                                        .ThenInclude(c => c.Campaign)
+                                   .ThenInclude(v => v.CampaignDetail)
+                                   .ThenInclude(c => c.Campaign)
                 );
 
             // Bước 3: Nhóm dữ liệu
@@ -176,17 +176,17 @@ namespace SWallet.Repository.Services.Implements
                             ExpireOn = vg.Key.ExpireOn,
                             CampaignId = vg.Key.CampaignId,
                             Quantity = vg.Count(v => v.IsUsed == false),
-                            TotalQuantity = vg.Count(),
+                            TotalQuantity = vg.Count()
                         }).ToList()
-                });
+                }).ToList();
 
             // Trả về kết quả phân trang
             return new Paginate<VoucherStorageGroupByBrandResponse>
             {
-                Items = groupedVouchers.ToList(),
+                Items = groupedVouchers,
                 Page = page,
                 Size = size,
-                Total = brandQuery.Total,
+                Total = brandQuery.Total, // Tổng số Brand
                 TotalPages = (int)Math.Ceiling(brandQuery.Total / (double)size)
             };
         }

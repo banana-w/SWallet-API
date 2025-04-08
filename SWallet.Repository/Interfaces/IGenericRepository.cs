@@ -52,7 +52,14 @@ namespace SWallet.Repository.Interfaces
             Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null,
             int page = 1,
             int size = 10);
-
+        public Task<IPaginate<TResult>> GetPagingListAsyncWithDistinct<TResult>(
+            Expression<Func<T, TResult>> selector,
+            Expression<Func<T, bool>> predicate = null,
+            Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null,
+            Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null,
+            int page = 1,
+            int size = 10,
+            bool distinct = false);
         #endregion
 
         #region Insert
