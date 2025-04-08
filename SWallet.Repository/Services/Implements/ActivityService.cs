@@ -186,7 +186,8 @@ namespace SWallet.Repository.Services.Implements
                 Items = groupedVouchers.ToList(),
                 Page = page,
                 Size = size,
-                Total = brandQuery.Total // Tổng số Brand
+                Total = brandQuery.Total,
+                TotalPages = (int)Math.Ceiling(brandQuery.Total / (double)size)
             };
         }
 
