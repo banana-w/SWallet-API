@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SWallet.Repository.Services.Implements;
+using System.Text.Json;
 
 namespace SWallet_API.Controllers
 {
@@ -15,66 +16,22 @@ namespace SWallet_API.Controllers
             _checkInService = checkInService;
         }
 
-        [HttpPost("gps")]
-        public async Task<IActionResult> CheckInWithGPS([FromBody] CheckInGpsRequest request)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(new { message = "Dữ liệu đầu vào không hợp lệ" });
-            }
-
-            try
-            {
-                bool result = await _checkInService.CheckInWithGPS(
-                    request.StudentId,
-                    request.LocationId,
-                    request.Latitude,
-                    request.Longitude
-                );
-
-                if (result)
-                {
-                    return Ok(new { message = "Check-in thành công", pointsAwarded = 10 });
-                }
-                else
-                {
-                    return BadRequest(new { message = "Check-in thất bại: Bạn không ở gần địa điểm này" });
-                }
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Lỗi server", error = ex.Message });
-            }
-        }
 
         [HttpPost("qr")]
         public async Task<IActionResult> CheckInWithQR([FromBody] CheckInQrRequest request)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(new { message = "Dữ liệu đầu vào không hợp lệ" });
-            }
+            var (success, message, pointsAwarded) = await _checkInService.CheckInWithQR(
+                request.StudentId,
+                request.QrCode,
+                request.Latitude,
+                request.Longitude
+            );
 
-            try
+            if (success)
             {
-                bool result = await _checkInService.CheckInWithQR(
-                    request.StudentId,
-                    request.QrCode
-                );
-
-                if (result)
-                {
-                    return Ok(new { message = "Check-in thành công", pointsAwarded = 10 });
-                }
-                else
-                {
-                    return BadRequest(new { message = "Check-in thất bại: Mã QR không hợp lệ" });
-                }
+                return Ok(new { message, pointsAwarded });
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Lỗi server", error = ex.Message });
-            }
+            return BadRequest(new { message });
         }
     }
 
@@ -90,5 +47,7 @@ namespace SWallet_API.Controllers
     {
         public string StudentId { get; set; }
         public string QrCode { get; set; }
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
     }
 }
