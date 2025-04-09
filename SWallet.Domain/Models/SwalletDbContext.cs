@@ -54,6 +54,8 @@ public partial class SwalletDbContext : DbContext
 
     public virtual DbSet<Lecturer> Lecturers { get; set; }
 
+    public virtual DbSet<Location> Locations { get; set; }
+
     public virtual DbSet<LuckyPrize> LuckyPrizes { get; set; }
 
     public virtual DbSet<Order> Orders { get; set; }
@@ -99,7 +101,7 @@ public partial class SwalletDbContext : DbContext
     public virtual DbSet<Wallet> Wallets { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-     => optionsBuilder.UseSqlServer(GetConnectionString());
+    => optionsBuilder.UseSqlServer(GetConnectionString());
 
     private string GetConnectionString()
     {
@@ -879,6 +881,26 @@ public partial class SwalletDbContext : DbContext
             entity.HasOne(d => d.Account).WithMany(p => p.Lecturers)
                 .HasForeignKey(d => d.AccountId)
                 .HasConstraintName("FK_tbl_staff_tbl_account_account_id");
+        });
+
+        modelBuilder.Entity<Location>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToTable("Location");
+
+            entity.Property(e => e.Id)
+                .HasMaxLength(26)
+                .IsUnicode(false)
+                .HasColumnName("id");
+            entity.Property(e => e.Latitue)
+                .HasColumnType("decimal(38, 2)")
+                .HasColumnName("latitue");
+            entity.Property(e => e.Longtitude)
+                .HasColumnType("decimal(38, 2)")
+                .HasColumnName("longtitude");
+            entity.Property(e => e.Name).HasColumnName("name");
+            entity.Property(e => e.Qrcode).HasColumnName("qrcode");
         });
 
         modelBuilder.Entity<LuckyPrize>(entity =>
