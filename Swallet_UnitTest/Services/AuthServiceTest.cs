@@ -21,6 +21,7 @@ namespace Swallet_UnitTest.Services
         private readonly Mock<IMapper> _mapperMock;
         private readonly AuthenticationService _authService;
         private readonly Mock<IRedisService> _redisServiceMock;
+        private readonly Mock<IChallengeService> _challengeServiceMock;
 
         public AuthServiceTest()
         {
@@ -29,7 +30,9 @@ namespace Swallet_UnitTest.Services
             _jwtServiceMock = new Mock<IJwtService>();
             _mapperMock = new Mock<IMapper>();
             _redisServiceMock = new Mock<IRedisService>();
-            _authService = new AuthenticationService(_unitOfWorkMock.Object, _loggerMock.Object, _jwtServiceMock.Object, _redisServiceMock.Object);
+            _challengeServiceMock = new Mock<IChallengeService>();
+
+            _authService = new AuthenticationService(_unitOfWorkMock.Object, _loggerMock.Object, _jwtServiceMock.Object, _redisServiceMock.Object, _challengeServiceMock.Object);
         }
 
         [Fact]
