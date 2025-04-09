@@ -33,8 +33,5 @@ namespace SWallet.Repository.Payload.Request
         public IFormFile Image { get; set; }
 
         public string Description { get; set; }
-
-        [Required(ErrorMessage = "Trạng thái là bắt buộc")]
-        public bool? State { get; set; }
     }
 }

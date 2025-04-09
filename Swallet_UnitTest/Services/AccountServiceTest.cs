@@ -33,6 +33,8 @@ namespace Swallet_UnitTest.Services
         private readonly Mock<IStoreService> _storeServiceMock;
         private readonly Mock<IWalletService> _walletServiceMock;
         private readonly Mock<ILecturerService> _literServiceMock;
+        private readonly Mock<IInvitationService> _invitationServiceMock;
+        private readonly Mock<IChallengeService> _challengeSerMock;
 
         public AccountServiceTest()
         {
@@ -48,6 +50,8 @@ namespace Swallet_UnitTest.Services
             _walletServiceMock = new Mock<IWalletService>();
             _cloudinaryServiceMock = new Mock<ICloudinaryService>();
             _literServiceMock = new Mock<ILecturerService>();
+            _invitationServiceMock = new Mock<IInvitationService>();
+            _challengeSerMock = new Mock<IChallengeService>();
 
             _accountService = new AccountService(
                 _unitOfWorkMock.Object, _loggerMock.Object,
@@ -58,7 +62,9 @@ namespace Swallet_UnitTest.Services
                 _storeServiceMock.Object,
                 _walletServiceMock.Object,
                 _cloudinaryServiceMock.Object,
-                _literServiceMock.Object
+                _literServiceMock.Object,
+                _invitationServiceMock.Object,
+                _challengeSerMock.Object
                 );
         }
 

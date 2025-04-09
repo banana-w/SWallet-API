@@ -32,4 +32,26 @@ namespace SWallet.Repository.Payload.Response.Challenge
 
         public bool? Status { get; set; }
     }
+
+    public class ChallengeResponseExtra
+    {
+        public string id { get; set; }
+        public string challengeId { get; set; }
+        public string challengeTypeId { get; set; }
+        public string challengeType { get; set; }
+        public string challengeTypeName { get; set; }
+        public string challengeName { get; set; }
+        public string challengeImage { get; set; }
+        public string studentId { get; set; }
+        public string studentName { get; set; }
+        public decimal amount { get; set; }
+        public decimal current { get; set; }
+        public decimal condition { get; set; }
+        public bool isCompleted { get; set; }
+        public bool isClaimed { get; set; }
+        public DateTime dateCreated { get; set; }
+        public DateTime? dateUpdated { get; set; }
+        public string description { get; set; }
+        public bool status { get; set; }
+    }
 }

@@ -10,8 +10,18 @@ namespace SWallet.Repository.Services.Interfaces
     {
         Task<bool> CreateChallenge(ChallengeRequest request);
         Task<IPaginate<ChallengeResponse>> GetChallenges(string? search, IEnumerable<ChallengeType> types, int page, int size);
+        Task<IPaginate<ChallengeResponseExtra>> GetStudentChallenges(string studentId,
+                string? search,
+                IEnumerable<ChallengeType> types,
+                int page,
+                int size);
         Task<ChallengeResponse> GetChallenge(string id);
         Task<bool> UpdateChallenge(string id, ChallengeRequest request);
+        Task<bool> AssignChallengeToStudent(string challengeId, string studentId);
+        Task<bool> AssignAllChallengesToStudent(string studentId);
+        Task<bool> UpdateAchievementProgress(string studentId, string challengeId, decimal amount);
+        Task<bool> RecordDailyTaskAction(string studentId, string challengeId, decimal amount);
+        Task<bool> CheckProgress(string studentId, string challengeId, decimal newAmount);
         //Task<bool> DeleteChallenge(string id);
     }
 }

@@ -75,17 +75,11 @@ namespace SWallet.Repository.Enums
 
     public enum ChallengeType
     {
-        [Display(Name = "Thường")]
-        [Description("Thách thức thường")]
-        Achievement = 1,
-        [Display(Name = "Ngày")]
+        [Display(Name = "Thành tựu")]
+        [Description("Thách thức Thành Tựu")]
+        Achievement = 2,
+        [Display(Name = "Hằng ngày")]
         [Description("Thách thức theo ngày")]
-        Daily = 2,
-        [Display(Name = "Tuần")]
-        [Description("Thách thức theo tuần")]
-        Weekly = 3,
-        [Display(Name = "Tháng")]
-        [Description("Thách thức theo tháng")]
-        Monthly = 4,
+        Daily = 1,
     }
 }
