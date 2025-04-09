@@ -335,7 +335,7 @@ namespace SWallet.Repository.Services.Implements
         {
             try
             {
-                // Tìm Wallet dựa trên CampusId
+
                 var wallet = await _unitOfWork.GetRepository<Wallet>().SingleOrDefaultAsync(
                  predicate: b => b.StudentId == studentId);
 
