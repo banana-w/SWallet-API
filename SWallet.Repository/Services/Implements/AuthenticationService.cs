@@ -20,9 +20,11 @@ namespace SWallet.Repository.Services.Implements
     {
         private readonly IJwtService _jwtService;
         private readonly IRedisService redisService;
+        private readonly IChallengeService _challengeService;
         private readonly Mapper mapper;
 
-        public AuthenticationService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<AuthenticationService> logger, IJwtService jwtService, IRedisService redisService) : base(unitOfWork, logger)
+        public AuthenticationService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<AuthenticationService> logger, IJwtService jwtService, 
+            IRedisService redisService, IChallengeService challengeService) : base(unitOfWork, logger)
         {
             var config = new MapperConfiguration(cfg
                 =>
@@ -79,6 +81,7 @@ namespace SWallet.Repository.Services.Implements
             mapper ??= new Mapper(config);
             _jwtService = jwtService;
             this.redisService = redisService;
+            _challengeService = challengeService;
         }
 
         public async Task<LoginResponse> Login(LoginRequest loginRequest)
@@ -119,20 +122,37 @@ namespace SWallet.Repository.Services.Implements
         }
         public async Task<bool> VerifyStudent(string email, string userInput, string studentId)
         {
-            var student = await _unitOfWork.GetRepository<Student>().SingleOrDefaultAsync(predicate: x => x.Id == studentId);
-
-            if (student != null)
+            await _unitOfWork.BeginTransactionAsync();
+            try
             {
-                var result = await redisService.VerifyCodeAsync(email, userInput);
-                if (result)
+
+                var student = await _unitOfWork.GetRepository<Student>().SingleOrDefaultAsync(predicate: x => x.Id == studentId);
+
+                if (student != null)
                 {
-                    student.State = (int)StudentState.Active;
-                    student.StudentEmail = email;
-                    _unitOfWork.GetRepository<Student>().UpdateAsync(student);
-                    return await _unitOfWork.CommitAsync() > 0;
+                    var result = await redisService.VerifyCodeAsync(email, userInput);
+                    if (result)
+                    {
+                        student.State = (int)StudentState.Active;
+                        student.StudentEmail = email;
+                        _unitOfWork.GetRepository<Student>().UpdateAsync(student);
+
+                        await _challengeService.AssignAllChallengesToStudent(studentId);
+
+                        var reuslt = await _unitOfWork.CommitAsync() > 0;
+
+                        await _unitOfWork.CommitTransactionAsync();
+                        if (result)
+                            return true;
+                    }
                 }
+                return false;
             }
-            return false;
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
         }
         
         public async Task<bool> VerifyBrand(string email, string userInput, string brandId)
@@ -161,6 +181,7 @@ namespace SWallet.Repository.Services.Implements
                 if (result)
                 {
                     account.IsVerify = true;
+                    account.DateVerified = DateTime.UtcNow;
                     _unitOfWork.GetRepository<Account>().UpdateAsync(account);
                     return await _unitOfWork.CommitAsync() > 0;
                 }

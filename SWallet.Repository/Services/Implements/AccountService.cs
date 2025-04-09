@@ -1,12 +1,15 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using SWallet.Domain.Models;
 using SWallet.Repository.Enums;
 using SWallet.Repository.Interfaces;
 using SWallet.Repository.Payload.ExceptionModels;
 using SWallet.Repository.Payload.Request.Account;
 using SWallet.Repository.Payload.Request.Brand;
+using SWallet.Repository.Payload.Request.Invitation;
 using SWallet.Repository.Payload.Request.Store;
 using SWallet.Repository.Payload.Request.Student;
 using SWallet.Repository.Payload.Request.Wallet;
@@ -28,11 +31,13 @@ namespace SWallet.Repository.Services.Implements
         private readonly IRedisService _redisService;
         private readonly IWalletService _walletService;
         private readonly ICloudinaryService _cloudinaryService;
+        private readonly IInvitationService _invitationService;
+        private readonly IChallengeService _challengeService;
 
         public AccountService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<AccountService> logger,
             IEmailService emailService, IBrandService brandService, IStudentService studentService,
-            IRedisService redisService, IStoreService storeService, IWalletService walletService, 
-            ICloudinaryService cloudinaryService, ILecturerService lecturerService) : base(unitOfWork, logger)
+            IRedisService redisService, IStoreService storeService, IWalletService walletService,
+            ICloudinaryService cloudinaryService, ILecturerService lecturerService, IInvitationService invitationService, IChallengeService challengeService) : base(unitOfWork, logger)
         {
             var config = new MapperConfiguration(cfg
                 =>
@@ -114,6 +119,8 @@ namespace SWallet.Repository.Services.Implements
             _walletService = walletService;
             _cloudinaryService = cloudinaryService;
             _lecturerService = lecturerService;
+            _invitationService = invitationService;
+            _challengeService = challengeService;
         }
 
         public async Task<AccountResponse> CreateBrandAccount(AccountRequest accountRequest, CreateBrandByAccountId brandRequest)
@@ -133,7 +140,7 @@ namespace SWallet.Repository.Services.Implements
                 await _unitOfWork.GetRepository<Account>().InsertAsync(ac);
 
                 if (brandRequest.Logo != null && brandRequest.Logo.Length > 0)
-                {                   
+                {
                     var uploadResult = await _cloudinaryService.UploadImageAsync(brandRequest.Logo);
                     ac.Avatar = uploadResult.SecureUrl.AbsoluteUri;
                 }
@@ -199,7 +206,7 @@ namespace SWallet.Repository.Services.Implements
                     }
 
                     campus.AccountId = ac.Id;
-                    campus.DateUpdated = DateTime.Now;  
+                    campus.DateUpdated = DateTime.Now;
 
                     await _walletService.AddWallet(new WalletRequest
                     {
@@ -250,7 +257,7 @@ namespace SWallet.Repository.Services.Implements
 
                 bool isSuccess = await _unitOfWork.CommitAsync() > 0;
                 if (isSuccess)
-                {   
+                {
                     lecturerReq.AccountId = ac.Id;
                     await _lecturerService.CreateLecturerAccount(lecturerReq);
 
@@ -335,6 +342,27 @@ namespace SWallet.Repository.Services.Implements
                         var code = await _emailService.SendVerificationEmail(ac.Email);
                         await _redisService.SaveVerificationCodeAsync(ac.Email, code);
                     }
+
+                    if (!string.IsNullOrEmpty(studentRequest.InviteCode))
+                    {
+                        await _invitationService.Add(new CreateInvitationModel
+                        {
+                            InviterId = studentRequest.InviteCode,
+                            InviteeId = student.Id,
+                            Description = "",
+                            State = true
+                        });
+
+                        var challengeId = await _unitOfWork.GetRepository<Challenge>().SingleOrDefaultAsync(
+                            selector: x => x.Id,
+                            predicate: x => x.ChallengeName.Contains("mời 1 người bạn"));
+                        if (challengeId != null)
+                        {
+                            var result = await _challengeService.UpdateAchievementProgress(studentRequest.InviteCode, challengeId, 1);
+                        }
+
+                    }
+
                     await _unitOfWork.CommitTransactionAsync();
                     return mapper.Map<AccountResponse>(ac);
                 }

@@ -35,6 +35,17 @@ namespace SWallet_API.Controllers
             var result = await _challengeService.GetChallenges(search, types, page, size);
             return Ok(result);
         }
+
+        [HttpGet("extra")]
+        [ProducesResponseType(typeof(ChallengeResponseExtra), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetStudentChallenges(string studentId, string? search, [FromQuery] IEnumerable<ChallengeType> types, int page, int size)
+        {
+            var result = await _challengeService.GetStudentChallenges(studentId, search, types, page, size);
+            return Ok(result);
+        }
+
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetChallenge(string id)
         {

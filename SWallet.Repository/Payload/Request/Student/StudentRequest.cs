@@ -12,6 +12,7 @@ namespace SWallet.Repository.Payload.Request.Student
         public string? FullName { get; set; }
 
         public string? Code { get; set; }
+        public string? InviteCode { get; set; }
 
         public int? Gender { get; set; }
 
