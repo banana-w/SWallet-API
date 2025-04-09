@@ -13,5 +13,7 @@ public partial class SpinHistory
 
     public int? SpinCount { get; set; }
 
+    public int? BonusSpins { get; set; }
+
     public virtual Student Student { get; set; } = null!;
 }

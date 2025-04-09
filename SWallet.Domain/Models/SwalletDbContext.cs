@@ -101,7 +101,7 @@ public partial class SwalletDbContext : DbContext
     public virtual DbSet<Wallet> Wallets { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    => optionsBuilder.UseSqlServer(GetConnectionString());
+     => optionsBuilder.UseSqlServer(GetConnectionString());
 
     private string GetConnectionString()
     {
@@ -894,10 +894,10 @@ public partial class SwalletDbContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("id");
             entity.Property(e => e.Latitue)
-                .HasColumnType("decimal(38, 2)")
+                .HasColumnType("decimal(38, 20)")
                 .HasColumnName("latitue");
             entity.Property(e => e.Longtitude)
-                .HasColumnType("decimal(38, 2)")
+                .HasColumnType("decimal(38, 20)")
                 .HasColumnName("longtitude");
             entity.Property(e => e.Name).HasColumnName("name");
             entity.Property(e => e.Qrcode).HasColumnName("qrcode");
@@ -1385,6 +1385,7 @@ public partial class SwalletDbContext : DbContext
             entity.HasIndex(e => new { e.StudentId, e.Date }, "UQ_SpinHistory_Student_Date").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.BonusSpins).HasColumnName("bonusSpins");
             entity.Property(e => e.Date).HasColumnName("date");
             entity.Property(e => e.SpinCount)
                 .HasDefaultValue(0)
