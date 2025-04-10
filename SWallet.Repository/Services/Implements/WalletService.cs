@@ -187,6 +187,7 @@ namespace SWallet.Repository.Services.Implements
                 CampaignId = wallet.CampaignId,
                 StudentId = wallet.StudentId,
                 BrandId = wallet.BrandId,
+                CampusId = wallet.CampusId,
                 Type = wallet.Type,
                 Balance = wallet.Balance,
                 DateCreated = wallet.DateCreated,
