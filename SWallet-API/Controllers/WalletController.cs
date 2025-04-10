@@ -25,7 +25,7 @@ namespace SWallet_API.Controllers
             return Ok(result);
         }
 
-        [HttpGet("get-wallet-by-student-id")]
+        [HttpGet("{studentId}/{type}")]
         [ProducesResponseType(typeof(WalletResponse), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetWalletByStudentId(string studentId, int type = 1)
         {
