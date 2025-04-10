@@ -343,25 +343,25 @@ namespace SWallet.Repository.Services.Implements
                         await _redisService.SaveVerificationCodeAsync(ac.Email, code);
                     }
 
-                    if (!string.IsNullOrEmpty(studentRequest.InviteCode))
-                    {
-                        await _invitationService.Add(new CreateInvitationModel
-                        {
-                            InviterId = studentRequest.InviteCode,
-                            InviteeId = student.Id,
-                            Description = "",
-                            State = true
-                        });
+                    //if (!string.IsNullOrEmpty(studentRequest.InviteCode))
+                    //{
+                    //    await _invitationService.Add(new CreateInvitationModel
+                    //    {
+                    //        InviterId = studentRequest.InviteCode,
+                    //        InviteeId = student.Id,
+                    //        Description = "",
+                    //        State = true
+                    //    });
 
-                        var challengeId = await _unitOfWork.GetRepository<Challenge>().SingleOrDefaultAsync(
-                            selector: x => x.Id,
-                            predicate: x => x.ChallengeName.Contains("mời 1 người bạn"));
-                        if (challengeId != null)
-                        {
-                            var result = await _challengeService.UpdateAchievementProgress(studentRequest.InviteCode, challengeId, 1);
-                        }
+                    //    var challengeId = await _unitOfWork.GetRepository<Challenge>().SingleOrDefaultAsync(
+                    //        selector: x => x.Id,
+                    //        predicate: x => x.ChallengeName.Contains("mời 1 người bạn"));
+                    //    if (challengeId != null)
+                    //    {
+                    //        var result = await _challengeService.UpdateAchievementProgress(studentRequest.InviteCode, challengeId, 1);
+                    //    }
 
-                    }
+                    //}
 
                     await _unitOfWork.CommitTransactionAsync();
                     return mapper.Map<AccountResponse>(ac);
