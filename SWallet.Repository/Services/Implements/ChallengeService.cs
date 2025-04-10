@@ -386,9 +386,20 @@ namespace SWallet.Repository.Services.Implements
                         predicate: t => t.ChallengeId == challenge.challengeId &&
                                         t.StudentId == studentId &&
                                         t.DateCreated >= today &&
-                                        t.DateCreated < today.AddDays(1)&& t.Type == 0);
+                                        t.DateCreated < today.AddDays(1) && t.Type == 0);
 
                     challenge.current = transactions.Count;
+                    if (challenge.isCompleted)
+                    {
+                        return studentChallenges; // Nếu đã hoàn thành thì không cần cập nhật lại
+                    }
+                    challenge.isCompleted = transactions.Count >= challenge.condition;
+                    var studentChallenge = await _unitOfWork.GetRepository<StudentChallenge>()
+                        .SingleOrDefaultAsync(predicate: sc => sc.StudentId == studentId && sc.ChallengeId == challenge.challengeId);
+                    studentChallenge.IsCompleted = challenge.isCompleted;
+                    studentChallenge.DateUpdated = DateTime.Now;
+                    _unitOfWork.GetRepository<StudentChallenge>().UpdateAsync(studentChallenge);
+                    await _unitOfWork.CommitAsync();
                 }
             }
             return studentChallenges;
