@@ -36,7 +36,7 @@ namespace SWallet.Repository.Services.Implements
 
             // Tính khoảng cách và kiểm tra bán kính
             double distance = CalculateDistance(userLat, userLong, (double)location.Latitue, (double)location.Longtitude);
-            if (distance > 50) // Bán kính 50m
+            if (distance > 50)
             {
                 return (false, "Bạn không ở gần địa điểm này để check-in", 0);
             }
