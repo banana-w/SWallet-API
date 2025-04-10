@@ -33,6 +33,34 @@ namespace SWallet_API.Controllers
             }
             return BadRequest(new { message });
         }
+
+        [HttpGet("get-check-in-data/{studentId}")]
+        public async Task<IActionResult> GetCheckInData(string studentId)
+        {
+            try
+            {
+                var result = await _checkInService.GetCheckInDataAsync(studentId);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("check-in/{studentId}")]
+        public async Task<IActionResult> CheckIn(string studentId)
+        {
+            try
+            {
+                var result = await _checkInService.CheckInAsync(studentId);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
     }
 
     public class CheckInGpsRequest

@@ -4,6 +4,8 @@ using Microsoft.Extensions.Logging;
 using SWallet.Domain.Models;
 using SWallet.Repository.Enums;
 using SWallet.Repository.Interfaces;
+using SWallet.Repository.Payload.ExceptionModels;
+using SWallet.Repository.Payload.Response.DailyCheckIn;
 using SWallet.Repository.Services.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -16,6 +18,8 @@ namespace SWallet.Repository.Services.Implements
     public interface ICheckInService
     {
         Task<(bool Success, string Message, int PointsAwarded)> CheckInWithQR(string studentId, string qrCode, double userLat, double userLong);
+        Task<CheckInResponse> GetCheckInDataAsync(string studentId);
+        Task<CheckInResponse> CheckInAsync(string studentId);
     }
 
     public class CheckInService : BaseService<CheckInService>, ICheckInService
@@ -28,6 +32,158 @@ namespace SWallet.Repository.Services.Implements
         {
             _walletService = walletService;
             _challengeService = challengeService;
+        }
+
+        public async Task<CheckInResponse> GetCheckInDataAsync(string studentId)
+        {
+            if (string.IsNullOrEmpty(studentId))
+            {
+                throw new ApiException("StudentId cannot be empty", 400, "BAD_REQUEST");
+            }
+
+            try
+            {
+                // Lấy lịch sử điểm danh của student
+                var checkInHistories = await _unitOfWork.GetRepository<DailyGiftHistory>()
+                    .GetListAsync(predicate: x => x.StudentId == studentId);
+
+                // Tính streak và points
+                int streak = 0;
+                int points = 0;
+                DateTime today = DateTime.Today;
+                bool canCheckInToday = true;
+                bool[] checkInHistory = new bool[7]; // Lịch sử 7 ngày trong chuỗi
+                int currentDayIndex = 0;
+
+                if (checkInHistories.Any())
+                {
+                    // Sắp xếp theo ngày điểm danh
+                    var orderedHistories = checkInHistories.OrderBy(x => x.CheckInDate).ToList();
+
+                    // Tìm bản ghi gần nhất
+                    var lastCheckIn = orderedHistories.Last();
+                    streak = (int)lastCheckIn.Streak;
+                    points = (int)lastCheckIn.Points;
+
+                    // Kiểm tra xem có thể điểm danh hôm nay không
+                    canCheckInToday = lastCheckIn.CheckInDate < today;
+
+                    // Nếu đã bỏ lỡ một ngày, reset streak
+                    var yesterday = today.AddDays(-1);
+                    if (!orderedHistories.Any(x => x.CheckInDate == yesterday) &&
+                        lastCheckIn.CheckInDate < yesterday)
+                    {
+                        streak = 0;
+                    }
+
+                    // Tính currentDayIndex
+                    currentDayIndex = streak == 0 ? 0 : (streak >= 7 ? 6 : (streak - 1) % 7);
+
+                    // Tính checkInHistory dựa trên streak
+                    for (int i = 0; i < 7; i++)
+                    {
+                        checkInHistory[i] = i < streak && i < 7; // Đánh dấu true cho các ngày đã điểm danh
+                    }
+                }
+
+                return new CheckInResponse
+                {
+                    CheckInHistory = checkInHistory,
+                    Streak = streak,
+                    Points = points,
+                    CanCheckInToday = canCheckInToday,
+                    CurrentDayIndex = currentDayIndex,
+                    RewardPoints = 0 // Không cần rewardPoints trong GetCheckInData
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting check-in data for studentId: {studentId}");
+                throw new ApiException("Failed to get check-in data", 500, "INTERNAL_SERVER_ERROR");
+            }
+        }
+
+        public async Task<CheckInResponse> CheckInAsync(string studentId)
+        {
+            if (string.IsNullOrEmpty(studentId))
+            {
+                throw new ApiException("StudentId cannot be empty", 400, "BAD_REQUEST");
+            }
+
+            try
+            {
+                // Lấy dữ liệu hiện tại
+                var currentData = await GetCheckInDataAsync(studentId);
+
+                if (!currentData.CanCheckInToday)
+                {
+                    throw new ApiException("You have already checked in today", 400, "BAD_REQUEST");
+                }
+
+                // Tính streak mới
+                int newStreak = currentData.Streak + 1;
+
+                // Tính phần thưởng dựa trên ngày trong chuỗi
+                int rewardPoints;
+                if (newStreak >= 7)
+                {
+                    rewardPoints = 70; // Ngày 7 trở đi: 70 điểm
+                }
+                else
+                {
+                    rewardPoints = newStreak * 10; // Ngày 1: 10, Ngày 2: 20, ..., Ngày 6: 60
+                }
+
+                // Tính tổng điểm tích lũy
+                int newPoints = currentData.Points + rewardPoints;
+
+                // Tạo bản ghi mới
+                var newCheckIn = new DailyGiftHistory
+                {
+                   
+                    StudentId = studentId,
+                    CheckInDate = DateTime.Today,
+                    Streak = newStreak,
+                    Points = newPoints
+                };
+
+                await _unitOfWork.GetRepository<DailyGiftHistory>().InsertAsync(newCheckIn);
+                var isSuccess = await _unitOfWork.CommitAsync() > 0;
+
+                if (!isSuccess)
+                {
+                    throw new ApiException("Failed to check in", 400, "BAD_REQUEST");
+                }
+
+                // Cập nhật điểm trên server (nếu cần)
+                // Giả sử bạn có API để cập nhật điểm cho Student
+                // await studentRepository.UpdatePointByStudentId(studentId, rewardPoints);
+
+                // Tính lại currentDayIndex
+                int currentDayIndex = newStreak >= 7 ? 6 : (newStreak - 1) % 7;
+
+                // Tính lại checkInHistory dựa trên newStreak
+                bool[] checkInHistory = new bool[7];
+                for (int i = 0; i < 7; i++)
+                {
+                    checkInHistory[i] = i < newStreak && i < 7; // Đánh dấu true cho các ngày đã điểm danh
+                }
+
+                return new CheckInResponse
+                {
+                    CheckInHistory = checkInHistory,
+                    Streak = newStreak,
+                    Points = newPoints,
+                    CanCheckInToday = false,
+                    CurrentDayIndex = currentDayIndex,
+                    RewardPoints = rewardPoints // Trả về phần thưởng nhận được hôm nay
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error checking in for studentId: {studentId}");
+                throw new ApiException("Failed to check in", 500, "INTERNAL_SERVER_ERROR");
+            }
         }
 
         public async Task<(bool Success, string Message, int PointsAwarded)> CheckInWithQR(string studentId, string qrCode, double userLat, double userLong)
