@@ -178,10 +178,10 @@ namespace SWallet.Repository.Services.Implements
             decimal challengeAmount = 0;
             if (studentChallenge != null)
             {
-                 challengeAmount = await _unitOfWork.GetRepository<Challenge>()
-                    .SingleOrDefaultAsync(
-                    selector: c => c.Amount, 
-                    predicate: c => c.Id == challengeId) ?? 0;
+                challengeAmount = await _unitOfWork.GetRepository<Challenge>()
+                   .SingleOrDefaultAsync(
+                   selector: c => c.Amount,
+                   predicate: c => c.Id == challengeId) ?? 0;
             }
 
             return (isCompleted, challengeAmount);
@@ -193,7 +193,7 @@ namespace SWallet.Repository.Services.Implements
                predicate: t => t.ChallengeId == challengeId && t.StudentId == studentId &&
                             t.DateCreated >= today && t.DateCreated < today.AddDays(1));
 
-            var totalAmount = transactions.Sum(t => t.Amount ?? 0);
+            var totalAmount = transactions.Count;
             var challenge = await _unitOfWork.GetRepository<Challenge>().SingleOrDefaultAsync(predicate: c => c.Id == challengeId);
 
             bool isCompleted = totalAmount >= challenge.Condition;
@@ -207,7 +207,7 @@ namespace SWallet.Repository.Services.Implements
 
             if (type == (int)ChallengeType.Daily)
             {
-                 result = await IsDailyTaskCompletedToday(studentId, challengeId);
+                result = await IsDailyTaskCompletedToday(studentId, challengeId);
 
             }
             else if (type == (int)ChallengeType.Achievement)
@@ -337,7 +337,7 @@ namespace SWallet.Repository.Services.Implements
             return challenges;
         }
 
-        public Task<IPaginate<ChallengeResponseExtra>> GetStudentChallenges(
+        public async Task<IPaginate<ChallengeResponseExtra>> GetStudentChallenges(
                 string studentId,
                 string? search,
                 IEnumerable<ChallengeType> types,
@@ -345,24 +345,24 @@ namespace SWallet.Repository.Services.Implements
                 int size)
         {
             Expression<Func<StudentChallenge, bool>> filter = sc =>
-                sc.StudentId == studentId && // Lọc theo studentId
-                sc.Status == true && // Chỉ lấy các challenge đang hoạt động
-                (string.IsNullOrEmpty(search) || sc.Challenge.ChallengeName.Contains(search)) && // Tìm kiếm theo tên challenge
-                (!types.Any() || types.Contains((ChallengeType)sc.Challenge.Type)); // Lọc theo loại challenge
+                sc.StudentId == studentId &&
+                sc.Status == true &&
+                (string.IsNullOrEmpty(search) || sc.Challenge.ChallengeName.Contains(search)) &&
+                (!types.Any() || types.Contains((ChallengeType)sc.Challenge.Type));
 
-            var studentChallenges = _unitOfWork.GetRepository<StudentChallenge>().GetPagingListAsync(
+            var studentChallenges = await _unitOfWork.GetRepository<StudentChallenge>().GetPagingListAsync(
                 selector: sc => new ChallengeResponseExtra
                 {
-                    id = sc.ChallengeId, 
+                    id = sc.ChallengeId,
                     challengeId = sc.ChallengeId,
                     challengeType = ((ChallengeType)sc.Challenge.Type).ToString(),
-                    challengeTypeName = sc.Challenge.Type == 1 ? "Hằng ngày" : "Thành Tựu", 
+                    challengeTypeName = sc.Challenge.Type == 1 ? "Hằng ngày" : "Thành Tựu",
                     challengeName = sc.Challenge.ChallengeName,
                     challengeImage = sc.Challenge.Image,
                     studentId = sc.StudentId,
                     studentName = sc.Student.FullName,
                     amount = sc.Challenge.Amount ?? 0,
-                    current = sc.Current ?? 0,
+                    current = sc.Current ?? 0, // sẽ cập nhật lại bên dưới nếu cần
                     condition = sc.Challenge.Condition ?? 0,
                     isCompleted = sc.IsCompleted ?? false,
                     isClaimed = sc.DateCompleted.HasValue && sc.IsCompleted == true,
@@ -373,10 +373,24 @@ namespace SWallet.Repository.Services.Implements
                 },
                 predicate: filter,
                 include: source => source.Include(sc => sc.Challenge)
-                                        .Include(sc => sc.Student), 
+                                        .Include(sc => sc.Student),
                 page: page,
                 size: size);
+            if (types.Contains(ChallengeType.Daily))
+            {
+                var today = DateTime.Today;
 
+                foreach (var challenge in studentChallenges.Items.Where(c => c.challengeTypeName == "Hằng ngày"))
+                {
+                    var transactions = await _unitOfWork.GetRepository<ChallengeTransaction>().GetListAsync(
+                        predicate: t => t.ChallengeId == challenge.challengeId &&
+                                        t.StudentId == studentId &&
+                                        t.DateCreated >= today &&
+                                        t.DateCreated < today.AddDays(1)&& t.Type == 0);
+
+                    challenge.current = transactions.Count;
+                }
+            }
             return studentChallenges;
         }
 
