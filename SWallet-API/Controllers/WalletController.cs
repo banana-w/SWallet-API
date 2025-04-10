@@ -42,6 +42,14 @@ namespace SWallet_API.Controllers
             return Ok(wallet);
         }
 
+        [HttpGet("get-wallet-by-campus-id")]
+        [ProducesResponseType(typeof(WalletResponse), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetWalletByCampusId(string campusId, int type = 1)
+        {
+            var wallet = await _walletService.GetWalletByCampusId(campusId, type);
+            return Ok(wallet);
+        }
+
         [HttpPut("{id}/{balance}")]
         [ProducesResponseType(typeof(WalletResponse), StatusCodes.Status200OK)]
         public async Task<IActionResult> UpdateWallet(string id, decimal balance)
