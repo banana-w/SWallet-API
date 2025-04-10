@@ -1,5 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using SWallet.Domain.Models;
+using SWallet.Repository.Enums;
+using SWallet.Repository.Interfaces;
 using SWallet.Repository.Services.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -14,21 +18,22 @@ namespace SWallet.Repository.Services.Implements
         Task<(bool Success, string Message, int PointsAwarded)> CheckInWithQR(string studentId, string qrCode, double userLat, double userLong);
     }
 
-    public class CheckInService : ICheckInService
+    public class CheckInService : BaseService<CheckInService>, ICheckInService
     {
-        private readonly SwalletDbContext _context;
         private readonly IWalletService _walletService;
+        private readonly IChallengeService _challengeService;
 
-        public CheckInService(SwalletDbContext context, IWalletService walletService)
+        public CheckInService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<CheckInService> logger, IHttpContextAccessor httpContextAccessor, 
+            IWalletService walletService, IChallengeService challengeService) : base(unitOfWork, logger, httpContextAccessor)
         {
-            _context = context;
             _walletService = walletService;
+            _challengeService = challengeService;
         }
 
         public async Task<(bool Success, string Message, int PointsAwarded)> CheckInWithQR(string studentId, string qrCode, double userLat, double userLong)
         {
             // Tìm địa điểm từ qrCode
-            var location = await _context.Locations.FirstOrDefaultAsync(l => l.Qrcode == qrCode);
+            var location = await _unitOfWork.GetRepository<Location>().SingleOrDefaultAsync(predicate: l => l.Qrcode == qrCode);
             if (location == null)
             {
                 return (false, "Mã QR không hợp lệ hoặc địa điểm không tồn tại", 0);
@@ -48,54 +53,41 @@ namespace SWallet.Repository.Services.Implements
         private async Task<(bool Success, string Message, int PointsAwarded)> RecordCheckIn(string studentId, string locationId)
         {
             var today = DateTime.Today;
-            var challengeId = "CHECKIN_DAILY";
             const int pointsAwarded = 10;
 
             try
             {
-                // Kiểm tra hoặc tạo StudentChallenge
-                var studentChallenge = await _context.StudentChallenges
-                    .FirstOrDefaultAsync(sc => sc.StudentId == studentId && sc.ChallengeId == challengeId);
+                var challengeId = await _unitOfWork.GetRepository<Challenge>().SingleOrDefaultAsync(
+                            selector: x => x.Id,
+                            predicate: x => x.ChallengeName.Contains("check-in"));
 
-                if (studentChallenge == null)
+                var studentChallenge = await _unitOfWork.GetRepository<StudentChallenge>()
+                    .AnyAsync(sc => sc.StudentId == studentId && sc.ChallengeId == challengeId);
+
+                if (!studentChallenge)
                 {
-                    studentChallenge = new StudentChallenge
-                    {
-                        ChallengeId = challengeId,
-                        StudentId = studentId,
-                        Amount = 0,
-                        Current = 0,
-                        Condition = 1,
-                        IsCompleted = false,
-                        DateCreated = DateTime.Now,
-                        Status = true
-                    };
-                    _context.StudentChallenges.Add(studentChallenge);
-                    await _context.SaveChangesAsync();
+                    await _challengeService.AssignChallengeToStudent(challengeId, studentId);
                 }
 
                 // Kiểm tra check-in trùng lặp trong ngày
-                var existingCheckIn = await _context.ChallengeTransactions
-                    .FirstOrDefaultAsync(t => t.StudentId == studentId && t.ChallengeId == challengeId &&
+                var existingCheckIn = await _unitOfWork.GetRepository<ChallengeTransaction>()
+                    .AnyAsync(predicate: t => t.StudentId == studentId && t.ChallengeId == challengeId &&
                                               t.DateCreated >= today && t.DateCreated < today.AddDays(1) &&
                                               t.Description.Contains(locationId));
 
-                if (existingCheckIn != null)
+                if (existingCheckIn)
                 {
                     return (false, "Bạn đã check-in tại địa điểm này hôm nay", 0);
                 }
 
-                // Lấy ví của sinh viên
-                var wallet = await _context.Wallets
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(w => w.StudentId == studentId);
+                var wallet = await _unitOfWork.GetRepository<Wallet>()
+                    .SingleOrDefaultAsync(predicate: w => w.StudentId == studentId);
 
                 if (wallet == null)
                 {
                     return (false, $"Không tìm thấy ví cho sinh viên {studentId}", 0);
                 }
 
-                // Tạo giao dịch check-in
                 var transaction = new ChallengeTransaction
                 {
                     Id = Ulid.NewUlid().ToString(),
@@ -105,24 +97,11 @@ namespace SWallet.Repository.Services.Implements
                     Amount = pointsAwarded,
                     DateCreated = DateTime.Now,
                     Description = $"Check-in tại {locationId}",
-                    State = true
                 };
 
-                _context.ChallengeTransactions.Add(transaction);
-                await _context.SaveChangesAsync();
+                await _challengeService.AddChallengeTransaction(transaction, (int)ChallengeType.Daily);
 
-                // Cộng điểm vào ví
                 await _walletService.AddPointsToStudentWallet(studentId, (int)transaction.Amount);
-
-                // Cập nhật StudentChallenge
-                studentChallenge.Current = (studentChallenge.Current ?? 0) + 1;
-                if (studentChallenge.Current >= studentChallenge.Condition)
-                {
-                    studentChallenge.IsCompleted = true;
-                    studentChallenge.DateCompleted = DateTime.Now;
-                }
-                _context.StudentChallenges.Update(studentChallenge);
-                await _context.SaveChangesAsync();
 
                 return (true, "Check-in thành công", pointsAwarded);
             }

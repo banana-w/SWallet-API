@@ -17,6 +17,7 @@ namespace SWallet_API.Controllers
         {
             _challengeService = challengeService;
         }
+
         [HttpPost]
         [ProducesResponseType(typeof(ChallengeResponse),StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
@@ -29,6 +30,21 @@ namespace SWallet_API.Controllers
             }
             throw new ApiException("Create challenge fail", 400, "CHALLENGE_FAIL");
         }
+
+        [HttpPost("reward")]
+        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> RewardToStudent(string challengeId, string studentId, int type)
+        {
+            var result = await _challengeService.RewardStudent(studentId, challengeId, type);
+            if (result)
+            {
+                return Ok(result);
+            }
+            throw new ApiException("Assign challenge to student fail", 400, "CHALLENGE_FAIL");
+        }
+
+
         [HttpGet]
         public async Task<IActionResult> GetChallenges(string? search,[FromQuery] IEnumerable<ChallengeType> types, int page, int size)
         {
@@ -62,6 +78,8 @@ namespace SWallet_API.Controllers
             }
             throw new ApiException("Update challenge fail", 400, "CHALLENGE_FAIL");
         }
+
+        
 
         //[HttpDelete("{id}")]
         //public async Task<IActionResult> DeleteChallenge(string id)
