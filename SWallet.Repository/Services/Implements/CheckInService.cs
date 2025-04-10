@@ -96,12 +96,13 @@ namespace SWallet.Repository.Services.Implements
                     ChallengeId = challengeId,
                     Amount = pointsAwarded,
                     DateCreated = DateTime.Now,
+                    Type = 0,
                     Description = $"Check-in tại {locationId}",
                 };
 
                 await _challengeService.AddChallengeTransaction(transaction, (int)ChallengeType.Daily);
 
-                await _walletService.AddPointsToStudentWallet(studentId, (int)transaction.Amount);
+                //await _walletService.AddPointsToStudentWallet(studentId, (int)transaction.Amount);
 
                 return (true, "Check-in thành công", pointsAwarded);
             }
