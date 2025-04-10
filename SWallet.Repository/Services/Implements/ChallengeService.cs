@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using CloudinaryDotNet;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SWallet.Domain.Models;
 using SWallet.Domain.Paginate;
@@ -21,9 +22,11 @@ namespace SWallet.Repository.Services.Implements
     public class ChallengeService : BaseService<ChallengeService>, IChallengeService
     {
         private readonly ICloudinaryService _cloudinaryService;
-        public ChallengeService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<ChallengeService> logger, ICloudinaryService cloudinaryService) : base(unitOfWork, logger)
+        private readonly IWalletService _walletService;
+        public ChallengeService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<ChallengeService> logger, ICloudinaryService cloudinaryService, IWalletService walletService) : base(unitOfWork, logger)
         {
             _cloudinaryService = cloudinaryService;
+            _walletService = walletService;
         }
 
         public async Task<bool> CreateChallenge(ChallengeRequest request)
@@ -88,17 +91,17 @@ namespace SWallet.Repository.Services.Implements
         public async Task<bool> AssignAllChallengesToStudent(string studentId)
         {
             // Lấy tất cả các challenge hiện có từ repository
-            var challenges = await _unitOfWork.GetRepository<Challenge>().GetListAsync();
+            var challengeIds = await _unitOfWork.GetRepository<Challenge>().GetListAsync(selector: x => x.Id);
 
-            if (challenges.Count == 0)
+            if (challengeIds.Count == 0)
             {
                 throw new ApiException("No challenges available to assign", 400, "NO_CHALLENGES_FOUND");
             }
 
             // Tạo danh sách StudentChallenge cho từng challenge
-            var studentChallenges = challenges.Select(challenge => new StudentChallenge
+            var studentChallenges = challengeIds.Select(challengeId => new StudentChallenge
             {
-                ChallengeId = challenge.Id,
+                ChallengeId = challengeId,
                 StudentId = studentId,
                 Current = 0, // Tiến trình ban đầu
                 IsCompleted = false, // Chưa hoàn thành
@@ -154,7 +157,7 @@ namespace SWallet.Repository.Services.Implements
                 Amount = amount, // Giá trị của hành động (ví dụ: 1 bài tập = 1 đơn vị)
                 DateCreated = DateTime.Now,
                 Description = "Daily task action",
-                State = true
+                Type = (int)ChallengeType.Daily
             };
             await _unitOfWork.GetRepository<ChallengeTransaction>().InsertAsync(transaction);
             var result = await _unitOfWork.CommitAsync();
@@ -165,36 +168,88 @@ namespace SWallet.Repository.Services.Implements
             throw new ApiException("Record daily task action fail", 400, "RECORD_DAILY_TASK_FAIL");
         }
 
-        //public bool IsAchievementCompleted(string studentId, string challengeId)
-        //{
-        //    var studentChallenge = _context.StudentChallenges
-        //        .FirstOrDefault(sc => sc.StudentId == studentId && sc.ChallengeId == challengeId);
-        //    return studentChallenge?.IsCompleted ?? false;
-        //}
-        //public bool IsDailyTaskCompletedToday(string studentId, string challengeId)
-        //{
-        //    var today = DateTime.Today;
-        //    var transactions = _context.ChallengeTransactions
-        //        .Where(t => t.ChallengeId == challengeId && t.StudentId == studentId &&
-        //                    t.DateCreated >= today && t.DateCreated < today.AddDays(1))
-        //        .ToList();
+        public async Task<(bool IsCompleted, decimal Amount)> IsAchievementCompleted(string studentId, string challengeId)
+        {
+            var studentChallenge = await _unitOfWork.GetRepository<StudentChallenge>()
+                .SingleOrDefaultAsync(predicate: sc => sc.StudentId == studentId && sc.ChallengeId == challengeId);
 
-        //    var totalAmount = transactions.Sum(t => t.Amount ?? 0);
-        //    var challenge = _context.Challenges.FirstOrDefault(c => c.Id == challengeId);
-        //    return totalAmount >= challenge.Condition;
-        //}
-        //public void RewardStudent(string studentId, string challengeId)
-        //{
-        //    var challenge = _context.Challenges.FirstOrDefault(c => c.Id == challengeId);
-        //    if (challenge == null) return;
+            bool isCompleted = studentChallenge?.IsCompleted ?? false && studentChallenge.DateCreated.HasValue;
 
-        //    var wallet = _context.Wallets.FirstOrDefault(w => w.StudentId == studentId);
-        //    if (wallet != null)
-        //    {
-        //        wallet.Balance += challenge.Amount; // Cộng phần thưởng vào ví
-        //        _context.SaveChanges();
-        //    }
-        //}
+            decimal challengeAmount = 0;
+            if (studentChallenge != null)
+            {
+                 challengeAmount = await _unitOfWork.GetRepository<Challenge>()
+                    .SingleOrDefaultAsync(
+                    selector: c => c.Amount, 
+                    predicate: c => c.Id == challengeId) ?? 0;
+            }
+
+            return (isCompleted, challengeAmount);
+        }
+        public async Task<(bool IsCompleted, decimal Amount)> IsDailyTaskCompletedToday(string studentId, string challengeId)
+        {
+            var today = DateTime.Today;
+            var transactions = await _unitOfWork.GetRepository<ChallengeTransaction>().GetListAsync(
+               predicate: t => t.ChallengeId == challengeId && t.StudentId == studentId &&
+                            t.DateCreated >= today && t.DateCreated < today.AddDays(1));
+
+            var totalAmount = transactions.Sum(t => t.Amount ?? 0);
+            var challenge = await _unitOfWork.GetRepository<Challenge>().SingleOrDefaultAsync(predicate: c => c.Id == challengeId);
+
+            bool isCompleted = totalAmount >= challenge.Condition;
+            decimal amount = challenge.Amount ?? 0;
+
+            return (isCompleted, amount);
+        }
+        public async Task<bool> RewardStudent(string studentId, string challengeId, int type)
+        {
+            (bool isCompleted, decimal amount) result = (false, 0);
+
+            if (type == (int)ChallengeType.Daily)
+            {
+                 result = await IsDailyTaskCompletedToday(studentId, challengeId);
+
+            }
+            else if (type == (int)ChallengeType.Achievement)
+            {
+                result = await IsAchievementCompleted(studentId, challengeId);
+            }
+
+            if (result.isCompleted)
+            {
+                var walletId = await _unitOfWork.GetRepository<Wallet>().SingleOrDefaultAsync(
+                    selector: x => x.Id,
+                    predicate: w => w.StudentId == studentId);
+                if (!string.IsNullOrEmpty(walletId))
+                {
+                    await _walletService.UpdateWalletForRedeem(walletId, result.amount);
+                    var transaction = new ChallengeTransaction
+                    {
+                        Id = Ulid.NewUlid().ToString(),
+                        ChallengeId = challengeId,
+                        StudentId = studentId,
+                        Amount = result.amount,
+                        DateCreated = DateTime.Now,
+                        Description = type == (int)ChallengeType.Daily ? "Daily" : "Achievement",
+                        Type = type
+                    };
+                    var check = await AddChallengeTransaction(transaction, type);
+                    return check;
+                }
+            }
+            throw new ApiException("Reward student fail", 400, "REWARD_STUDENT_FAIL");
+        }
+        public async Task<bool> AddChallengeTransaction(ChallengeTransaction transaction, int type)
+        {
+
+            await _unitOfWork.GetRepository<ChallengeTransaction>().InsertAsync(transaction);
+            var result = await _unitOfWork.CommitAsync();
+            if (result > 0)
+            {
+                return true;
+            }
+            throw new ApiException("Add challenge transaction fail", 400, "ADD_CHALLENGE_TRANSACTION_FAIL");
+        }
 
         public async Task<bool> CheckProgress(string studentId, string challengeId, decimal newAmount)
         {

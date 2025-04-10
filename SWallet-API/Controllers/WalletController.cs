@@ -25,7 +25,7 @@ namespace SWallet_API.Controllers
             return Ok(result);
         }
 
-        [HttpGet("get-wallet-by-student-id")]
+        [HttpGet("{studentId}/{type}")]
         [ProducesResponseType(typeof(WalletResponse), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetWalletByStudentId(string studentId, int type = 1)
         {
@@ -39,6 +39,14 @@ namespace SWallet_API.Controllers
         public async Task<IActionResult> GetWalletByBrandId(string brandId, int type = 1)
         {
             var wallet = await _walletService.GetWalletByBrandId(brandId, type);
+            return Ok(wallet);
+        }
+
+        [HttpGet("get-wallet-by-campus-id")]
+        [ProducesResponseType(typeof(WalletResponse), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetWalletByCampusId(string campusId, int type = 1)
+        {
+            var wallet = await _walletService.GetWalletByCampusId(campusId, type);
             return Ok(wallet);
         }
 

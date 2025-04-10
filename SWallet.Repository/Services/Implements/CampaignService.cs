@@ -296,6 +296,15 @@ namespace SWallet.Repository.Services.Implements
                         : "default_cover.jpg";
                 }
 
+          
+
+                var deductSuccess = await _walletService.UpdateWallet(brandWalletBalance.Id, (decimal)(brandWalletBalance.Balance - totalVoucherCost));
+
+                if (deductSuccess == null)
+                {
+                    throw new ApiException("Failed to deduct balance from Brand wallet", 400, "BAD_REQUEST");
+                }
+
                 // Commit transaction
                 await _unitOfWork.CommitAsync();
                 await _unitOfWork.CommitTransactionAsync();

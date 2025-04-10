@@ -19,7 +19,7 @@ public partial class ChallengeTransaction
 
     public string Description { get; set; } = null!;
 
-    public bool State { get; set; }
+    public int Type { get; set; }
 
     public bool? Status { get; set; }
 

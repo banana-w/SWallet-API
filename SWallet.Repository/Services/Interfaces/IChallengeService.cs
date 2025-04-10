@@ -1,4 +1,5 @@
-﻿using SWallet.Domain.Paginate;
+﻿using SWallet.Domain.Models;
+using SWallet.Domain.Paginate;
 using SWallet.Repository.Enums;
 using SWallet.Repository.Payload.Request;
 using SWallet.Repository.Payload.Response.Challenge;
@@ -21,6 +22,8 @@ namespace SWallet.Repository.Services.Interfaces
         Task<bool> AssignAllChallengesToStudent(string studentId);
         Task<bool> UpdateAchievementProgress(string studentId, string challengeId, decimal amount);
         Task<bool> RecordDailyTaskAction(string studentId, string challengeId, decimal amount);
+        Task<bool> RewardStudent(string studentId, string challengeId, int type);
+        Task<bool> AddChallengeTransaction(ChallengeTransaction transaction, int type);
         Task<bool> CheckProgress(string studentId, string challengeId, decimal newAmount);
         //Task<bool> DeleteChallenge(string id);
     }

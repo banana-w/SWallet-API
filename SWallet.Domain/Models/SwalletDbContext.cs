@@ -782,18 +782,18 @@ public partial class SwalletDbContext : DbContext
                 .HasColumnName("challenge_id");
             entity.Property(e => e.DateCreated).HasColumnName("date_created");
             entity.Property(e => e.Description)
-                .HasColumnType("text")
+                .HasMaxLength(350)
                 .HasColumnName("description");
             entity.Property(e => e.Rate)
                 .HasColumnType("decimal(38, 2)")
                 .HasColumnName("rate");
-            entity.Property(e => e.State).HasColumnName("state");
             entity.Property(e => e.Status).HasColumnName("status");
             entity.Property(e => e.StudentId)
                 .HasMaxLength(26)
                 .IsUnicode(false)
                 .IsFixedLength()
                 .HasColumnName("student_id");
+            entity.Property(e => e.Type).HasColumnName("type");
             entity.Property(e => e.WalletId)
                 .HasMaxLength(26)
                 .IsUnicode(false)
