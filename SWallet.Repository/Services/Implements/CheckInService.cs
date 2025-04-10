@@ -140,24 +140,25 @@ namespace SWallet.Repository.Services.Implements
                 // Tạo bản ghi mới
                 var newCheckIn = new DailyGiftHistory
                 {
-                   
                     StudentId = studentId,
                     CheckInDate = DateTime.Today,
                     Streak = newStreak,
                     Points = newPoints
                 };
 
-                await _unitOfWork.GetRepository<DailyGiftHistory>().InsertAsync(newCheckIn);
-                var isSuccess = await _unitOfWork.CommitAsync() > 0;
+                        // Lưu bản ghi điểm danh
+                        await _unitOfWork.GetRepository<DailyGiftHistory>().InsertAsync(newCheckIn);
+                        var isSuccess = await _unitOfWork.CommitAsync() > 0;
 
-                if (!isSuccess)
-                {
-                    throw new ApiException("Failed to check in", 400, "BAD_REQUEST");
-                }
+                        if (!isSuccess)
+                        {
+                            throw new ApiException("Failed to check in", 400, "BAD_REQUEST");
+                        }
 
-                // Cập nhật điểm trên server (nếu cần)
-                // Giả sử bạn có API để cập nhật điểm cho Student
-                // await studentRepository.UpdatePointByStudentId(studentId, rewardPoints);
+                        // Cập nhật balance trong Wallet
+                        await _walletService.AddPointsToStudentWallet(studentId, rewardPoints);
+
+          
 
                 // Tính lại currentDayIndex
                 int currentDayIndex = newStreak >= 7 ? 6 : (newStreak - 1) % 7;
