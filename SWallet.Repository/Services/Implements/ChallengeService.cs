@@ -1,6 +1,7 @@
 ﻿using CloudinaryDotNet;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using SWallet.Domain.Models;
 using SWallet.Domain.Paginate;
 using SWallet.Repository.Enums;
@@ -239,18 +240,13 @@ namespace SWallet.Repository.Services.Implements
                         StudentId = studentId,
                         WalletId = walletId,
                         Amount = result.amount,
-                        DateCreated = DateTime.Now,
+                        DateCreated = DateTime.UtcNow,
                         Description = type == (int)ChallengeType.Daily ? "Daily" : "Achievement",
                         Type = type
                     };
 
                     var check = await AddChallengeTransaction(transaction, type);
 
-                    var sC = await _unitOfWork.GetRepository<StudentChallenge>().SingleOrDefaultAsync(
-                         predicate: sc => sc.StudentId == studentId && sc.ChallengeId == challengeId);
-                    sC.Description = "Đã nhận";
-                    _unitOfWork.GetRepository<StudentChallenge>().UpdateAsync(sC);
-                    await _unitOfWork.CommitAsync();
                     return check;
                 }
             }
@@ -382,7 +378,7 @@ namespace SWallet.Repository.Services.Implements
                     current = sc.Current ?? 0, // sẽ cập nhật lại bên dưới nếu cần
                     condition = sc.Challenge.Condition ?? 0,
                     isCompleted = sc.IsCompleted ?? false,
-                    isClaimed = sc.Description == "Đã nhận",
+                    isClaimed = false,
                     dateCreated = sc.DateCreated ?? DateTime.MinValue,
                     dateUpdated = sc.DateUpdated,
                     description = sc.Challenge.Description,
@@ -406,18 +402,15 @@ namespace SWallet.Repository.Services.Implements
                                         t.DateCreated < today.AddDays(1) && t.Type == 0);
 
                     challenge.current = transactions.Count;
-                    if (challenge.isCompleted)
-                    {
-                        return studentChallenges; // Nếu đã hoàn thành thì không cần cập nhật lại
-                    }
                     challenge.isCompleted = transactions.Count >= challenge.condition;
-                    var studentChallenge = await _unitOfWork.GetRepository<StudentChallenge>()
-                        .SingleOrDefaultAsync(predicate: sc => sc.StudentId == studentId && sc.ChallengeId == challenge.challengeId);
-                    studentChallenge.IsCompleted = challenge.isCompleted;
-                    studentChallenge.DateUpdated = DateTime.UtcNow;
-                    studentChallenge.DateCompleted = DateTime.UtcNow;
-                    _unitOfWork.GetRepository<StudentChallenge>().UpdateAsync(studentChallenge);
-                    await _unitOfWork.CommitAsync();
+
+                    var transactions1 = await _unitOfWork.GetRepository<ChallengeTransaction>().GetListAsync(
+                        predicate: t => t.ChallengeId == challenge.challengeId &&
+                                        t.StudentId == studentId &&
+                                        t.DateCreated >= today &&
+                                        t.DateCreated < today.AddDays(1) && t.Type == 1);
+                    if (!transactions1.IsNullOrEmpty())
+                        challenge.isClaimed = true;
                 }
             }
             return studentChallenges;

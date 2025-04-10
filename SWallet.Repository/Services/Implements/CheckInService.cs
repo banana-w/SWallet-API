@@ -95,7 +95,7 @@ namespace SWallet.Repository.Services.Implements
                     WalletId = wallet.Id,
                     ChallengeId = challengeId,
                     Amount = pointsAwarded,
-                    DateCreated = DateTime.Now,
+                    DateCreated = DateTime.UtcNow,
                     Type = 0,
                     Description = $"Check-in tại {locationId}",
                 };
