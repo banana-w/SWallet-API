@@ -50,6 +50,8 @@ public partial class SwalletDbContext : DbContext
 
     public virtual DbSet<ChallengeTransaction> ChallengeTransactions { get; set; }
 
+    public virtual DbSet<DailyGiftHistory> DailyGiftHistories { get; set; }
+
     public virtual DbSet<Invitation> Invitations { get; set; }
 
     public virtual DbSet<Lecturer> Lecturers { get; set; }
@@ -810,6 +812,22 @@ public partial class SwalletDbContext : DbContext
                 .HasConstraintName("FK_challenge_transaction_student_challenge");
         });
 
+        modelBuilder.Entity<DailyGiftHistory>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK_DailyCheckInHistory");
+
+            entity.ToTable("daily_gift_history");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.CheckInDate).HasColumnName("check_in_date");
+            entity.Property(e => e.Points).HasColumnName("points");
+            entity.Property(e => e.Streak).HasColumnName("streak");
+            entity.Property(e => e.StudentId)
+                .HasMaxLength(26)
+                .IsUnicode(false)
+                .HasColumnName("student_id");
+        });
+
         modelBuilder.Entity<Invitation>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK_tbl_invitation");
@@ -885,9 +903,7 @@ public partial class SwalletDbContext : DbContext
 
         modelBuilder.Entity<Location>(entity =>
         {
-            entity
-                .HasNoKey()
-                .ToTable("Location");
+            entity.ToTable("Location");
 
             entity.Property(e => e.Id)
                 .HasMaxLength(26)
