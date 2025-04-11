@@ -93,7 +93,7 @@ namespace SWallet.Repository.Services.Implements
                     Points = points,
                     CanCheckInToday = canCheckInToday,
                     CurrentDayIndex = currentDayIndex,
-                    RewardPoints = 0 // Không cần rewardPoints trong GetCheckInData
+                    RewardPoints = 0 
                 };
             }
             catch (Exception ex)

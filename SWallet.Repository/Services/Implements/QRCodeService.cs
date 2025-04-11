@@ -144,7 +144,7 @@ namespace SWallet.Repository.Services.Implements
             // Kiểm tra xem QRCode đã được sử dụng chưa
             var qrCodeUsageRepository = _unitOfWork.GetRepository<QrcodeUsage>();
             var isQrCodeUsed = await qrCodeUsageRepository.AnyAsync(
-                predicate: u => u.QrcodeJson == request.QRCodeJson
+                predicate: u => u.QrcodeJson == request.QRCodeJson && u.StudentId == request.StudentId
             );
             if (isQrCodeUsed)
             {
