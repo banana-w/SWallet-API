@@ -144,7 +144,7 @@ namespace SWallet_API.Controllers
         {
             var typeResponse = await _campaignService.GetCampaignById(id);
             if (typeResponse == null)
-            {
+            { 
                 return NotFound();
             }
             return Ok(typeResponse);

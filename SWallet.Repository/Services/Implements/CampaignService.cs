@@ -788,6 +788,7 @@ namespace SWallet.Repository.Services.Implements
                     BrandAcronym = x.Brand.Acronym,
                     BrandLogo = x.Brand.Account.Avatar,
                     TypeId = x.TypeId,
+                    TypeName = x.Type.TypeName,
                     CampaignName = x.CampaignName,
                     Image = x.Image,
                     ImageName = x.ImageName,
@@ -806,7 +807,7 @@ namespace SWallet.Repository.Services.Implements
                 },
                 
                 predicate: x => x.Id == id,
-                include: x => x.Include(x => x.CampaignDetails)
+                include: x => x.Include(x => x.CampaignDetails).Include(x => x.Type)
                                .Include(x => x.Brand).ThenInclude(x => x.Account));
             ;
             if (campaign == null)
