@@ -228,7 +228,7 @@ namespace SWallet.Repository.Services.Implements
                     OpeningHours = x.OpeningHours,
                     ClosingHours = x.ClosingHours,
                     TotalIncome = x.TotalIncome,
-                    TotalSpending = x.TotalSpending,
+                    TotalSpending = x.Campaigns.Sum(c => c.TotalSpending ?? 0), // Sum of TotalSpending from Campaigns
                     DateCreated = x.DateCreated,
                     DateUpdated = x.DateUpdated,
                     Description = x.Description,
@@ -271,7 +271,7 @@ namespace SWallet.Repository.Services.Implements
                     OpeningHours = x.OpeningHours,
                     ClosingHours = x.ClosingHours,
                     TotalIncome = x.TotalIncome,
-                    TotalSpending = x.TotalSpending,
+                    TotalSpending = x.Campaigns.Sum(c => c.TotalSpending ?? 0),
                     DateCreated = x.DateCreated,
                     DateUpdated = x.DateUpdated,
                     Description = x.Description,

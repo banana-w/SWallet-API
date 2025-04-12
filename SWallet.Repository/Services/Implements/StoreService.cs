@@ -356,6 +356,7 @@ namespace SWallet.Repository.Services.Implements
                    BrandName = x.Brand.BrandName,
                    AreaId = x.AreaId,
                    AreaName = x.Area.AreaName,
+                   
                    StoreName = x.StoreName,
                    Address = x.Address,
                    OpeningHours = x.OpeningHours,

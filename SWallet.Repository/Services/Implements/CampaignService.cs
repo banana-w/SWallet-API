@@ -899,7 +899,10 @@ namespace SWallet.Repository.Services.Implements
                     Description = x.Description,
                     Status = x.Status,
                     Store = x.Store,
-                    Campaign = x.Campaign
+                    Email = x.Store.Account.Email ?? "No email",
+                    Phone = x.Store.Account.Phone ?? "No phone",
+                    Campaign = x.Campaign,
+                    
 
                 },
                 predicate: filterQuery,
