@@ -287,7 +287,7 @@ namespace SWallet.Repository.Services.Implements
                         StudentId = studentId,
                         WalletId = walletId,
                         Amount = result.amount,
-                        DateCreated = DateTime.UtcNow,
+                        DateCreated = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeUtils.GetVietnamTimeZone()),
                         Description = type == (int)ChallengeType.Daily ? "Daily" : "Achievement",
                         Type = type
                     };
