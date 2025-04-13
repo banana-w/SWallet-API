@@ -13,6 +13,7 @@ namespace SWallet.Repository.Payload.Request
     {
         [Required(ErrorMessage = "Loại thử thách là bắt buộc")]
         public int? Type { get; set; }
+        public string Category { get; set; } = null!;
 
         [Required(ErrorMessage = "Tên của thử thách là bắt buộc")]
         [StringLength(255, MinimumLength = 3,

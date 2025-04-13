@@ -43,10 +43,6 @@ public partial class Brand
 
     public virtual ICollection<Campaign> Campaigns { get; set; } = new List<Campaign>();
 
-    public virtual ICollection<Request> Requests { get; set; } = new List<Request>();
-
-    public virtual ICollection<Reward> Rewards { get; set; } = new List<Reward>();
-
     public virtual ICollection<Store> Stores { get; set; } = new List<Store>();
 
     public virtual ICollection<Voucher> Vouchers { get; set; } = new List<Voucher>();

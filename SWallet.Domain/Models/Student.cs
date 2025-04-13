@@ -53,10 +53,6 @@ public partial class Student
 
     public virtual ICollection<Invitation> InvitationInviters { get; set; } = new List<Invitation>();
 
-    public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
-
-    public virtual ICollection<Reward> Rewards { get; set; } = new List<Reward>();
-
     public virtual ICollection<SpinHistory> SpinHistories { get; set; } = new List<SpinHistory>();
 
     public virtual ICollection<StudentChallenge> StudentChallenges { get; set; } = new List<StudentChallenge>();

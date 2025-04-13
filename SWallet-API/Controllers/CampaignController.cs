@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Org.BouncyCastle.Security;
+using SWallet.Domain.Models;
 using SWallet.Domain.Paginate;
 using SWallet.Repository.Payload.Request.Brand;
 using SWallet.Repository.Payload.Request.Campaign;
@@ -41,6 +42,7 @@ namespace SWallet_API.Controllers
         }
 
         [HttpGet("getStoreByCampaignId/{campaignId}")]
+        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
         public async Task<ActionResult<IPaginate<StoreResponse>>> GetAllStoresByCampaignId(string campaignId, string searchName = "", int page = 1, int size = 10)
         {
             try

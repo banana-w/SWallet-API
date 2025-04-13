@@ -44,6 +44,4 @@ public partial class Store
     public virtual Brand Brand { get; set; } = null!;
 
     public virtual ICollection<CampaignStore> CampaignStores { get; set; } = new List<CampaignStore>();
-
-    public virtual ICollection<Reward> Rewards { get; set; } = new List<Reward>();
 }

@@ -41,6 +41,7 @@ namespace SWallet.Repository.Payload.Response.Challenge
         public string challengeType { get; set; }
         public string challengeTypeName { get; set; }
         public string challengeName { get; set; }
+        public string category { get; set; }
         public string challengeImage { get; set; }
         public string studentId { get; set; }
         public string studentName { get; set; }

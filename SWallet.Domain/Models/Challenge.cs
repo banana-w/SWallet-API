@@ -9,6 +9,8 @@ public partial class Challenge
 
     public int? Type { get; set; }
 
+    public string? Category { get; set; }
+
     public string ChallengeName { get; set; } = null!;
 
     public decimal? Amount { get; set; }
@@ -24,8 +26,6 @@ public partial class Challenge
     public DateTime? DateUpdated { get; set; }
 
     public string? Description { get; set; }
-
-    public bool? State { get; set; }
 
     public bool? Status { get; set; }
 

@@ -20,6 +20,4 @@ public partial class Admin
     public bool? Status { get; set; }
 
     public virtual Account Account { get; set; } = null!;
-
-    public virtual ICollection<Request> Requests { get; set; } = new List<Request>();
 }

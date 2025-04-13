@@ -44,8 +44,6 @@ public partial class SwalletDbContext : DbContext
 
     public virtual DbSet<CampusLecturer> CampusLecturers { get; set; }
 
-    public virtual DbSet<Category> Categories { get; set; }
-
     public virtual DbSet<Challenge> Challenges { get; set; }
 
     public virtual DbSet<ChallengeTransaction> ChallengeTransactions { get; set; }
@@ -60,33 +58,13 @@ public partial class SwalletDbContext : DbContext
 
     public virtual DbSet<LuckyPrize> LuckyPrizes { get; set; }
 
-    public virtual DbSet<Order> Orders { get; set; }
-
-    public virtual DbSet<OrderDetail> OrderDetails { get; set; }
-
-    public virtual DbSet<OrderState> OrderStates { get; set; }
-
-    public virtual DbSet<OrderTransaction> OrderTransactions { get; set; }
-
     public virtual DbSet<PointPackage> PointPackages { get; set; }
-
-    public virtual DbSet<Product> Products { get; set; }
 
     public virtual DbSet<QrCodeHistory> QrCodeHistories { get; set; }
 
     public virtual DbSet<QrcodeUsage> QrcodeUsages { get; set; }
 
-    public virtual DbSet<Request> Requests { get; set; }
-
-    public virtual DbSet<RequestTransaction> RequestTransactions { get; set; }
-
-    public virtual DbSet<Reward> Rewards { get; set; }
-
-    public virtual DbSet<RewardTransaction> RewardTransactions { get; set; }
-
     public virtual DbSet<SpinHistory> SpinHistories { get; set; }
-
-    public virtual DbSet<Station> Stations { get; set; }
 
     public virtual DbSet<Store> Stores { get; set; }
 
@@ -696,33 +674,6 @@ public partial class SwalletDbContext : DbContext
                 .HasConstraintName("FK_campus_lecturer_lecturer");
         });
 
-        modelBuilder.Entity<Category>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("PK_tbl_category");
-
-            entity.ToTable("category");
-
-            entity.Property(e => e.Id)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("id");
-            entity.Property(e => e.CategoryName)
-                .HasMaxLength(255)
-                .HasColumnName("category_name");
-            entity.Property(e => e.DateCreated).HasColumnName("date_created");
-            entity.Property(e => e.DateUpdated).HasColumnName("date_updated");
-            entity.Property(e => e.Description)
-                .HasColumnType("text")
-                .HasColumnName("description");
-            entity.Property(e => e.FileName)
-                .HasColumnType("text")
-                .HasColumnName("file_name");
-            entity.Property(e => e.Image).HasColumnName("image");
-            entity.Property(e => e.State).HasColumnName("state");
-            entity.Property(e => e.Status).HasColumnName("status");
-        });
-
         modelBuilder.Entity<Challenge>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK_tbl_challenge");
@@ -737,6 +688,9 @@ public partial class SwalletDbContext : DbContext
             entity.Property(e => e.Amount)
                 .HasColumnType("decimal(38, 2)")
                 .HasColumnName("amount");
+            entity.Property(e => e.Category)
+                .HasMaxLength(250)
+                .HasColumnName("category");
             entity.Property(e => e.ChallengeName)
                 .HasMaxLength(255)
                 .HasColumnName("challenge_name");
@@ -752,7 +706,6 @@ public partial class SwalletDbContext : DbContext
             entity.Property(e => e.Image)
                 .HasColumnType("text")
                 .HasColumnName("image");
-            entity.Property(e => e.State).HasColumnName("state");
             entity.Property(e => e.Status).HasColumnName("status");
             entity.Property(e => e.Type).HasColumnName("type");
         });
@@ -935,171 +888,6 @@ public partial class SwalletDbContext : DbContext
             entity.Property(e => e.Value).HasColumnName("value");
         });
 
-        modelBuilder.Entity<Order>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("PK_tbl_order");
-
-            entity.ToTable("order");
-
-            entity.HasIndex(e => e.StationId, "IX_tbl_order_station_id");
-
-            entity.HasIndex(e => e.StudentId, "IX_tbl_order_student_id");
-
-            entity.Property(e => e.Id)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("id");
-            entity.Property(e => e.Amount)
-                .HasColumnType("decimal(38, 2)")
-                .HasColumnName("amount");
-            entity.Property(e => e.DateCreated).HasColumnName("date_created");
-            entity.Property(e => e.Description)
-                .HasColumnType("text")
-                .HasColumnName("description");
-            entity.Property(e => e.State).HasColumnName("state");
-            entity.Property(e => e.StationId)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("station_id");
-            entity.Property(e => e.Status).HasColumnName("status");
-            entity.Property(e => e.StudentId)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("student_id");
-
-            entity.HasOne(d => d.Station).WithMany(p => p.Orders)
-                .HasForeignKey(d => d.StationId)
-                .HasConstraintName("FK_tbl_order_tbl_station_station_id");
-
-            entity.HasOne(d => d.Student).WithMany(p => p.Orders)
-                .HasForeignKey(d => d.StudentId)
-                .HasConstraintName("FK_tbl_order_tbl_student_student_id");
-        });
-
-        modelBuilder.Entity<OrderDetail>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("PK_tbl_order_detail");
-
-            entity.ToTable("order_detail");
-
-            entity.HasIndex(e => e.OrderId, "IX_tbl_order_detail_order_id");
-
-            entity.HasIndex(e => e.ProductId, "IX_tbl_order_detail_product_id");
-
-            entity.Property(e => e.Id)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("id");
-            entity.Property(e => e.Amount)
-                .HasColumnType("decimal(38, 2)")
-                .HasColumnName("amount");
-            entity.Property(e => e.OrderId)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("order_id");
-            entity.Property(e => e.Price)
-                .HasColumnType("decimal(38, 2)")
-                .HasColumnName("price");
-            entity.Property(e => e.ProductId)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("product_id");
-            entity.Property(e => e.Quantity).HasColumnName("quantity");
-            entity.Property(e => e.State).HasColumnName("state");
-            entity.Property(e => e.Status).HasColumnName("status");
-
-            entity.HasOne(d => d.Order).WithMany(p => p.OrderDetails)
-                .HasForeignKey(d => d.OrderId)
-                .HasConstraintName("FK_tbl_order_detail_tbl_order_order_id");
-
-            entity.HasOne(d => d.Product).WithMany(p => p.OrderDetails)
-                .HasForeignKey(d => d.ProductId)
-                .HasConstraintName("FK_tbl_order_detail_tbl_product_product_id");
-        });
-
-        modelBuilder.Entity<OrderState>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("PK_tbl_order_state");
-
-            entity.ToTable("order_state");
-
-            entity.HasIndex(e => e.OrderId, "IX_tbl_order_state_order_id");
-
-            entity.Property(e => e.Id)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("id");
-            entity.Property(e => e.DateCreated).HasColumnName("date_created");
-            entity.Property(e => e.Description)
-                .HasColumnType("text")
-                .HasColumnName("description");
-            entity.Property(e => e.OrderId)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("order_id");
-            entity.Property(e => e.State).HasColumnName("state");
-            entity.Property(e => e.Status).HasColumnName("status");
-
-            entity.HasOne(d => d.Order).WithMany(p => p.OrderStates)
-                .HasForeignKey(d => d.OrderId)
-                .HasConstraintName("FK_tbl_order_state_tbl_order_order_id");
-        });
-
-        modelBuilder.Entity<OrderTransaction>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("PK_tbl_order_transaction");
-
-            entity.ToTable("order_transaction");
-
-            entity.HasIndex(e => e.OrderId, "IX_tbl_order_transaction_order_id");
-
-            entity.HasIndex(e => e.WalletId, "IX_tbl_order_transaction_wallet_id");
-
-            entity.Property(e => e.Id)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("id");
-            entity.Property(e => e.Amount)
-                .HasColumnType("decimal(38, 2)")
-                .HasColumnName("amount");
-            entity.Property(e => e.Description)
-                .HasColumnType("text")
-                .HasColumnName("description");
-            entity.Property(e => e.OrderId)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("order_id");
-            entity.Property(e => e.Rate)
-                .HasColumnType("decimal(38, 2)")
-                .HasColumnName("rate");
-            entity.Property(e => e.State).HasColumnName("state");
-            entity.Property(e => e.Status).HasColumnName("status");
-            entity.Property(e => e.WalletId)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("wallet_id");
-
-            entity.HasOne(d => d.Order).WithMany(p => p.OrderTransactions)
-                .HasForeignKey(d => d.OrderId)
-                .HasConstraintName("FK_tbl_order_transaction_tbl_order_order_id");
-
-            entity.HasOne(d => d.Wallet).WithMany(p => p.OrderTransactions)
-                .HasForeignKey(d => d.WalletId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_tbl_order_transaction_tbl_wallet_wallet_id");
-        });
-
         modelBuilder.Entity<PointPackage>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK_Point_package");
@@ -1121,47 +909,6 @@ public partial class SwalletDbContext : DbContext
                 .HasColumnType("decimal(38, 2)")
                 .HasColumnName("price");
             entity.Property(e => e.Status).HasColumnName("status");
-        });
-
-        modelBuilder.Entity<Product>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("PK_tbl_product");
-
-            entity.ToTable("product");
-
-            entity.HasIndex(e => e.CategoryId, "IX_tbl_product_category_id");
-
-            entity.Property(e => e.Id)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("id");
-            entity.Property(e => e.CategoryId)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("category_id");
-            entity.Property(e => e.DateCreated).HasColumnName("date_created");
-            entity.Property(e => e.DateUpdated).HasColumnName("date_updated");
-            entity.Property(e => e.Description)
-                .HasColumnType("text")
-                .HasColumnName("description");
-            entity.Property(e => e.Price)
-                .HasColumnType("decimal(38, 2)")
-                .HasColumnName("price");
-            entity.Property(e => e.ProductName)
-                .HasMaxLength(255)
-                .HasColumnName("product_name");
-            entity.Property(e => e.Quantity).HasColumnName("quantity");
-            entity.Property(e => e.State).HasColumnName("state");
-            entity.Property(e => e.Status).HasColumnName("status");
-            entity.Property(e => e.Weight)
-                .HasColumnType("decimal(38, 2)")
-                .HasColumnName("weight");
-
-            entity.HasOne(d => d.Category).WithMany(p => p.Products)
-                .HasForeignKey(d => d.CategoryId)
-                .HasConstraintName("FK_tbl_product_tbl_category_category_id");
         });
 
         modelBuilder.Entity<QrCodeHistory>(entity =>
@@ -1198,200 +945,6 @@ public partial class SwalletDbContext : DbContext
             entity.Property(e => e.UsedAt).HasColumnName("used_at");
         });
 
-        modelBuilder.Entity<Request>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("PK_tbl_request");
-
-            entity.ToTable("request");
-
-            entity.HasIndex(e => e.AdminId, "IX_tbl_request_admin_id");
-
-            entity.HasIndex(e => e.BrandId, "IX_tbl_request_brand_id");
-
-            entity.Property(e => e.Id)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("id");
-            entity.Property(e => e.AdminId)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("admin_id");
-            entity.Property(e => e.Amount)
-                .HasColumnType("decimal(38, 2)")
-                .HasColumnName("amount");
-            entity.Property(e => e.BrandId)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("brand_id");
-            entity.Property(e => e.DateCreated).HasColumnName("date_created");
-            entity.Property(e => e.DateUpdated).HasColumnName("date_updated");
-            entity.Property(e => e.Description)
-                .HasColumnType("text")
-                .HasColumnName("description");
-            entity.Property(e => e.State).HasColumnName("state");
-            entity.Property(e => e.Status).HasColumnName("status");
-
-            entity.HasOne(d => d.Admin).WithMany(p => p.Requests)
-                .HasForeignKey(d => d.AdminId)
-                .HasConstraintName("FK_tbl_request_tbl_admin_admin_id");
-
-            entity.HasOne(d => d.Brand).WithMany(p => p.Requests)
-                .HasForeignKey(d => d.BrandId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_tbl_request_tbl_brand_brand_id");
-        });
-
-        modelBuilder.Entity<RequestTransaction>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("PK_tbl_request_transaction");
-
-            entity.ToTable("request_transaction");
-
-            entity.HasIndex(e => e.RequestId, "IX_tbl_request_transaction_request_id");
-
-            entity.HasIndex(e => e.WalletId, "IX_tbl_request_transaction_wallet_id");
-
-            entity.Property(e => e.Id)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("id");
-            entity.Property(e => e.Amount)
-                .HasColumnType("decimal(38, 2)")
-                .HasColumnName("amount");
-            entity.Property(e => e.Description)
-                .HasColumnType("text")
-                .HasColumnName("description");
-            entity.Property(e => e.Rate)
-                .HasColumnType("decimal(38, 2)")
-                .HasColumnName("rate");
-            entity.Property(e => e.RequestId)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("request_id");
-            entity.Property(e => e.State).HasColumnName("state");
-            entity.Property(e => e.Status).HasColumnName("status");
-            entity.Property(e => e.WalletId)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("wallet_id");
-
-            entity.HasOne(d => d.Request).WithMany(p => p.RequestTransactions)
-                .HasForeignKey(d => d.RequestId)
-                .HasConstraintName("FK_tbl_request_transaction_tbl_request_request_id");
-
-            entity.HasOne(d => d.Wallet).WithMany(p => p.RequestTransactions)
-                .HasForeignKey(d => d.WalletId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_tbl_request_transaction_tbl_wallet_wallet_id");
-        });
-
-        modelBuilder.Entity<Reward>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("PK_tbl_bonus");
-
-            entity.ToTable("reward");
-
-            entity.HasIndex(e => e.BrandId, "IX_tbl_bonus_brand_id");
-
-            entity.HasIndex(e => e.StoreId, "IX_tbl_bonus_store_id");
-
-            entity.HasIndex(e => e.StudentId, "IX_tbl_bonus_student_id");
-
-            entity.Property(e => e.Id)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("id");
-            entity.Property(e => e.Amount)
-                .HasColumnType("decimal(38, 2)")
-                .HasColumnName("amount");
-            entity.Property(e => e.BrandId)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("brand_id");
-            entity.Property(e => e.DateCreated).HasColumnName("date_created");
-            entity.Property(e => e.DateUpdated).HasColumnName("date_updated");
-            entity.Property(e => e.Description).HasColumnName("description");
-            entity.Property(e => e.State).HasColumnName("state");
-            entity.Property(e => e.Status).HasColumnName("status");
-            entity.Property(e => e.StoreId)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("store_id");
-            entity.Property(e => e.StudentId)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("student_id");
-
-            entity.HasOne(d => d.Brand).WithMany(p => p.Rewards)
-                .HasForeignKey(d => d.BrandId)
-                .HasConstraintName("FK_tbl_bonus_tbl_brand_brand_id");
-
-            entity.HasOne(d => d.Store).WithMany(p => p.Rewards)
-                .HasForeignKey(d => d.StoreId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_tbl_bonus_tbl_store_store_id");
-
-            entity.HasOne(d => d.Student).WithMany(p => p.Rewards)
-                .HasForeignKey(d => d.StudentId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_tbl_bonus_tbl_student_student_id");
-        });
-
-        modelBuilder.Entity<RewardTransaction>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("PK_tbl_bonus_transaction");
-
-            entity.ToTable("reward_transaction");
-
-            entity.HasIndex(e => e.BonusId, "IX_tbl_bonus_transaction_bonus_id");
-
-            entity.HasIndex(e => e.WalletId, "IX_tbl_bonus_transaction_wallet_id");
-
-            entity.Property(e => e.Id)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("id");
-            entity.Property(e => e.Amount)
-                .HasColumnType("decimal(38, 2)")
-                .HasColumnName("amount");
-            entity.Property(e => e.BonusId)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("bonus_id");
-            entity.Property(e => e.Description).HasColumnName("description");
-            entity.Property(e => e.Rate)
-                .HasColumnType("decimal(38, 2)")
-                .HasColumnName("rate");
-            entity.Property(e => e.State).HasColumnName("state");
-            entity.Property(e => e.Status).HasColumnName("status");
-            entity.Property(e => e.WalletId)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("wallet_id");
-
-            entity.HasOne(d => d.Bonus).WithMany(p => p.RewardTransactions)
-                .HasForeignKey(d => d.BonusId)
-                .HasConstraintName("FK_tbl_bonus_transaction_tbl_bonus_bonus_id");
-
-            entity.HasOne(d => d.Wallet).WithMany(p => p.RewardTransactions)
-                .HasForeignKey(d => d.WalletId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_tbl_bonus_transaction_tbl_wallet_wallet_id");
-        });
-
         modelBuilder.Entity<SpinHistory>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__SpinHist__3213E83F578A77FF");
@@ -1416,48 +969,6 @@ public partial class SwalletDbContext : DbContext
                 .HasForeignKey(d => d.StudentId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_SpinHistory_Student");
-        });
-
-        modelBuilder.Entity<Station>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("PK_tbl_station");
-
-            entity.ToTable("station");
-
-            entity.Property(e => e.Id)
-                .HasMaxLength(26)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("id");
-            entity.Property(e => e.Address)
-                .HasColumnType("text")
-                .HasColumnName("address");
-            entity.Property(e => e.ClosingHours).HasColumnName("closing_hours");
-            entity.Property(e => e.DateCreated).HasColumnName("date_created");
-            entity.Property(e => e.DateUpdated).HasColumnName("date_updated");
-            entity.Property(e => e.Description)
-                .HasColumnType("text")
-                .HasColumnName("description");
-            entity.Property(e => e.Email)
-                .HasMaxLength(320)
-                .HasColumnName("email");
-            entity.Property(e => e.FileName)
-                .HasColumnType("text")
-                .HasColumnName("file_name");
-            entity.Property(e => e.Image)
-                .HasColumnType("text")
-                .HasColumnName("image");
-            entity.Property(e => e.OpeningHours).HasColumnName("opening_hours");
-            entity.Property(e => e.Phone)
-                .HasMaxLength(20)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("phone");
-            entity.Property(e => e.State).HasColumnName("state");
-            entity.Property(e => e.StationName)
-                .HasMaxLength(255)
-                .HasColumnName("station_name");
-            entity.Property(e => e.Status).HasColumnName("status");
         });
 
         modelBuilder.Entity<Store>(entity =>

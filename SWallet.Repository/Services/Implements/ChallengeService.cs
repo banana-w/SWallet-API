@@ -32,7 +32,7 @@ namespace SWallet.Repository.Services.Implements
 
         public async Task<bool> CreateChallenge(ChallengeRequest request)
         {
-
+            // Tạo challenge mới
             var challenge = new Challenge
             {
                 Id = Ulid.NewUlid().ToString(),
@@ -41,15 +41,18 @@ namespace SWallet.Repository.Services.Implements
                 Amount = request.Amount,
                 Condition = request.Condition,
                 Type = request.Type,
-                Image = "NUll",
-                FileName = "NUll",
+                Category = request.Category,
+                Image = "NULL",
+                FileName = "NULL",
                 DateCreated = DateTime.Now,
                 DateUpdated = DateTime.Now,
                 Status = true
             };
-            // Add challenge to the database
+
+            // Thêm challenge vào database
             await _unitOfWork.GetRepository<Challenge>().InsertAsync(challenge);
 
+            // Xử lý hình ảnh
             if (request.Image != null && request.Image.Length > 0)
             {
                 var image = await _cloudinaryService.UploadImageAsync(request.Image);
@@ -60,11 +63,54 @@ namespace SWallet.Repository.Services.Implements
                 }
             }
 
+            // Gán StudentChallenge cho tất cả sinh viên
+            var students = await _unitOfWork.GetRepository<Student>().GetListAsync();
+            if (students.Count != 0)
+            {
+                var studentChallenges = new List<StudentChallenge>();
+
+                foreach (var student in students)
+                {
+                    decimal initialProgress = 0;
+
+                    // Nếu là Achievement, tính tổng Current từ các StudentChallenge cùng Category
+                    if (request.Type == (int)ChallengeType.Achievement)
+                    {
+                        var existingStudentChallenges = await _unitOfWork.GetRepository<StudentChallenge>()
+                            .GetListAsync(predicate: sc => sc.StudentId == student.Id &&
+                                              sc.Challenge.Category == request.Category &&
+                                              sc.Challenge.Type == 1 &&
+                                              sc.Status == true);
+
+                        initialProgress = existingStudentChallenges.Sum(sc => sc.Current ?? 0);
+                    }
+
+                    // Tạo StudentChallenge mới
+                    var studentChallenge = new StudentChallenge
+                    {
+                        ChallengeId = challenge.Id,
+                        StudentId = student.Id,
+                        Current = initialProgress, // Gán tiến trình ban đầu
+                        IsCompleted = initialProgress >= challenge.Condition, // Kiểm tra ngay nếu đã hoàn thành
+                        DateCreated = DateTime.Now,
+                        Status = true,
+                        DateCompleted = initialProgress >= challenge.Condition ? DateTime.Now : null
+                    };
+
+                    studentChallenges.Add(studentChallenge);
+                }
+
+                // Thêm tất cả StudentChallenge vào repository
+                await _unitOfWork.GetRepository<StudentChallenge>().InsertRangeAsync(studentChallenges);
+            }
+
+            // Commit thay đổi
             var result = await _unitOfWork.CommitAsync();
             if (result > 0)
             {
                 return true;
             }
+
             throw new ApiException("Create challenge fail", 400, "CHALLENGE_FAIL");
         }
 
@@ -351,68 +397,137 @@ namespace SWallet.Repository.Services.Implements
         }
 
         public async Task<IPaginate<ChallengeResponseExtra>> GetStudentChallenges(
-                string studentId,
-                string? search,
-                IEnumerable<ChallengeType> types,
-                int page,
-                int size)
+            string studentId,
+            string? search,
+            IEnumerable<ChallengeType> types,
+            int page,
+            int size)
         {
+            // Bộ lọc cho StudentChallenge
             Expression<Func<StudentChallenge, bool>> filter = sc =>
                 sc.StudentId == studentId &&
                 sc.Status == true &&
                 (string.IsNullOrEmpty(search) || sc.Challenge.ChallengeName.Contains(search)) &&
                 (!types.Any() || types.Contains((ChallengeType)sc.Challenge.Type));
 
+            // Truy vấn StudentChallenge với phân trang
             var studentChallenges = await _unitOfWork.GetRepository<StudentChallenge>().GetPagingListAsync(
                 selector: sc => new ChallengeResponseExtra
                 {
                     id = sc.ChallengeId,
                     challengeId = sc.ChallengeId,
                     challengeType = ((ChallengeType)sc.Challenge.Type).ToString(),
-                    challengeTypeName = sc.Challenge.Type == 1 ? "Hằng ngày" : "Thành Tựu",
+                    challengeTypeName = sc.Challenge.Type == 1 ? "Thành Tựu" : "Hằng ngày",
                     challengeName = sc.Challenge.ChallengeName,
                     challengeImage = sc.Challenge.Image,
                     studentId = sc.StudentId,
                     studentName = sc.Student.FullName,
                     amount = sc.Challenge.Amount ?? 0,
-                    current = sc.Current ?? 0, // sẽ cập nhật lại bên dưới nếu cần
+                    current = sc.Current ?? 0, // Sẽ cập nhật sau
                     condition = sc.Challenge.Condition ?? 0,
                     isCompleted = sc.IsCompleted ?? false,
-                    isClaimed = false,
+                    isClaimed = false, // Sẽ cập nhật sau
                     dateCreated = sc.DateCreated ?? DateTime.MinValue,
                     dateUpdated = sc.DateUpdated,
                     description = sc.Challenge.Description,
-                    status = sc.Status ?? false
+                    status = sc.Status ?? false,
+                    category = sc.Challenge.Category // Để nhóm
                 },
                 predicate: filter,
                 include: source => source.Include(sc => sc.Challenge)
                                         .Include(sc => sc.Student),
                 page: page,
                 size: size);
-            if (types.Contains(ChallengeType.Daily))
+
+            // Xử lý tiến trình nếu có dữ liệu
+            if (studentChallenges.Items.Any())
             {
-                var today = DateTime.Today;
+                // Lấy tất cả category duy nhất
+                var categories = studentChallenges.Items.Select(c => c.category).Distinct().ToList();
 
-                foreach (var challenge in studentChallenges.Items.Where(c => c.challengeTypeName == "Hằng ngày"))
+                // Xử lý Daily challenges
+                if (types.Contains(ChallengeType.Daily) || !types.Any())
                 {
-                    var transactions = await _unitOfWork.GetRepository<ChallengeTransaction>().GetListAsync(
-                        predicate: t => t.ChallengeId == challenge.challengeId &&
-                                        t.StudentId == studentId &&
-                                        t.DateCreated >= today &&
-                                        t.DateCreated < today.AddDays(1) && t.Type == 0);
+                    var today = DateTime.Today;
 
-                    challenge.current = transactions.Count;
-                    challenge.isCompleted = transactions.Count >= challenge.condition;
+                    // Lấy tất cả giao dịch trong ngày cho sinh viên
+                    var allTransactions = await _unitOfWork.GetRepository<ChallengeTransaction>()
+                        .GetListAsync(
+                            predicate: t => t.StudentId == studentId &&
+                                            t.DateCreated >= today &&
+                                            t.DateCreated < today.AddDays(1),
+                            include: source => source.Include(t => t.StudentChallenge)
+                                                   .ThenInclude(sc => sc.Challenge) // Kết nối với Challenge
+                        );
 
-                    var transactions1 = await _unitOfWork.GetRepository<ChallengeTransaction>().GetListAsync(
-                        predicate: t => t.ChallengeId == challenge.challengeId &&
-                                        t.StudentId == studentId &&
-                                        t.DateCreated >= today &&
-                                        t.DateCreated < today.AddDays(1) && t.Type == 1);
-                    if (!transactions1.IsNullOrEmpty())
-                        challenge.isClaimed = true;
+                    // Nhóm giao dịch theo Category
+                    var progressByCategory = allTransactions
+                        .Where(t => t.Type == 0) // Giao dịch tiến trình
+                        .GroupBy(t => t.StudentChallenge.Challenge.Category!)
+                        .ToDictionary(
+                            g => g.Key,
+                            g => g.Count()
+                        );
+
+                    var claimByCategory = allTransactions
+                        .Where(t => t.Type == 1) // Giao dịch nhận thưởng
+                        .GroupBy(t => t.StudentChallenge.Challenge.Category!)
+                        .ToDictionary(
+                            g => g.Key,
+                            g => g.Select(t => t.ChallengeId).Distinct().ToList()
+                        );
+
+                    // Cập nhật current và isCompleted cho Daily challenges
+                    foreach (var challenge in studentChallenges.Items.Where(c => c.challengeType == "Daily"))
+                    {
+                        var totalProgress = progressByCategory.TryGetValue(challenge.category, out var count) ? count : 0;
+                        challenge.current = totalProgress;
+                        challenge.isCompleted = totalProgress >= challenge.condition;
+                        challenge.isClaimed = claimByCategory.TryGetValue(challenge.category, out var claimedIds)
+                                                && claimedIds.Contains(challenge.challengeId);
+                    }
+                }
+
+                // Xử lý Achievement challenges
+                if (types.Contains(ChallengeType.Achievement) || !types.Any())
+                {
+                    // Lấy tất cả StudentChallenge của sinh viên
+                    var allStudentChallenges = await _unitOfWork.GetRepository<StudentChallenge>()
+                        .GetListAsync(
+                            predicate: sc => sc.StudentId == studentId &&
+                                            sc.Status == true &&
+                                            sc.Challenge.Type == 1,
+                            include: source => source.Include(sc => sc.Challenge)
+                        );
+
+                    // Nhóm tiến trình theo Category
+                    var progressByCategory = allStudentChallenges
+                        .GroupBy(sc => sc.Challenge.Category!)
+                        .ToDictionary(
+                            g => g.Key,
+                            g => g.Sum(sc => sc.Current ?? 0)
+                        );
+
+                    var claimByCategory = allStudentChallenges
+                        .Where(sc => sc.DateCompleted.HasValue)
+                        .GroupBy(sc => sc.Challenge.Category!)
+                        .ToDictionary(
+                            g => g.Key,
+                            g => g.Select(sc => sc.ChallengeId).Distinct().ToList()
+                        );
+
+                    // Cập nhật current và isCompleted cho Achievement challenges
+                    foreach (var challenge in studentChallenges.Items.Where(c => c.challengeType == "Achievement"))
+                    {
+                        var totalProgress = progressByCategory.TryGetValue(challenge.category, out var sum) ? sum : 0;
+                        challenge.current = totalProgress;
+                        challenge.isCompleted = totalProgress >= challenge.condition;
+                        challenge.isClaimed = claimByCategory.TryGetValue(challenge.category, out var claimedIds)
+                                                && claimedIds.Contains(challenge.challengeId);
+                    }
                 }
             }
+
             return studentChallenges;
         }
 
