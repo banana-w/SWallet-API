@@ -24,5 +24,11 @@ namespace SWallet.Repository.Utils
                 return TimeZoneInfo.Utc; // Hoặc throw exception tùy yêu cầu
             }
         }
+        public static DateTime GetVietnamToday()
+        {
+            var vnTimeZone = GetVietnamTimeZone();
+            var vnNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vnTimeZone);
+            return vnNow.Date;
+        }
     }
 }

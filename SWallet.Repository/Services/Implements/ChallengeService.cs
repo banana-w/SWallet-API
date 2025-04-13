@@ -10,6 +10,7 @@ using SWallet.Repository.Payload.ExceptionModels;
 using SWallet.Repository.Payload.Request;
 using SWallet.Repository.Payload.Response.Challenge;
 using SWallet.Repository.Services.Interfaces;
+using SWallet.Repository.Utils;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -448,7 +449,7 @@ namespace SWallet.Repository.Services.Implements
                 // Xử lý Daily challenges
                 if (types.Contains(ChallengeType.Daily) || !types.Any())
                 {
-                    var today = DateTime.Today;
+                    var today = TimeUtils.GetVietnamToday();
 
                     // Lấy tất cả giao dịch trong ngày cho sinh viên
                     var allTransactions = await _unitOfWork.GetRepository<ChallengeTransaction>()
