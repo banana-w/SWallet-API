@@ -198,7 +198,7 @@ namespace SWallet.Repository.Services.Implements
 
             // Tính khoảng cách và kiểm tra bán kính
             double distance = CalculateDistance(userLat, userLong, (double)location.Latitue, (double)location.Longtitude);
-            if (distance > 200)
+            if (distance > 100)
             {
                 return (false, "Bạn không ở gần địa điểm này để check-in", 0);
             }
@@ -216,15 +216,7 @@ namespace SWallet.Repository.Services.Implements
             {
                 var challengeId = await _unitOfWork.GetRepository<Challenge>().SingleOrDefaultAsync(
                             selector: x => x.Id,
-                            predicate: x => x.ChallengeName.Contains("check-in"));
-
-                var studentChallenge = await _unitOfWork.GetRepository<StudentChallenge>()
-                    .AnyAsync(sc => sc.StudentId == studentId && sc.ChallengeId == challengeId);
-
-                if (!studentChallenge)
-                {
-                    await _challengeService.AssignChallengeToStudent(challengeId, studentId);
-                }
+                            predicate: x => x.Category!.Contains("Check-in"));
 
                 // Kiểm tra check-in trùng lặp trong ngày
                 var existingCheckIn = await _unitOfWork.GetRepository<ChallengeTransaction>()
@@ -252,7 +244,7 @@ namespace SWallet.Repository.Services.Implements
                     WalletId = wallet.Id,
                     ChallengeId = challengeId,
                     Amount = pointsAwarded,
-                    DateCreated = DateTime.UtcNow,
+                    DateCreated = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, Utils.TimeUtils.GetVietnamTimeZone()),
                     Type = 0,
                     Description = $"Check-in tại {locationId}",
                 };

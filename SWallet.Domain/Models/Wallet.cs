@@ -43,11 +43,5 @@ public partial class Wallet
 
     public virtual Lecturer? Lecturer { get; set; }
 
-    public virtual ICollection<OrderTransaction> OrderTransactions { get; set; } = new List<OrderTransaction>();
-
-    public virtual ICollection<RequestTransaction> RequestTransactions { get; set; } = new List<RequestTransaction>();
-
-    public virtual ICollection<RewardTransaction> RewardTransactions { get; set; } = new List<RewardTransaction>();
-
     public virtual Student? Student { get; set; }
 }
