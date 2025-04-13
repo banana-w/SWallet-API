@@ -482,7 +482,7 @@ namespace SWallet.Repository.Services.Implements
                     foreach (var challenge in studentChallenges.Items.Where(c => c.challengeType == "Daily"))
                     {
                         var totalProgress = progressByCategory.TryGetValue(challenge.category, out var count) ? count : 0;
-                        challenge.current = totalProgress;
+                        challenge.current = Math.Min(totalProgress, challenge.condition);
                         challenge.isCompleted = totalProgress >= challenge.condition;
                         challenge.isClaimed = claimByCategory.TryGetValue(challenge.category, out var claimedIds)
                                                 && claimedIds.Contains(challenge.challengeId);
@@ -521,7 +521,7 @@ namespace SWallet.Repository.Services.Implements
                     foreach (var challenge in studentChallenges.Items.Where(c => c.challengeType == "Achievement"))
                     {
                         var totalProgress = progressByCategory.TryGetValue(challenge.category, out var sum) ? sum : 0;
-                        challenge.current = totalProgress;
+                        challenge.current = Math.Min(totalProgress, challenge.condition);
                         challenge.isCompleted = totalProgress >= challenge.condition;
                         challenge.isClaimed = claimByCategory.TryGetValue(challenge.category, out var claimedIds)
                                                 && claimedIds.Contains(challenge.challengeId);
