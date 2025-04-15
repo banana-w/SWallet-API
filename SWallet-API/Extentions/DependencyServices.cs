@@ -58,6 +58,7 @@ namespace SWallet_API.Extentions
             services.AddScoped<IBrandRepository, BrandRepository>();
             services.AddScoped<ILuckyWheelService, LuckyWheelService>();
             services.AddScoped<ICheckInService, CheckInService>();
+            services.AddScoped<IWishlistService, WishlistService>();
 
             return services;
         }

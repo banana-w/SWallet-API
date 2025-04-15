@@ -11,7 +11,7 @@ public partial class Wishlist
 
     public string BrandId { get; set; } = null!;
 
-    public string Description { get; set; } = null!;
+    public string? Description { get; set; }
 
     public bool? State { get; set; }
 

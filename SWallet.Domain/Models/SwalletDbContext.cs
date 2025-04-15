@@ -80,8 +80,10 @@ public partial class SwalletDbContext : DbContext
 
     public virtual DbSet<Wallet> Wallets { get; set; }
 
+    public virtual DbSet<Wishlist> Wishlists { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-     => optionsBuilder.UseSqlServer(GetConnectionString());
+      => optionsBuilder.UseSqlServer(GetConnectionString());
 
     private string GetConnectionString()
     {
@@ -1368,6 +1370,44 @@ public partial class SwalletDbContext : DbContext
             entity.HasOne(d => d.Student).WithMany(p => p.Wallets)
                 .HasForeignKey(d => d.StudentId)
                 .HasConstraintName("FK_tbl_wallet_tbl_student_student_id");
+        });
+
+        modelBuilder.Entity<Wishlist>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK_Wishlist");
+
+            entity.ToTable("wishlist");
+
+            entity.Property(e => e.Id)
+                .HasMaxLength(26)
+                .IsUnicode(false)
+                .IsFixedLength()
+                .HasColumnName("id");
+            entity.Property(e => e.BrandId)
+                .HasMaxLength(26)
+                .IsUnicode(false)
+                .IsFixedLength()
+                .HasColumnName("brand_id");
+            entity.Property(e => e.Description)
+                .HasColumnType("text")
+                .HasColumnName("description");
+            entity.Property(e => e.State).HasColumnName("state");
+            entity.Property(e => e.Status).HasColumnName("status");
+            entity.Property(e => e.StudentId)
+                .HasMaxLength(26)
+                .IsUnicode(false)
+                .IsFixedLength()
+                .HasColumnName("student_id");
+
+            entity.HasOne(d => d.Brand).WithMany(p => p.Wishlists)
+                .HasForeignKey(d => d.BrandId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Wishlist_Brand");
+
+            entity.HasOne(d => d.Student).WithMany(p => p.Wishlists)
+                .HasForeignKey(d => d.StudentId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Wishlist_Student");
         });
 
         OnModelCreatingPartial(modelBuilder);
