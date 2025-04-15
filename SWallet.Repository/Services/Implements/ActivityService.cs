@@ -317,7 +317,7 @@ namespace SWallet.Repository.Services.Implements
                     StudentId = request.StudentId,
                     VoucherItemId = voucherItem.Id,
                     Type = (int?)ActivityType.Use,
-                    Description = $"Use Voucher {voucherItem.Voucher.VoucherName} at store {storeName}",
+                    Description = $"Use Voucher {voucherItem.Id} at store {storeName}",
                     State = true,
                     Status = true,
                     DateCreated = DateTime.UtcNow
@@ -333,7 +333,7 @@ namespace SWallet.Repository.Services.Implements
                     useActivity.Id,
                     null,
                     0,
-                    $"Sử dụng Voucher {voucherItem.Voucher.VoucherName} tại {storeName}"
+                    $"Mã: {voucherItem.Id} \nSử dụng tại cửa hàng {storeName}"
                 );
                 // Commit transaction
                 await _unitOfWork.CommitAsync();

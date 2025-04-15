@@ -19,8 +19,6 @@ public partial class CampaignStore
 
     public string Phone { get; set; } = null!;
 
-
-
     public virtual Campaign Campaign { get; set; } = null!;
 
     public virtual Store Store { get; set; } = null!;
