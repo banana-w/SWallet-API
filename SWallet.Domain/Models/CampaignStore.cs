@@ -15,6 +15,10 @@ public partial class CampaignStore
 
     public bool? Status { get; set; }
 
+    public String Email { get; set; } = null!;
+
+    public string Phone { get; set; } = null!;
+
     public virtual Campaign Campaign { get; set; } = null!;
 
     public virtual Store Store { get; set; } = null!;

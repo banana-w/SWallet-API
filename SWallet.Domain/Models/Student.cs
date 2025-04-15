@@ -58,4 +58,6 @@ public partial class Student
     public virtual ICollection<StudentChallenge> StudentChallenges { get; set; } = new List<StudentChallenge>();
 
     public virtual ICollection<Wallet> Wallets { get; set; } = new List<Wallet>();
+
+    public virtual ICollection<Wishlist> Wishlists { get; set; } = new List<Wishlist>();
 }
