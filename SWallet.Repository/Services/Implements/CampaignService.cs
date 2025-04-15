@@ -878,7 +878,7 @@ namespace SWallet.Repository.Services.Implements
             return result;
         }
 
-        public async Task<IPaginate<CampaignStore>> GetStoresByCampaignId(string campaignId, string searchName, int page, int size)
+        public async Task<IPaginate<StoreResponse>> GetStoresByCampaignId(string campaignId, string searchName, int page, int size)
         {
             Expression<Func<CampaignStore, bool>> filterQuery;
 
@@ -892,22 +892,30 @@ namespace SWallet.Repository.Services.Implements
             }
 
             var stores = await _unitOfWork.GetRepository<CampaignStore>().GetPagingListAsync(
-                selector: x => new CampaignStore
+                selector: x => new StoreResponse
                 {
-                    Id = x.Id,
-                    CampaignId = x.CampaignId,
-                    StoreId = x.StoreId,
-                    Description = x.Description,
-                    Status = x.Status,
-                    Store = x.Store,
-                    Email = x.Store.Account.Email ?? "No email",
-                    Phone = x.Store.Account.Phone ?? "No phone",
-                    Campaign = x.Campaign,
-                    
-
+                    Id = x.Store.Id,
+                    AccountId = x.Store.AccountId,
+                    BrandId = x.Store.BrandId,
+                    BrandName = x.Store.Brand.BrandName,
+                    AreaId = x.Store.AreaId,
+                    AreaName = x.Store.Area.AreaName,
+                    StoreName = x.Store.StoreName,
+                    Address = x.Store.Address,
+                    OpeningHours = x.Store.OpeningHours,
+                    ClosingHours = x.Store.ClosingHours,
+                    DateCreated = x.Store.DateCreated,
+                    DateUpdated = x.Store.DateUpdated,
+                    Description = x.Store.Description,
+                    State = x.Store.State,
+                    Status = x.Store.Account.Status,
+                    UserName = x.Store.Account.UserName,
+                    Email = x.Store.Account.Email,
+                    Phone = x.Store.Account.Phone,
+                    File = x.Store.File,
                 },
                 predicate: filterQuery,
-                include: x => x.Include(a => a.Store).Include(b => b.Campaign),
+                include: x => x.Include(a => a.Store).ThenInclude(a => a.Account),
                 page: page,
                 size: size);
 
