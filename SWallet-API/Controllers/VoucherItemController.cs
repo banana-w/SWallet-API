@@ -33,6 +33,13 @@ namespace SWallet_API.Controllers
             var result = await _voucherItemService.GetVoucherItemsByCampaignDetailIdAsync(campaignDetailId);
             return Ok(result);
         }
+        [HttpGet("viId")]
+        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetVoucherItemIdAvailable(string voucherId, string studentId)
+        {
+            var result = await _voucherItemService.GetVoucherItemIdAvailable(voucherId, studentId);
+            return Ok(result);
+        }
 
     }
 }
