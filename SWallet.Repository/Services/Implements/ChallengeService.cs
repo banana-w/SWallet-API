@@ -221,18 +221,21 @@ namespace SWallet.Repository.Services.Implements
             var studentChallenge = await _unitOfWork.GetRepository<StudentChallenge>()
                 .SingleOrDefaultAsync(predicate: sc => sc.StudentId == studentId && sc.ChallengeId == challengeId);
 
-            bool isCompleted = studentChallenge?.IsCompleted ?? false && studentChallenge.DateCreated.HasValue;
+            bool isCompleted = false;
 
-            decimal challengeAmount = 0;
             if (studentChallenge != null)
             {
-                challengeAmount = await _unitOfWork.GetRepository<Challenge>()
+                var challenge = await _unitOfWork.GetRepository<Challenge>()
                    .SingleOrDefaultAsync(
-                   selector: c => c.Amount,
-                   predicate: c => c.Id == challengeId) ?? 0;
+                   selector: c => new {c.Amount, c.Condition},
+                   predicate: c => c.Id == challengeId);
+
+                isCompleted = studentChallenge.Current >= challenge.Condition;
+                var amount = challenge.Amount ?? 0;
+                return (isCompleted, amount);
             }
 
-            return (isCompleted, challengeAmount);
+            return (isCompleted, 0);
         }
         public async Task<(bool IsCompleted, decimal Amount)> IsDailyTaskCompletedToday(string studentId, string challengeId)
         {
