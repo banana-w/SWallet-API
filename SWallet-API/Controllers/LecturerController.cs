@@ -29,27 +29,27 @@ namespace SWallet_API.Controllers
             _qrCodeService = qrCodeService;
         }
 
-        [HttpPost]
-        public async Task<ActionResult<LecturerResponse>> CreateLecturer(CreateLecturerModel creation)
-        {
-            try
-            {
-                var lecturerResponse = await _lecturerService.CreateLecturerAccount(creation);
-                return Ok(lecturerResponse);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error creating lecturer");
-                return StatusCode(StatusCodes.Status500InternalServerError, "Error creating lecturer");
-            }
-        }
+        //[HttpPost]
+        //public async Task<ActionResult<LecturerResponse>> CreateLecturer(CreateLecturerModel creation)
+        //{
+        //    try
+        //    {
+        //        var lecturerResponse = await _lecturerService.CreateLecturerAccount(creation);
+        //        return Ok(lecturerResponse);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, "Error creating lecturer");
+        //        return StatusCode(StatusCodes.Status500InternalServerError, "Error creating lecturer");
+        //    }
+        //}
 
         [HttpPost("create-campus-lecture")]
-        public async Task<ActionResult<LecturerResponse>> CreateCampusLecturer([FromQuery]List<string> campusIds, CreateLecturerModel creation)
+        public async Task<ActionResult<LecturerResponse>> CreateCampusLecturer([FromQuery]List<string> campusIds, CreateLecturerModel creation, string accountId)
         {
             try
             {
-                var lecturerResponse = await _lecturerService.CreateCampusLecture(campusIds, creation);
+                var lecturerResponse = await _lecturerService.CreateCampusLecture(campusIds, creation, accountId);
                 return Ok(lecturerResponse);
             }
             catch (Exception ex)

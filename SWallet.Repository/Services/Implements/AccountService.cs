@@ -238,7 +238,7 @@ namespace SWallet.Repository.Services.Implements
             }
         }
 
-        public async Task<AccountResponse> CreateLecturerAccount(AccountRequest accountRequest, CreateLecturerModel lecturerReq)
+        public async Task<AccountResponse> CreateLecturerAccount(AccountRequest accountRequest, CreateLecturerModel lecturerReq, string campusId)
         {
             await _unitOfWork.BeginTransactionAsync();
             try
@@ -258,8 +258,8 @@ namespace SWallet.Repository.Services.Implements
                 bool isSuccess = await _unitOfWork.CommitAsync() > 0;
                 if (isSuccess)
                 {
-                    lecturerReq.AccountId = ac.Id;
-                    await _lecturerService.CreateLecturerAccount(lecturerReq);
+                    var campus = new List<string> { campusId };
+                    await _lecturerService.CreateCampusLecture(campus,lecturerReq, ac.Id);
 
                     await _unitOfWork.CommitTransactionAsync();
                     return mapper.Map<AccountResponse>(ac);
