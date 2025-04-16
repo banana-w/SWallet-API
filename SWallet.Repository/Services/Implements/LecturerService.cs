@@ -48,38 +48,38 @@ namespace SWallet.Repository.Services.Implements
             }));
         }
 
-        public async Task<LecturerResponse> CreateLecturerAccount(CreateLecturerModel lecturer)
-        {
+        //public async Task<LecturerResponse> CreateLecturerAccount(CreateLecturerModel lecturer)
+        //{
 
-            var newLecturer = new Lecturer
-            {
-                Id = Ulid.NewUlid().ToString(),
-                AccountId = lecturer.AccountId,
-                FullName = lecturer.FullName,
-                DateCreated = DateTime.Now,
-                DateUpdated = DateTime.Now,
-                State = true,
-                Status = true
-            };
-            await _unitOfWork.GetRepository<Lecturer>().InsertAsync(newLecturer);
-            var isSuccess = await _unitOfWork.CommitAsync() > 0;
+        //    var newLecturer = new Lecturer
+        //    {
+        //        Id = Ulid.NewUlid().ToString(),
+        //        AccountId = lecturer.AccountId,
+        //        FullName = lecturer.FullName,
+        //        DateCreated = DateTime.Now,
+        //        DateUpdated = DateTime.Now,
+        //        State = true,
+        //        Status = true
+        //    };
+        //    await _unitOfWork.GetRepository<Lecturer>().InsertAsync(newLecturer);
+        //    var isSuccess = await _unitOfWork.CommitAsync() > 0;
 
-            if (isSuccess)
-            {
-                return new LecturerResponse
-                {
-                    Id = newLecturer.Id,
-                    AccountId = newLecturer.AccountId,
-                    FullName = newLecturer.FullName,
-                    DateCreated = newLecturer.DateCreated,
-                    DateUpdated = newLecturer.DateUpdated,
-                    State = newLecturer.State,
-                    Status = newLecturer.Status
+        //    if (isSuccess)
+        //    {
+        //        return new LecturerResponse
+        //        {
+        //            Id = newLecturer.Id,
+        //            AccountId = newLecturer.AccountId,
+        //            FullName = newLecturer.FullName,
+        //            DateCreated = newLecturer.DateCreated,
+        //            DateUpdated = newLecturer.DateUpdated,
+        //            State = newLecturer.State,
+        //            Status = newLecturer.Status
 
-                };
-            }
-            throw new ApiException("Create Lecturer Fail", 400, "BAD_REQUEST");
-        }
+        //        };
+        //    }
+        //    throw new ApiException("Create Lecturer Fail", 400, "BAD_REQUEST");
+        //}
 
         public void Delete(string id)
         {
@@ -245,7 +245,7 @@ namespace SWallet.Repository.Services.Implements
             throw new ApiException("Update Lecturer Fail", 400, "BAD_REQUEST");
         }
 
-        public async  Task<LecturerResponse> CreateCampusLecture(List<string> campusIds, CreateLecturerModel lecturer)
+        public async  Task<LecturerResponse> CreateCampusLecture(List<string> campusIds, CreateLecturerModel lecturer, string accountId)
         {
             // 1. Validate input
             if (lecturer == null)
@@ -283,11 +283,11 @@ namespace SWallet.Repository.Services.Implements
             var lecturerEntity = new Lecturer
             {
                 Id = Ulid.NewUlid().ToString(), // Tạo ID mới cho Lecturer
-                AccountId = lecturer.AccountId,
+                AccountId = accountId,
                 FullName = lecturer.FullName,
                 DateCreated = lecturer.DateCreated ?? DateTime.UtcNow, // Gán thời gian hiện tại nếu null
                 DateUpdated = lecturer.DateUpdated,
-                State = lecturer.State,
+                State = true,
                 Status = lecturer.Status
             };
 
