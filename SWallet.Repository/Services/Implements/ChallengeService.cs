@@ -227,7 +227,7 @@ namespace SWallet.Repository.Services.Implements
             {
                 var challenge = await _unitOfWork.GetRepository<Challenge>()
                    .SingleOrDefaultAsync(
-                   selector: c => new {c.Amount, c.Condition},
+                   selector: c => new { c.Amount, c.Condition },
                    predicate: c => c.Id == challengeId);
 
                 isCompleted = studentChallenge.Current >= challenge.Condition;
@@ -296,6 +296,17 @@ namespace SWallet.Repository.Services.Implements
                     };
 
                     var check = await AddChallengeTransaction(transaction, type);
+                    if (type == (int)ChallengeType.Achievement)
+                    {
+                        var sC = await _unitOfWork.GetRepository<StudentChallenge>().SingleOrDefaultAsync(
+                            predicate: sc => sc.StudentId == studentId && sc.ChallengeId == challengeId);
+
+                        sC.IsCompleted = true;
+                        sC.DateCompleted = DateTime.UtcNow;
+                        sC.DateUpdated = DateTime.UtcNow;
+                        _unitOfWork.GetRepository<StudentChallenge>().UpdateAsync(sC);
+                        var resultSC = await _unitOfWork.CommitAsync();
+                    }
 
                     return check;
                 }
