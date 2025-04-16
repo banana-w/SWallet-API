@@ -520,9 +520,7 @@ namespace SWallet.Repository.Services.Implements
                     // Cập nhật current và isCompleted cho Achievement challenges
                     foreach (var challenge in studentChallenges.Items.Where(c => c.challengeType == "Achievement"))
                     {
-                        var totalProgress = progressByCategory.TryGetValue(challenge.category, out var sum) ? sum : 0;
-                        challenge.current = Math.Min(totalProgress, challenge.condition);
-                        challenge.isCompleted = totalProgress >= challenge.condition;
+                        challenge.isCompleted = challenge.current >= challenge.condition;
                         challenge.isClaimed = claimByCategory.TryGetValue(challenge.category, out var claimedIds)
                                                 && claimedIds.Contains(challenge.challengeId);
                     }
