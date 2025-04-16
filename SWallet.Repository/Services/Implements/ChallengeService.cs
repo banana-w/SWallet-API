@@ -524,7 +524,7 @@ namespace SWallet.Repository.Services.Implements
                         );
 
                     var claimByCategory = allStudentChallenges
-                        .Where(sc => sc.DateCompleted.HasValue)
+                        .Where(sc => sc.IsCompleted.HasValue)
                         .GroupBy(sc => sc.Challenge.Category!)
                         .ToDictionary(
                             g => g.Key,
