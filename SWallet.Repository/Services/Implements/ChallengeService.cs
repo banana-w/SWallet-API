@@ -511,7 +511,7 @@ namespace SWallet.Repository.Services.Implements
                         .GetListAsync(
                             predicate: sc => sc.StudentId == studentId &&
                                             sc.Status == true &&
-                                            sc.Challenge.Type == 1,
+                                            sc.Challenge.Type == 2,
                             include: source => source.Include(sc => sc.Challenge)
                         );
 
