@@ -142,16 +142,16 @@ namespace SWallet_API.Controllers
         }
 
         [HttpGet("ActivityTransaction")]
-        [ProducesResponseType(typeof(IPaginate<ActivityTransactionResponse>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<IPaginate<ActivityTransactionResponse>>> GetActivityTransactions(string? searchName = "", string studentId = "", int page = 1, int size = 10)
+        [ProducesResponseType(typeof(IPaginate<TransactionResponse>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<IPaginate<TransactionResponse>>> GetActivityTransactions(string? searchName = "", string studentId = "", int type = 0, int page = 1, int size = 10)
         {
-            var transactions = await _activityService.GetAllActivityTransactionAsync(studentId, searchName!, page, size);
+            var transactions = await _activityService.GetAllActivityTransactionAsync(studentId, searchName!,type, page, size);
             return Ok(transactions);
         }
 
         [HttpGet("UseVoucherTransaction")]
-        [ProducesResponseType(typeof(IPaginate<ActivityTransactionResponse>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<IPaginate<ActivityTransactionResponse>>> GetUseVoucherTransactions(string? searchName = "", string studentId = "", int page = 1, int size = 10)
+        [ProducesResponseType(typeof(IPaginate<TransactionResponse>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<IPaginate<TransactionResponse>>> GetUseVoucherTransactions(string? searchName = "", string studentId = "", int page = 1, int size = 10)
         {
             var transactions = await _activityService.GetAllUseVoucherTransactionAsync(studentId, searchName!, page, size);
             return Ok(transactions);

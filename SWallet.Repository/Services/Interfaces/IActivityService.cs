@@ -18,12 +18,13 @@ namespace SWallet.Repository.Services.Interfaces
         Task<UseVoucherResponse> UseVoucherActivityAsync(UseVoucherRequest request);
         Task<bool> UpdateActivityAsync(string id, ActivityRequest activityRequest);
         Task<IPaginate<ActivityResponse>> GetActivityAsync(string search, bool? isAsc, int page, int size);
-        Task<IPaginate<ActivityTransactionResponse>> GetAllActivityTransactionAsync(
+        Task<IPaginate<TransactionResponse>> GetAllActivityTransactionAsync(
                      string studentId,
                      string search,
+                     int type,
                      int page,
                      int size);
-        Task<IPaginate<ActivityTransactionResponse>> GetAllUseVoucherTransactionAsync(
+        Task<IPaginate<TransactionResponse>> GetAllUseVoucherTransactionAsync(
                      string studentId,
                      string search,
                      int page,
