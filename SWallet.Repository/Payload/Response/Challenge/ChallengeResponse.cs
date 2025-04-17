@@ -18,6 +18,8 @@ namespace SWallet.Repository.Payload.Response.Challenge
 
         public decimal? Condition { get; set; }
 
+        public string Category { get; set; } = null!;
+
         public string Image { get; set; } = null!;
 
         public string FileName { get; set; } = null!;
