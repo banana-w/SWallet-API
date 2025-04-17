@@ -20,7 +20,7 @@ namespace SWallet.Repository.Services.Interfaces
         Task<bool> UpdateChallenge(string id, ChallengeRequest request);
         Task<bool> AssignChallengeToStudent(string challengeId, string studentId);
         Task<bool> AssignAllChallengesToStudent(string studentId);
-        Task<bool> UpdateAchievementProgress(string studentId, string challengeId, decimal amount);
+        Task<bool> UpdateAchievementProgress(string studentId, IEnumerable<Challenge> challenges, decimal amount);
         Task<bool> RecordDailyTaskAction(string studentId, string challengeId, decimal amount);
         Task<bool> RewardStudent(string studentId, string challengeId, int type);
         Task<bool> AddChallengeTransaction(ChallengeTransaction transaction, int type);

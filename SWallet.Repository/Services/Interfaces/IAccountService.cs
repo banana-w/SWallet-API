@@ -20,5 +20,6 @@ namespace SWallet.Repository.Services.Interfaces
         Task<AccountResponse> UpdateAccountAvatar(string id, IFormFile avatar);
         Task<bool> ValidUsername(string username);
         Task<bool> ValidEmail(string email);
+        Task<bool> ValidInviteCode(string code);
     }
 }

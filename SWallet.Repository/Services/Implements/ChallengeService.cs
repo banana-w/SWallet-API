@@ -170,28 +170,38 @@ namespace SWallet.Repository.Services.Implements
             throw new ApiException("Failed to assign challenges to student", 400, "ASSIGN_ALL_CHALLENGES_FAIL");
         }
 
-        public async Task<bool> UpdateAchievementProgress(string studentId, string challengeId, decimal amount)
+        public async Task<bool> UpdateAchievementProgress(string studentId, IEnumerable<Challenge> challenges, decimal amount)
         {
-            var studentChallenge = await _unitOfWork.GetRepository<StudentChallenge>()
-                .SingleOrDefaultAsync(predicate: sc => sc.StudentId == studentId && sc.ChallengeId == challengeId);
+            bool anyUpdated = false;
 
-            if (studentChallenge != null && (bool)!studentChallenge.IsCompleted)
+            foreach (var challenge in challenges)
             {
-                studentChallenge.Current = (studentChallenge.Current ?? 0) + amount;
-                var challenge = await _unitOfWork.GetRepository<Challenge>().SingleOrDefaultAsync(predicate: c => c.Id == challengeId);
+                var studentChallenge = await _unitOfWork.GetRepository<StudentChallenge>()
+                    .SingleOrDefaultAsync(predicate: sc => sc.StudentId == studentId && sc.ChallengeId == challenge.Id);
 
-                if (studentChallenge.Current >= challenge.Condition)
+                if (studentChallenge != null && !(bool)studentChallenge.IsCompleted)
                 {
-                    studentChallenge.IsCompleted = true;
-                    studentChallenge.DateCompleted = DateTime.Now;
+                    studentChallenge.Current = (studentChallenge.Current ?? 0) + amount;
+
+                    if (studentChallenge.Current >= challenge.Condition)
+                    {
+                        break;
+                    }
+
+                    _unitOfWork.GetRepository<StudentChallenge>().UpdateAsync(studentChallenge);
+                    anyUpdated = true;
                 }
-                _unitOfWork.GetRepository<StudentChallenge>().UpdateAsync(studentChallenge);
+            }
+
+            if (anyUpdated)
+            {
                 var result = await _unitOfWork.CommitAsync();
                 if (result > 0)
                 {
                     return true;
                 }
             }
+
             throw new ApiException("Update achievement progress fail", 400, "UPDATE_ACHIEVEMENT_FAIL");
         }
 

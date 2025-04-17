@@ -259,7 +259,7 @@ namespace SWallet.Repository.Services.Implements
                 if (isSuccess)
                 {
                     var campus = new List<string> { campusId };
-                    await _lecturerService.CreateCampusLecture(campus,lecturerReq, ac.Id);
+                    await _lecturerService.CreateCampusLecture(campus, lecturerReq, ac.Id);
 
                     await _unitOfWork.CommitTransactionAsync();
                     return mapper.Map<AccountResponse>(ac);
@@ -311,62 +311,68 @@ namespace SWallet.Repository.Services.Implements
             await _unitOfWork.BeginTransactionAsync();
             try
             {
-                var account = await _unitOfWork.GetRepository<Account>().AnyAsync(x => x.UserName == accountRequest.UserName);
-                if (account)
+                // Kiểm tra tài khoản tồn tại
+                var accountExists = await _unitOfWork.GetRepository<Account>().AnyAsync(x => x.UserName == accountRequest.UserName);
+                if (accountExists)
                 {
                     throw new ApiException("Account already exists", 400, "BAD_REQUEST");
                 }
-                Account ac = mapper.Map<Account>(accountRequest);
-                ac.Role = (int)Role.Student;
-                ac.Description = "Student Account";
 
-                await _unitOfWork.GetRepository<Account>().InsertAsync(ac);
+                // Tạo account
+                var account = mapper.Map<Account>(accountRequest);
+                account.Role = (int)Role.Student;
+                account.Description = "Student Account";
 
-                bool issuccessfull = await _unitOfWork.CommitAsync() > 0;
-                if (issuccessfull)
+                await _unitOfWork.GetRepository<Account>().InsertAsync(account);
+
+                // Commit tạo account
+                bool isSuccessful = await _unitOfWork.CommitAsync() > 0;
+                if (!isSuccessful)
                 {
-                    var student = await _studentService.CreateStudentAsync(ac.Id, studentRequest);
+                    throw new ApiException("Student Account Creation Fail", 400, "BAD_REQUEST");
+                }
 
+                // Tạo student
+                var student = await _studentService.CreateStudentAsync(account.Id, studentRequest);
 
-                    await _walletService.AddWallet(new WalletRequest
+                await _walletService.AddWallet(new WalletRequest
+                {
+                    StudentId = student.Id,
+                    Type = (int)WalletType.Green,
+                    Balance = 0,
+                    Description = "Student Wallet",
+                    State = true
+                });
+
+                if (!string.IsNullOrEmpty(account.Email))
+                {
+                    var code = await _emailService.SendVerificationEmail(account.Email);
+                    await _redisService.SaveVerificationCodeAsync(account.Email, code);
+                }
+
+                if (!string.IsNullOrEmpty(studentRequest.InviteCode))
+                {
+                    // Thêm invitation
+                    await _invitationService.Add(new CreateInvitationModel
                     {
-                        StudentId = student.Id,
-                        Type = (int)WalletType.Green,
-                        Balance = 0,
-                        Description = "Student Wallet",
+                        InviterId = studentRequest.InviteCode,
+                        InviteeId = student.Id,
+                        Description = "",
                         State = true
                     });
 
-                    if (ac.Email != null)
+                    // Lấy danh sách các challenge thuộc category "Mời bạn"
+                    var challenges = await _unitOfWork.GetRepository<Challenge>()
+                        .GetListAsync(predicate: x => x.Category.Contains("Mời bạn"));
+
+                    if (challenges.Count != 0)
                     {
-                        var code = await _emailService.SendVerificationEmail(ac.Email);
-                        await _redisService.SaveVerificationCodeAsync(ac.Email, code);
+                        await _challengeService.UpdateAchievementProgress(studentRequest.InviteCode, challenges, 1);
                     }
-
-                    //if (!string.IsNullOrEmpty(studentRequest.InviteCode))
-                    //{
-                    //    await _invitationService.Add(new CreateInvitationModel
-                    //    {
-                    //        InviterId = studentRequest.InviteCode,
-                    //        InviteeId = student.Id,
-                    //        Description = "",
-                    //        State = true
-                    //    });
-
-                    //    var challengeId = await _unitOfWork.GetRepository<Challenge>().SingleOrDefaultAsync(
-                    //        selector: x => x.Id,
-                    //        predicate: x => x.ChallengeName.Contains("mời 1 người bạn"));
-                    //    if (challengeId != null)
-                    //    {
-                    //        var result = await _challengeService.UpdateAchievementProgress(studentRequest.InviteCode, challengeId, 1);
-                    //    }
-
-                    //}
-
-                    await _unitOfWork.CommitTransactionAsync();
-                    return mapper.Map<AccountResponse>(ac);
                 }
-                else throw new ApiException("Student Account Creation Fail", 400, "BAD_REQUEST");
+
+                await _unitOfWork.CommitTransactionAsync();
+                return mapper.Map<AccountResponse>(account);
             }
             catch
             {
@@ -467,6 +473,16 @@ namespace SWallet.Repository.Services.Implements
             if (account.Result)
             {
                 throw new ApiException("Username already exists", 400, "BAD_REQUEST");
+            }
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> ValidInviteCode(string code)
+        {
+            var account = _unitOfWork.GetRepository<Account>().AnyAsync(x => x.Id.Equals(code));
+            if (account.Result)
+            {
+                throw new ApiException("Invite code already exists", 400, "BAD_REQUEST");
             }
             return Task.FromResult(true);
         }

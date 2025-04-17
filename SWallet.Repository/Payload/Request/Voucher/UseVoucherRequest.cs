@@ -11,5 +11,6 @@ namespace SWallet.Repository.Payload.Request.Voucher
         public string StudentId { get; set; }
         public string VoucherId { get; set; }
         public string StoreId { get; set; }
+        public string VoucherItemId { get; set; }
     }
 }
