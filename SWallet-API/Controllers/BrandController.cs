@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SWallet.Domain.Paginate;
@@ -9,11 +10,13 @@ using SWallet.Repository.Payload.Response.Admin;
 using SWallet.Repository.Payload.Response.Brand;
 using SWallet.Repository.Services.Implements;
 using SWallet.Repository.Services.Interfaces;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace SWallet_API.Controllers
 {
     [ApiController]
+    [Authorize] // Yêu cầu xác thực cho tất cả các endpoint
     [Route("api/[controller]")]
     public class BrandController : ControllerBase
     {
@@ -42,30 +45,55 @@ namespace SWallet_API.Controllers
         }
 
 
+[HttpGet("{id}")]
+public async Task<IActionResult> GetBrandById(string id)
+{
+    try
+    {
+                // Lấy studentId từ JWT token, nếu không có thì để null
+                var studentId = User.FindFirst("studentId")?.Value;
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetBrandById(string id)
+                var brandResponse = await _brandService.GetBrandById(id, studentId);
+        if (brandResponse == null)
         {
-            var brandResponse = await _brandService.GetBrandById(id);
-            if (brandResponse == null)
-            {
-                return NotFound();
-            }
-            return Ok(brandResponse);
+            return NotFound();
         }
+        return Ok(brandResponse);
+    }
+    catch (ApiException ex)
+    {
+        _logger.LogError(ex, $"Error getting brand by ID: {id}");
+        return StatusCode(ex.StatusCode, ex.Message);
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, $"Error getting brand by ID: {id}");
+        return StatusCode(StatusCodes.Status500InternalServerError, "Error getting brand");
+    }
+}
 
         [HttpGet]
-        public async Task<ActionResult<IPaginate<BrandResponse>>> GetAllBrands(string searchName = "", int page = 1, int size = 10, bool status = true) // Pagination parameters
+        public async Task<ActionResult<IPaginate<BrandResponse>>> GetAllBrands(
+            string searchName = "", int page = 1, int size = 10, bool status = true)
         {
             try
             {
-                var brandResponses = await _brandService.GetBrands(searchName, page, size, status);
+                // Lấy studentId từ JWT token
+                var studentId = User.FindFirst("studentId")?.Value
+                    ?? throw new ApiException( "Student ID not found in token", 400);
+
+                var brandResponses = await _brandService.GetBrands(searchName, page, size, status, studentId);
                 return Ok(brandResponses);
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Error getting brands");
+                return StatusCode(ex.StatusCode, ex.Message);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating admin"); // Log the error
-                return StatusCode(StatusCodes.Status500InternalServerError, "Error getting admins");
+                _logger.LogError(ex, "Error getting brands");
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error getting brands");
             }
         }
 

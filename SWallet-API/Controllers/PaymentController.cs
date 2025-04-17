@@ -97,7 +97,7 @@ namespace SWallet_API.Controllers
                     return BadRequest(new { error = "Point package not found" });
                 }
 
-                var brand = await _brandService.GetBrandById(request.BrandId);
+                var brand = await _brandService.GetBrandById(request.BrandId, null);
                 if (brand == null)
                 {
                     return BadRequest(new { error = "Brand not found" });
@@ -172,7 +172,7 @@ namespace SWallet_API.Controllers
                             return Ok(); // Trả về 200 OK
                         }
 
-                        var brand = await _brandService.GetBrandById(entityId);
+                        var brand = await _brandService.GetBrandById(entityId, null);
                         if (brand != null)
                         {
                             // Trường hợp Brand mua điểm
