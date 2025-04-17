@@ -363,7 +363,7 @@ namespace SWallet.Repository.Services.Implements
 
                     // Lấy danh sách các challenge thuộc category "Mời bạn"
                     var challenges = await _unitOfWork.GetRepository<Challenge>()
-                        .GetListAsync(predicate: x => x.Category.Contains("Mời bạn"));
+                        .GetListAsync(predicate: x => x.Category.Contains("Mời bạn") && x.Type == (int)ChallengeType.Achievement);
 
                     if (challenges.Count != 0)
                     {

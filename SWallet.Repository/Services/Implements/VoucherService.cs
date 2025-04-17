@@ -295,8 +295,8 @@ namespace SWallet.Repository.Services.Implements
                     Description = x.Description,
                     State = x.State,
                     Status = x.Status,
-                    NumberOfItemsAvailable = null,
-                    //x.VoucherItems.Where(i => !(bool)i.IsLocked && !(bool)i.IsBought && !(bool)i.IsUsed && i.CampaignDetailId.IsNullOrEmpty()).Count(),
+                    NumberOfItemsAvailable =
+                    x.VoucherItems.Where(i => !(bool)i.IsLocked && !(bool)i.IsBought && !(bool)i.IsUsed).Count(),
                     NumberOfItems = x.VoucherItems.Count()
                 },
                 predicate: filterQuery,

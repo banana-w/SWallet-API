@@ -5,6 +5,7 @@ using SWallet.Domain.Models;
 using SWallet.Repository.Enums;
 using SWallet.Repository.Interfaces;
 using SWallet.Repository.Payload.ExceptionModels;
+using SWallet.Repository.Payload.Request.Student;
 using SWallet.Repository.Payload.Response.DailyCheckIn;
 using SWallet.Repository.Services.Interfaces;
 using System;
@@ -250,6 +251,14 @@ namespace SWallet.Repository.Services.Implements
                 };
 
                 await _challengeService.AddChallengeTransaction(transaction, (int)ChallengeType.Daily);
+
+                var challenges = await _unitOfWork.GetRepository<Challenge>()
+                        .GetListAsync(predicate: x => x.Category.Contains("Check-in") && x.Type == (int)ChallengeType.Achievement);
+
+                if (challenges.Count != 0)
+                {
+                    await _challengeService.UpdateAchievementProgress(studentId, challenges, 1);
+                }
 
                 //await _walletService.AddPointsToStudentWallet(studentId, (int)transaction.Amount);
 

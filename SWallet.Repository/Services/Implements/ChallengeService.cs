@@ -183,7 +183,7 @@ namespace SWallet.Repository.Services.Implements
                 {
                     studentChallenge.Current = (studentChallenge.Current ?? 0) + amount;
 
-                    if (studentChallenge.Current >= challenge.Condition)
+                    if (studentChallenge.Current > challenge.Condition)
                     {
                         break;
                     }
@@ -200,9 +200,9 @@ namespace SWallet.Repository.Services.Implements
                 {
                     return true;
                 }
+                throw new ApiException("Update achievement progress fail", 400, "UPDATE_ACHIEVEMENT_FAIL");
             }
-
-            throw new ApiException("Update achievement progress fail", 400, "UPDATE_ACHIEVEMENT_FAIL");
+            return false;
         }
 
         public async Task<bool> RecordDailyTaskAction(string studentId, string challengeId, decimal amount)
@@ -526,15 +526,15 @@ namespace SWallet.Repository.Services.Implements
                         );
 
                     // Nhóm tiến trình theo Category
-                    var progressByCategory = allStudentChallenges
-                        .GroupBy(sc => sc.Challenge.Category!)
-                        .ToDictionary(
-                            g => g.Key,
-                            g => g.Sum(sc => sc.Current ?? 0)
-                        );
+                    //var progressByCategory = allStudentChallenges
+                    //    .GroupBy(sc => sc.Challenge.Category!)
+                    //    .ToDictionary(
+                    //        g => g.Key,
+                    //        g => g.Sum(sc => sc.Current ?? 0)
+                    //    );
 
                     var claimByCategory = allStudentChallenges
-                        .Where(sc => sc.IsCompleted.HasValue)
+                        .Where(sc => sc.IsCompleted == true)
                         .GroupBy(sc => sc.Challenge.Category!)
                         .ToDictionary(
                             g => g.Key,
