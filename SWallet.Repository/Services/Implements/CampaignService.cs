@@ -927,11 +927,11 @@ namespace SWallet.Repository.Services.Implements
             Expression<Func<Campaign, bool>> filterQuery;
             if (string.IsNullOrEmpty(searchName))
             {
-                filterQuery = p => true;
+                filterQuery = p => p.Status == true;
             }
             else
             {
-                filterQuery = p => p.CampaignName.Contains(searchName);
+                filterQuery = p => p.CampaignName.Contains(searchName) && p.Status == true;
             }
 
             var campaigns = await _unitOfWork.GetRepository<Campaign>().GetPagingListAsync(
