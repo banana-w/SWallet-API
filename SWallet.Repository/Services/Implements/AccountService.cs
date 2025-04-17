@@ -482,9 +482,9 @@ namespace SWallet.Repository.Services.Implements
             var account = _unitOfWork.GetRepository<Account>().AnyAsync(x => x.Id.Equals(code));
             if (account.Result)
             {
-                throw new ApiException("Invite code already exists", 400, "BAD_REQUEST");
+                return Task.FromResult(true);
             }
-            return Task.FromResult(true);
+            throw new ApiException("Invite code not found", 400, "BAD_REQUEST");
         }
     }
 }
