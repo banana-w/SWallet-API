@@ -278,12 +278,12 @@ namespace SWallet.Repository.Services.Implements
                 //            && x.StudentId == request.StudentId,
                 //        include: q => q.Include(x => x.VoucherItem).ThenInclude(v => v.Voucher)
 
-                    //);
+                //);
                 var voucherItem = await _unitOfWork.GetRepository<VoucherItem>()
                     .SingleOrDefaultAsync(
                         selector: x => x,
-                        predicate: x => x.Id == request.VoucherItemId 
-                                                && x.IsBought == true 
+                        predicate: x => x.Id == request.VoucherItemId
+                                                && x.IsBought == true
                                                 && x.IsUsed == false,
                         include: q => q.Include(x => x.Voucher)
                                        .Include(x => x.CampaignDetail)
@@ -377,52 +377,157 @@ namespace SWallet.Repository.Services.Implements
             return transaction;
         }
 
-        public async Task<IPaginate<ActivityTransactionResponse>> GetAllActivityTransactionAsync(
-                     string studentId,
-                     string search,
-                     int page,
-                     int size)
+        public async Task<IPaginate<TransactionResponse>> GetAllActivityTransactionAsync(
+                                                        string studentId,
+                                                        string search,
+                                                        int type,
+                                                        int page,
+                                                        int size)
         {
+            // Validate input
             if (page < 1)
                 throw new ApiException("Page number must be greater than 0", 400, "INVALID_PAGE");
             if (size < 1)
                 throw new ApiException("Page size must be greater than 0", 400, "INVALID_SIZE");
-            if (size > 100) // Giới hạn kích thước tối đa
+            if (size > 100)
                 size = 100;
             if (string.IsNullOrEmpty(studentId))
                 throw new ApiException("Student ID is required", 400, "WALLET_ID_REQUIRED");
 
+            // Get wallet ID
             var walletId = await _unitOfWork.GetRepository<Wallet>().SingleOrDefaultAsync(
                 selector: x => x.Id,
                 predicate: x => x.StudentId == studentId && x.Type == (int)WalletType.Green);
 
-            Expression<Func<ActivityTransaction, bool>> filter = x =>
+            // Define filters
+            Expression<Func<ActivityTransaction, bool>> activityFilter = x =>
                 x.WalletId == walletId
-                && (string.IsNullOrEmpty(search) || (x.Activity != null && x.Activity.VoucherItem != null && x.Activity.VoucherItem.Voucher.VoucherName.Contains(search)));
+                && (string.IsNullOrEmpty(search) || (x.Activity != null && x.Activity.VoucherItem != null));
 
-            var transactions = await _unitOfWork.GetRepository<ActivityTransaction>()
-                .GetPagingListAsync(
-                    selector: x => new ActivityTransactionResponse
-                    {
-                        Id = x.Id,
-                        ActivityId = x.ActivityId,
-                        WalletId = x.WalletId,
-                        Amount = x.Amount,
-                        Description = x.Description,
-                        Status = x.Status ?? false,
-                        VoucherName = x.Activity.VoucherItem.Voucher.VoucherName,
-                        CreatedAt = x.Activity.DateCreated
-                    },
-                    predicate: filter,
-                    include: q => q.Include(x => x.Activity).ThenInclude(a => a.VoucherItem).ThenInclude(v => v.Voucher),
-                    orderBy: q => q.OrderByDescending(x => x.Activity.DateCreated),
-                    page: page,
-                    size: size
-                );
+            Expression<Func<ChallengeTransaction, bool>> challengeFilter = x =>
+                x.WalletId == walletId
+                && (string.IsNullOrEmpty(search) || (x.StudentChallenge != null && x.StudentChallenge.Challenge != null)) 
+                && x.Type != 0;
 
-            return transactions;
+            // Handle based on type
+            if (type == 1) // Activity Transactions only
+            {
+                return await _unitOfWork.GetRepository<ActivityTransaction>()
+                    .GetPagingListAsync(
+                        selector: x => new TransactionResponse
+                        {
+                            Id = x.Id,
+                            TransId = x.ActivityId,
+                            WalletId = x.WalletId,
+                            Amount = x.Amount,
+                            Description = x.Description,
+                            Status = x.Status ?? false,
+                            Name = x.Activity.VoucherItem.Voucher.VoucherName,
+                            CreatedAt = x.Activity.DateCreated
+                        },
+                        predicate: activityFilter,
+                        include: q => q.Include(x => x.Activity).ThenInclude(a => a.VoucherItem).ThenInclude(v => v.Voucher),
+                        orderBy: q => q.OrderByDescending(x => x.Activity.DateCreated),
+                        page: page,
+                        size: size
+                    );
+            }
+            else if (type == 2) // Challenge Transactions only
+            {
+                return await _unitOfWork.GetRepository<ChallengeTransaction>()
+                    .GetPagingListAsync(
+                        selector: x => new TransactionResponse
+                        {
+                            Id = x.Id,
+                            TransId = x.ChallengeId,
+                            WalletId = x.WalletId,
+                            Amount = x.Amount,
+                            Description = x.Description,
+                            Status = x.Status ?? false,
+                            Name = x.StudentChallenge.Challenge.ChallengeName,
+                            CreatedAt = x.DateCreated
+                        },
+                        predicate: challengeFilter,
+                        include: q => q.Include(x => x.StudentChallenge).ThenInclude(x => x.Challenge),
+                        orderBy: q => q.OrderByDescending(x => x.DateCreated),
+                        page: page,
+                        size: size
+                    );
+            }
+            else if (type == 0) // All Transactions
+            {
+                // Fetch Activity Transactions with pagination
+                var activityPaged = await _unitOfWork.GetRepository<ActivityTransaction>()
+                    .GetPagingListAsync(
+                        selector: x => new TransactionResponse
+                        {
+                            Id = x.Id,
+                            TransId = x.ActivityId,
+                            WalletId = x.WalletId,
+                            Amount = x.Amount,
+                            Description = x.Description,
+                            Status = x.Status ?? false,
+                            Name = x.Activity.VoucherItem.Voucher.VoucherName,
+                            CreatedAt = x.Activity.DateCreated
+                        },
+                        predicate: activityFilter,
+                        include: q => q.Include(x => x.Activity).ThenInclude(a => a.VoucherItem).ThenInclude(v => v.Voucher),
+                        orderBy: q => q.OrderByDescending(x => x.Activity.DateCreated),
+                        page: page,
+                        size: size
+                    );
+
+                // Fetch Challenge Transactions with pagination
+                var challengePaged = await _unitOfWork.GetRepository<ChallengeTransaction>()
+                    .GetPagingListAsync(
+                        selector: x => new TransactionResponse
+                        {
+                            Id = x.Id,
+                            TransId = x.ChallengeId,
+                            WalletId = x.WalletId,
+                            Amount = x.Amount,
+                            Description = x.Description,
+                            Status = x.Status ?? false,
+                            Name = x.StudentChallenge.Challenge.ChallengeName,
+                            CreatedAt = x.DateCreated
+                        },
+                        predicate: challengeFilter,
+                        include: q => q.Include(x => x.StudentChallenge).ThenInclude(x => x.Challenge),
+                        orderBy: q => q.OrderByDescending(x => x.DateCreated),
+                        page: page,
+                        size: size
+                    );
+
+                // Combine results
+                var combinedTransactions = activityPaged.Items
+                    .Concat(challengePaged.Items)
+                    .OrderByDescending(x => x.CreatedAt)
+                    .Take(size)
+                    .ToList();
+
+                // Calculate total count
+                var activityCount = await _unitOfWork.GetRepository<ActivityTransaction>()
+                    .CountAsync(activityFilter);
+                var challengeCount = await _unitOfWork.GetRepository<ChallengeTransaction>()
+                    .CountAsync(challengeFilter);
+                var totalCount = activityCount + challengeCount;
+
+                // Create paginated result
+                return new Paginate<TransactionResponse>
+                {
+                    Items = combinedTransactions,
+                    Page = page,
+                    Size = size,
+                    Total = totalCount,
+                    TotalPages = (int)Math.Ceiling(totalCount / (double)size)
+                };
+            }
+            else
+            {
+                throw new ApiException("Invalid transaction type", 400, "INVALID_TYPE");
+            }
         }
-        public async Task<IPaginate<ActivityTransactionResponse>> GetAllUseVoucherTransactionAsync(
+        public async Task<IPaginate<TransactionResponse>> GetAllUseVoucherTransactionAsync(
                      string studentId,
                      string search,
                      int page,
@@ -438,22 +543,22 @@ namespace SWallet.Repository.Services.Implements
                 throw new ApiException("Student ID is required", 400, "WALLET_ID_REQUIRED");
 
             Expression<Func<ActivityTransaction, bool>> filter = x =>
-                x.Activity.StudentId == studentId 
-                && string.IsNullOrEmpty(x.WalletId) 
+                x.Activity.StudentId == studentId
+                && string.IsNullOrEmpty(x.WalletId)
                 && x.Amount == 0
                 && (string.IsNullOrEmpty(search) || (x.Activity != null && x.Activity.VoucherItem != null && x.Activity.VoucherItem.Voucher.VoucherName.Contains(search)));
 
             var transactions = await _unitOfWork.GetRepository<ActivityTransaction>()
                 .GetPagingListAsync(
-                    selector: x => new ActivityTransactionResponse
+                    selector: x => new TransactionResponse
                     {
                         Id = x.Id,
-                        ActivityId = x.ActivityId,
+                        TransId = x.ActivityId,
                         WalletId = x.WalletId,
                         Amount = x.Amount,
                         Description = x.Description,
                         Status = x.Status ?? false,
-                        VoucherName = x.Activity.VoucherItem.Voucher.VoucherName,
+                        Name = x.Activity.VoucherItem.Voucher.VoucherName,
                         CreatedAt = x.Activity.DateCreated
                     },
                     predicate: filter,

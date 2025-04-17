@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace SWallet.Repository.Payload.Response.ActivityTransaction
 {
-    public class ActivityTransactionResponse
+    public class TransactionResponse
     {
         public string Id { get; set; } = null!;
 
-        public string VoucherName { get; set; } = null!;
-        public string ActivityId { get; set; } = null!;
+        public string Name { get; set; } = null!;
+        public string TransId { get; set; } = null!;
 
         public string WalletId { get; set; } = null!;
 
