@@ -126,5 +126,14 @@ namespace SWallet_API.Controllers
             var result = await _accountService.ValidEmail(email);
             return Ok(result);
         }
+
+        [HttpPost("validInviteCode")]
+        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> ValidInviteCode(string inviteCode)
+        {
+            var result = await _accountService.ValidInviteCode(inviteCode);
+            return Ok(result);
+        }
     }
 }
