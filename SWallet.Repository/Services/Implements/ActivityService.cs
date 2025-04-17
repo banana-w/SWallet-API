@@ -262,25 +262,29 @@ namespace SWallet.Repository.Services.Implements
                 throw new ApiException("Voucher ID is required", 400, "VOUCHER_ID_REQUIRED");
             if (string.IsNullOrEmpty(request.StoreId))
                 throw new ApiException("Store ID is required", 400, "STORE_ID_REQUIRED");
+            if (string.IsNullOrEmpty(request.VoucherItemId))
+                throw new ApiException("Voucher Item ID is required", 400, "VOUCHER_ITEM_ID_REQUIRED");
 
             await _unitOfWork.BeginTransactionAsync();
             try
             {
                 // Lấy VoucherItem chưa dùng
-                var voucherItemId = await _unitOfWork.GetRepository<Activity>()
-                    .SingleOrDefaultAsync(
-                        selector: x => x.VoucherItem.Id,
-                        predicate: x => x.VoucherItem.Voucher.Id == request.VoucherId
-                            && x.VoucherItem.IsBought == true
-                            && x.VoucherItem.IsUsed == false
-                            && x.StudentId == request.StudentId,
-                        include: q => q.Include(x => x.VoucherItem).ThenInclude(v => v.Voucher)
+                //var voucherItemId = await _unitOfWork.GetRepository<Activity>()
+                //    .SingleOrDefaultAsync(
+                //        selector: x => x.VoucherItem.Id,
+                //        predicate: x => x.VoucherItem.Voucher.Id == request.VoucherId
+                //            && x.VoucherItem.IsBought == true
+                //            && x.VoucherItem.IsUsed == false
+                //            && x.StudentId == request.StudentId,
+                //        include: q => q.Include(x => x.VoucherItem).ThenInclude(v => v.Voucher)
 
-                    );
+                    //);
                 var voucherItem = await _unitOfWork.GetRepository<VoucherItem>()
                     .SingleOrDefaultAsync(
                         selector: x => x,
-                        predicate: x => x.Id == voucherItemId,
+                        predicate: x => x.Id == request.VoucherItemId 
+                                                && x.IsBought == true 
+                                                && x.IsUsed == false,
                         include: q => q.Include(x => x.Voucher)
                                        .Include(x => x.CampaignDetail)
                                            .ThenInclude(c => c.Campaign)
