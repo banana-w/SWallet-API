@@ -48,6 +48,8 @@ namespace SWallet.Repository.Payload.Response.Brand
 
         public bool? Status { get; set; }
 
+        public bool? IsFavor { get; set; }
+
         public int? NumberOfCampaigns { get; set; }
     }
 }

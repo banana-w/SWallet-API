@@ -209,7 +209,7 @@ namespace SWallet.Repository.Services.Implements
             
         }
 
-        public async Task<BrandResponse> GetBrandById(string id)
+        public async Task<BrandResponse> GetBrandById(string id, string? studentId)
         {
             var area = await _unitOfWork.GetRepository<Brand>().SingleOrDefaultAsync(
                 selector: x => new BrandResponse
@@ -228,32 +228,33 @@ namespace SWallet.Repository.Services.Implements
                     OpeningHours = x.OpeningHours,
                     ClosingHours = x.ClosingHours,
                     TotalIncome = x.TotalIncome,
-                    TotalSpending = x.Campaigns.Sum(c => c.TotalSpending ?? 0), // Sum of TotalSpending from Campaigns
+                    TotalSpending = x.Campaigns.Sum(c => c.TotalSpending ?? 0),
                     DateCreated = x.DateCreated,
                     DateUpdated = x.DateUpdated,
                     Description = x.Description,
                     State = x.State,
                     Status = x.Status,
+
+                    IsFavor = !string.IsNullOrEmpty(studentId) && x.Wishlists.Any(w => w.StudentId == studentId && w.Status == true), // Kiểm tra studentId và Status
                     NumberOfCampaigns = x.Campaigns.Where(c => c.BrandId == id).Count()
                 },
                 predicate: x => x.Id == id,
-                include: x => x.Include(a => a.Account).Include(a => a.Campaigns));
+                include: x => x.Include(a => a.Account).Include(a => a.Campaigns).Include(a => a.Wishlists)
+            );
             return area;
         }
 
-        public async Task<IPaginate<BrandResponse>> GetBrands(string? searchName, int page, int size, bool status)
+        public async Task<IPaginate<BrandResponse>> GetBrands(string? searchName, int page, int size, bool status, string? studentId)
         {
             Expression<Func<Brand, bool>> filterQuery;
 
             // Kết hợp điều kiện lọc theo searchName và status
             if (string.IsNullOrEmpty(searchName))
             {
-                // Nếu searchName rỗng, chỉ lọc theo status
                 filterQuery = p => p.Status == status;
             }
             else
             {
-                // Nếu searchName không rỗng, lọc theo cả searchName và status
                 filterQuery = p => p.BrandName.Contains(searchName) && p.Status == status;
             }
 
@@ -277,6 +278,7 @@ namespace SWallet.Repository.Services.Implements
                     Description = x.Description,
                     State = x.State,
                     Status = x.Status,
+                    IsFavor = !string.IsNullOrEmpty(studentId) && x.Wishlists.Any(w => w.StudentId == studentId && w.Status == true),
                     NumberOfCampaigns = x.Campaigns.Count
                 },
                 predicate: filterQuery,

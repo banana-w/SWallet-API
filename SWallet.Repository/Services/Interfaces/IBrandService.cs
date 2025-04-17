@@ -14,8 +14,8 @@ namespace SWallet.Repository.Services.Interfaces
 {
         public interface IBrandService
         {
-        Task<IPaginate<BrandResponse>> GetBrands(string searchName, int page, int size, bool status);
-        Task<BrandResponse> GetBrandById(string id);
+        Task<IPaginate<BrandResponse>> GetBrands(string searchName, int page, int size, bool status, string? studentId);
+        Task<BrandResponse> GetBrandById(string id, string? studentId);
         Task<BrandResponse> CreateBrand(CreateBrandModel brand);
         Task<BrandResponse> UpdateBrand(string id, UpdateBrandModel brand);
         void Delete(string id);
