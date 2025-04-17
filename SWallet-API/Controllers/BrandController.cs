@@ -79,8 +79,7 @@ public async Task<IActionResult> GetBrandById(string id)
             try
             {
                 // Lấy studentId từ JWT token
-                var studentId = User.FindFirst("studentId")?.Value
-                    ?? throw new ApiException( "Student ID not found in token", 400);
+                var studentId = User.FindFirst("studentId")?.Value;
 
                 var brandResponses = await _brandService.GetBrands(searchName, page, size, status, studentId);
                 return Ok(brandResponses);
