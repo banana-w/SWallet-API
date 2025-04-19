@@ -379,5 +379,38 @@ namespace SWallet.Repository.Services.Implements
             }
             throw new ApiException("Update Brand Fail", 400, "BAD_REQUEST");
         }
+
+        public Task<BrandResponse> GetBrandbyAccountId(string accountId)
+        {
+            var brand = _unitOfWork.GetRepository<Brand>().SingleOrDefaultAsync(
+                selector: x => new BrandResponse
+                {
+                    Id = x.Id,
+                    AccountId = x.AccountId,
+                    BrandName = x.BrandName,
+                    Acronym = x.Acronym,
+                    Address = x.Address,
+                    Email = x.Account.Email,
+                    PhoneNumber = x.Account.Phone,
+                    CoverPhoto = x.CoverPhoto,
+                    CoverFileName = x.CoverFileName,
+                    Link = x.Link,
+                    OpeningHours = x.OpeningHours,
+                    ClosingHours = x.ClosingHours,
+                    TotalIncome = x.TotalIncome,
+                    TotalSpending = x.Campaigns.Sum(c => c.TotalSpending ?? 0),
+                    DateCreated = x.DateCreated,
+                    DateUpdated = x.DateUpdated,
+                    Description = x.Description,
+                    State = x.State,
+                    Status = x.Status,
+                    NumberOfCampaigns = x.Campaigns.Count
+                },
+                predicate: x => x.Account.Id == accountId,
+                include: x => x.Include(a => a.Campaigns).Include(a => a.Account)
+                );
+
+            return brand;
+        }
     }
 }

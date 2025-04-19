@@ -45,32 +45,32 @@ namespace SWallet_API.Controllers
         }
 
 
-[HttpGet("{id}")]
-public async Task<IActionResult> GetBrandById(string id)
-{
-    try
-    {
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetBrandById(string id)
+        {
+            try
+            {
                 // Lấy studentId từ JWT token, nếu không có thì để null
                 var studentId = User.FindFirst("studentId")?.Value;
 
                 var brandResponse = await _brandService.GetBrandById(id, studentId);
-        if (brandResponse == null)
-        {
-            return NotFound();
+                if (brandResponse == null)
+                {
+                    return NotFound();
+                }
+                return Ok(brandResponse);
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, $"Error getting brand by ID: {id}");
+                return StatusCode(ex.StatusCode, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting brand by ID: {id}");
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error getting brand");
+            }
         }
-        return Ok(brandResponse);
-    }
-    catch (ApiException ex)
-    {
-        _logger.LogError(ex, $"Error getting brand by ID: {id}");
-        return StatusCode(ex.StatusCode, ex.Message);
-    }
-    catch (Exception ex)
-    {
-        _logger.LogError(ex, $"Error getting brand by ID: {id}");
-        return StatusCode(StatusCodes.Status500InternalServerError, "Error getting brand");
-    }
-}
 
         [HttpGet]
         public async Task<ActionResult<IPaginate<BrandResponse>>> GetAllBrands(
@@ -138,6 +138,15 @@ public async Task<IActionResult> GetBrandById(string id)
                 _logger.LogError(ex, $"Error updating brand by ID: {id}");
                 return StatusCode(StatusCodes.Status500InternalServerError, "Error updating brand");
             }
+        }
+
+        [HttpGet("account/{accountId}")]
+        [ProducesResponseType(typeof(BrandResponse), 200)]
+        public async Task<IActionResult> GetBrandByAccountId(string accountId)
+        {
+            var brand = await _brandService.GetBrandbyAccountId(accountId)
+                ?? throw new ApiException("Not Found.", StatusCodes.Status400BadRequest, "BRAND_NOTFOUND");
+            return Ok(brand);
         }
 
     }

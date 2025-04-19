@@ -18,6 +18,7 @@ namespace SWallet.Repository.Services.Interfaces
         Task<BrandResponse> GetBrandById(string id, string? studentId);
         Task<BrandResponse> CreateBrand(CreateBrandModel brand);
         Task<BrandResponse> UpdateBrand(string id, UpdateBrandModel brand);
+        Task<BrandResponse> GetBrandbyAccountId(string accountId);
         void Delete(string id);
         Task<BrandResponse> CreateBrandAsync(string accountId, CreateBrandByAccountId brand);
 
