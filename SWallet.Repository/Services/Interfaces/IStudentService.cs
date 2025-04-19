@@ -30,6 +30,8 @@ namespace SWallet.Repository.Services.Interfaces
 
         long CountStudent();
 
+        Task<List<string>> GetWishlistsByStudentIdAsync(string studentId);
+
         //Task<bool> DeleteStudentAsync(string accountId, string studentId);
         //Task<bool> VerifyStudentAsync(string accountId, string studentId);
         //Task<bool> UnVerifyStudentAsync(string accountId, string studentId);
