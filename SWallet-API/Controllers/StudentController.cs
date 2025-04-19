@@ -82,5 +82,46 @@ namespace SWallet_API.Controllers
             var result = await _studentService.UpdateStudentCardFront(id, studentCardFront);
             return Ok(result);
         }
+
+        /// <summary>
+        /// Lấy danh sách BrandId từ Wishlists của một student dựa trên studentId.
+        /// </summary>
+        /// <param name="studentId">ID của student</param>
+        /// <returns>Danh sách BrandId</returns>
+        /// <response code="200">Trả về danh sách BrandId</response>
+        /// <response code="400">Nếu studentId không hợp lệ</response>
+        /// <response code="404">Nếu không tìm thấy student</response>
+        /// <response code="500">Nếu có lỗi server</response>
+        [HttpGet("{studentId}/wishlists")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetWishlistsByStudentId(string studentId)
+        {
+            try
+            {
+                // Gọi service để lấy danh sách BrandId
+                var brandIds = await _studentService.GetWishlistsByStudentIdAsync(studentId);
+
+                // Nếu danh sách rỗng, có thể coi là student không có wishlist (tùy yêu cầu)
+                if (brandIds == null || !brandIds.Any())
+                {
+                    return NotFound(new { message = "Student not found or no wishlists available." });
+                }
+
+                return Ok(brandIds);
+            }
+            catch (ArgumentException ex)
+            {
+                // Xử lý lỗi đầu vào (studentId không hợp lệ)
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                // Xử lý lỗi server
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while processing your request.", error = ex.Message });
+            }
+        }
     }
 }

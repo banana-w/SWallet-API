@@ -425,5 +425,35 @@ namespace SWallet.Repository.Services.Implements
                 throw new Exception($"Lỗi khi lấy danh sách xếp hạng sinh viên theo cửa hàng: {ex.Message}", ex);
             }
         }
+
+        public async Task<List<string>> GetWishlistsByStudentIdAsync(string studentId)
+        {
+            // Kiểm tra đầu vào
+            if (string.IsNullOrEmpty(studentId))
+            {
+                throw new ArgumentException("Invalid student Id");
+            }
+
+            // Lấy student từ database
+            var student = await _unitOfWork.GetRepository<Student>().SingleOrDefaultAsync(
+                predicate: x => x.Id == studentId,
+                include: x => x.Include(w => w.Wishlists)
+            );
+
+            // Kiểm tra nếu student không tồn tại
+            if (student == null)
+            {
+                return new List<string>(); // Trả về danh sách rỗng nếu không tìm thấy student
+            }
+
+            // Lấy danh sách BrandId từ Wishlists
+            var brandIds = student.Wishlists
+                .Where(w => w.Status == true) // Chỉ lấy wishlist đang active (nếu cần)
+                .Select(w => w.BrandId)
+                .Distinct()
+                .ToList();
+
+            return brandIds;
+        }
     }
 }
