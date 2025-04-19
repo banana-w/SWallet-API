@@ -24,6 +24,7 @@ namespace SWallet.Repository.Services.Implements
 {
     public class ActivityService : BaseService<ActivityService>, IActivityService
     {
+        private const decimal PointBackRate = 0.9M;
         private readonly IWalletService _walletService;
         private readonly IVoucherItemService _voucherItemService;
         public ActivityService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<ActivityService> logger, IWalletService walletService, IVoucherItemService voucherItemService) : base(unitOfWork, logger)
@@ -200,8 +201,12 @@ namespace SWallet.Repository.Services.Implements
             await _unitOfWork.BeginTransactionAsync();
             try
             {
+                var brandId = await _unitOfWork.GetRepository<VoucherItem>()
+                    .SingleOrDefaultAsync(selector: x => x.Voucher.BrandId,
+                                          predicate: x => x.CampaignDetail.CampaignId == activityRequest.CampaignId);
                 // Kiểm tra wallet
                 var wallet = await _walletService.GetWalletByStudentId(activityRequest.StudentId, (int)WalletType.Green);
+                var brandWallet = await _walletService.GetWalletByBrandId(brandId, (int)WalletType.Green);
                 if (wallet == null || wallet.Balance < activityRequest.Cost)
                 {
                     await _unitOfWork.RollbackTransactionAsync();
@@ -236,6 +241,8 @@ namespace SWallet.Repository.Services.Implements
 
                 // Trừ điểm từ wallet
                 await _walletService.UpdateWalletForRedeem(wallet.Id, -(decimal)activityRequest.Cost);
+
+                await _walletService.UpdateWalletForRedeem(brandWallet.Id, (decimal)activityRequest.Cost * PointBackRate);
 
                 // Thêm activity transaction
                 await AddActivityTransactionAsync(

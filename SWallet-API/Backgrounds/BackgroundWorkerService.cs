@@ -174,7 +174,7 @@ public class BackgroundWorkerService : BackgroundService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An error occurred in BackgroundWorkerService.");
+                _logger.LogError(ex, ex.Message);
             }
         }
 
