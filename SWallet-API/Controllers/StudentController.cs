@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SWallet.Domain.Paginate;
 using SWallet.Repository.Payload.ExceptionModels;
@@ -44,6 +45,7 @@ namespace SWallet_API.Controllers
         [HttpGet("account/{id}")]
         [ProducesResponseType(typeof(StudentResponse), StatusCodes.Status200OK)]
         [ProducesDefaultResponseType(typeof(ErrorResponse))]
+        [Authorize]
         public async Task<IActionResult> GetStudentByAccountId(string id)
         {
             var result = await _studentService.GetStudentByAccountIdAsync(id);
