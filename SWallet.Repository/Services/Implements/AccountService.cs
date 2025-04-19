@@ -479,8 +479,8 @@ namespace SWallet.Repository.Services.Implements
 
         public Task<bool> ValidInviteCode(string code)
         {
-            var account = _unitOfWork.GetRepository<Account>().AnyAsync(x => x.Id.Equals(code));
-            if (account.Result)
+            var account = _unitOfWork.GetRepository<Student>().SingleOrDefaultAsync(predicate: x => x.Id.Equals(code));
+            if (account.Result != null)
             {
                 return Task.FromResult(true);
             }
