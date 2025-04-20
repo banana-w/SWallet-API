@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace SWallet.Repository.Services.Implements
 {
-    internal class LocationService : BaseService<LocationService>, ILocationService
+    public class LocationService : BaseService<LocationService>, ILocationService
     {
         public LocationService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<LocationService> logger) : base(unitOfWork, logger)
         {

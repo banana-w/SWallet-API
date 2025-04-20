@@ -59,6 +59,8 @@ namespace SWallet_API.Extentions
             services.AddScoped<ILuckyWheelService, LuckyWheelService>();
             services.AddScoped<ICheckInService, CheckInService>();
             services.AddScoped<IWishlistService, WishlistService>();
+            services.AddScoped<IPurchaseHistory, PurchaseHistoryService>();
+            services.AddScoped<ILocationService, LocationService>();
 
             return services;
         }
