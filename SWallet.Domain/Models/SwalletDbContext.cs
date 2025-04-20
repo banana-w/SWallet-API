@@ -60,6 +60,8 @@ public partial class SwalletDbContext : DbContext
 
     public virtual DbSet<PointPackage> PointPackages { get; set; }
 
+    public virtual DbSet<PointPurchaseHistory> PointPurchaseHistories { get; set; }
+
     public virtual DbSet<QrCodeHistory> QrCodeHistories { get; set; }
 
     public virtual DbSet<QrcodeUsage> QrcodeUsages { get; set; }
@@ -83,7 +85,7 @@ public partial class SwalletDbContext : DbContext
     public virtual DbSet<Wishlist> Wishlists { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-      => optionsBuilder.UseSqlServer(GetConnectionString());
+    => optionsBuilder.UseSqlServer(GetConnectionString());
 
     private string GetConnectionString()
     {
@@ -911,6 +913,42 @@ public partial class SwalletDbContext : DbContext
                 .HasColumnType("decimal(38, 2)")
                 .HasColumnName("price");
             entity.Property(e => e.Status).HasColumnName("status");
+        });
+
+        modelBuilder.Entity<PointPurchaseHistory>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__PointPur__3214EC0769020790");
+
+            entity.ToTable("point_purchase_history");
+
+            entity.HasIndex(e => new { e.EntityId, e.EntityType }, "idx_entity");
+
+            entity.Property(e => e.Id)
+                .HasMaxLength(26)
+                .IsUnicode(false);
+            entity.Property(e => e.Amount).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.EntityId)
+                .HasMaxLength(26)
+                .IsUnicode(false);
+            entity.Property(e => e.EntityType)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.PaymentStatus)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.PointPackageId)
+                .HasMaxLength(26)
+                .IsUnicode(false)
+                .IsFixedLength();
+            entity.Property(e => e.UpdatedDate).HasColumnType("datetime");
+
+            entity.HasOne(d => d.PointPackage).WithMany(p => p.PointPurchaseHistories)
+                .HasForeignKey(d => d.PointPackageId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__PointPurc__Point__42ACE4D4");
         });
 
         modelBuilder.Entity<QrCodeHistory>(entity =>

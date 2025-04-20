@@ -18,4 +18,6 @@ public partial class PointPackage
     public DateTime? DateUpdated { get; set; }
 
     public bool? Status { get; set; }
+
+    public virtual ICollection<PointPurchaseHistory> PointPurchaseHistories { get; set; } = new List<PointPurchaseHistory>();
 }
