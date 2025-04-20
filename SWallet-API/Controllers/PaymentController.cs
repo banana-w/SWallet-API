@@ -29,7 +29,7 @@ namespace SWallet_API.Controllers
         private readonly IPurchaseHistory _pointPurchaseHistoryService;
 
 
-        public PaymentController(IVnpay vnpay, IOptions<VnpayConfig> vnpayConfig, IPointPackageService pointPackageService, ICampusService campusService, IWalletService walletService, IBrandService brandService)
+        public PaymentController(IVnpay vnpay, IOptions<VnpayConfig> vnpayConfig, IPointPackageService pointPackageService, ICampusService campusService, IWalletService walletService, IBrandService brandService, IPurchaseHistory pointPurchaseHistoryService)
         {
             _vnpay = vnpay;
             _vnpayConfig = vnpayConfig.Value;
@@ -37,6 +37,7 @@ namespace SWallet_API.Controllers
             _campusService = campusService;
             _walletService = walletService;
             _brandService = brandService;
+            _pointPurchaseHistoryService = pointPurchaseHistoryService;
         }
 
         [HttpPost("campus-purchase-points")]
@@ -74,7 +75,7 @@ namespace SWallet_API.Controllers
                 // Lưu lịch sử giao dịch
                 var purchaseHistory = new PointPurchaseHistory
                 {
-                    Id = Guid.NewGuid().ToString(),
+                    Id = Ulid.NewUlid().ToString(),
                     EntityId = request.CampusId,
                     EntityType = "Campus",
                     PointPackageId = request.PointPackageId,
@@ -137,7 +138,7 @@ namespace SWallet_API.Controllers
                 // Lưu lịch sử giao dịch
                 var purchaseHistory = new PointPurchaseHistory
                 {
-                    Id = Guid.NewGuid().ToString(),
+                    Id = Ulid.NewUlid().ToString(),
                     EntityId = request.BrandId,
                     EntityType = "Brand",
                     PointPackageId = request.PointPackageId,
@@ -145,7 +146,9 @@ namespace SWallet_API.Controllers
                     Amount = (decimal)pointPackage.Price,
                     PaymentId = paymentRequest.PaymentId,
                     PaymentStatus = "Pending",
-                    CreatedDate = DateTime.Now
+                    CreatedDate = DateTime.Now,
+                    UpdatedDate = DateTime.Now
+                    
                 };
                 await _pointPurchaseHistoryService.SavePurchaseHistoryAsync(purchaseHistory);
 

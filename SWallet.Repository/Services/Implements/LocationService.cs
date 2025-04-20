@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace SWallet.Repository.Services.Implements
 {
-    internal class LocationService : BaseService<LocationService>, ILocationService
+    public class LocationService : BaseService<LocationService>, ILocationService
     {
         public LocationService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<LocationService> logger) : base(unitOfWork, logger)
         {
@@ -49,18 +49,18 @@ namespace SWallet.Repository.Services.Implements
             throw new ApiException("Create Location Fail", 400, "BAD_REQUEST");
         }
 
-        public async Task<Location> UpdateLocation(Location location)
+        public async Task<Location> UpdateLocation(string id, Location location)
         {
             var updateLocation = await _unitOfWork.GetRepository<Location>()
        .SingleOrDefaultAsync(
-           predicate: x => x.Id == location.Id
+           predicate: x => x.Id == id
        );
             if (updateLocation == null)
             {
                 throw new ApiException("Location not found", 404, "NOT_FOUND");
             }
 
-            updateLocation.Id = location.Id;
+            updateLocation.Id = id;
             updateLocation.Name = location.Name;
             updateLocation.Latitue = location.Latitue;
             updateLocation.Longtitude = location.Longtitude;
@@ -72,7 +72,7 @@ namespace SWallet.Repository.Services.Implements
             {
                 return new Location
                 {
-                    Id = updateLocation.Id,
+                    Id = id,
                     Name = updateLocation.Name,
                     Latitue = updateLocation.Latitue,
                     Longtitude = updateLocation.Longtitude,

@@ -11,7 +11,7 @@ namespace SWallet.Repository.Services.Interfaces
 {
     public interface ILocationService
     {
-        Task<Location> UpdateLocation(Location location);
+        Task<Location> UpdateLocation(string id, Location location);
         Task<Location> CreateLocation(Location location);
     }
 }
