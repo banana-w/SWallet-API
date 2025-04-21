@@ -11,6 +11,7 @@ namespace SWallet.Repository.Services.Interfaces
     {
         Task<PointPurchaseHistory> SavePurchaseHistoryAsync(PointPurchaseHistory purchaseHistory);
         Task<PointPurchaseHistory> GetPurchaseHistoryByPaymentIdAsync(string paymentId);
+        Task<PointPurchaseHistory> GetPurchaseHistoryById(string Id);
         Task<PointPurchaseHistory> UpdatePurchaseHistoryAsync(PointPurchaseHistory purchaseHistory);
     }
 }

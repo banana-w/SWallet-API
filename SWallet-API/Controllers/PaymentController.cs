@@ -40,6 +40,18 @@ namespace SWallet_API.Controllers
             _pointPurchaseHistoryService = pointPurchaseHistoryService;
         }
 
+
+        [HttpGet("get-purchase-history")]
+        public async Task<IActionResult> GetPurchaseHistoryById(string id)
+        {
+            var historyResponse = await _pointPurchaseHistoryService.GetPurchaseHistoryById(id);
+            if (historyResponse == null)
+            {
+                return NotFound();
+            }
+            return Ok(historyResponse);
+        }
+
         [HttpPost("campus-purchase-points")]
         public async Task<IActionResult> PurchasePoints([FromBody] PurchasePointRequest request)
         {

@@ -19,6 +19,27 @@ namespace SWallet.Repository.Services.Implements
         {
         }
 
+        public async Task<PointPurchaseHistory> GetPurchaseHistoryById(string Id)
+        {
+            var history = await _unitOfWork.GetRepository<PointPurchaseHistory>().SingleOrDefaultAsync(
+             selector: x => new PointPurchaseHistory
+             {
+                 Id = x.Id,
+                 PointPackageId = x.PointPackageId,
+                 Points = x.Points,
+                 Amount = x.Amount,
+                 PaymentId = x.PaymentId,
+                 PaymentStatus = x.PaymentStatus,
+                 CreatedDate = x.CreatedDate,
+                 UpdatedDate = x.UpdatedDate,
+                 EntityId = x.EntityId,
+                 EntityType = x.EntityType,
+
+             },
+             predicate: x => x.EntityId == Id);
+            return history;
+        }
+
         public async Task<PointPurchaseHistory> GetPurchaseHistoryByPaymentIdAsync(string paymentId)
         {
             var history = await _unitOfWork.GetRepository<PointPurchaseHistory>().SingleOrDefaultAsync(
