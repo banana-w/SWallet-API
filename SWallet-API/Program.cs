@@ -14,6 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
+
 builder.Services
     .AddServices(builder.Configuration)
     .AddJwtValidation(builder.Configuration);

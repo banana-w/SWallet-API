@@ -397,32 +397,50 @@ namespace SWallet.Repository.Services.Implements
         }
 
 
-        public async Task<List<StudentRanking>> GetRankingByStore(string storeId, int limit)
+        public async Task<List<StudentRanking>> GetRankingByBrand(string brandId, int limit)
         {
-            if (string.IsNullOrEmpty(storeId))
-                throw new ArgumentException("StoreId không được để trống", nameof(storeId));
+            if (string.IsNullOrEmpty(brandId))
+                throw new ArgumentException("BrandId không được để trống", nameof(brandId));
             if (limit <= 0)
                 throw new ArgumentException("Giới hạn phải lớn hơn 0", nameof(limit));
 
             try
             {
                 return await _dbContext.Students
-                    .Where(s => (bool)s.Status) // Lọc theo Status của Student
+                    .Where(s => (bool)s.Status // Lọc sinh viên có Status = true
+                        && s.Activities.Any(a => (bool)a.Status
+                            && a.VoucherItem != null
+                            && a.VoucherItem.CampaignDetail != null
+                            && a.VoucherItem.CampaignDetail.Campaign != null
+                            && a.VoucherItem.CampaignDetail.Campaign.BrandId.Equals(brandId))) // Thuộc brandId
                     .Include(s => s.Account)
-                    .OrderByDescending(s => s.TotalSpending) // Sắp xếp theo TotalSpending
-                    .Take(limit)
+                    .Include(s => s.Activities.Where(a => (bool)a.Status
+                        && a.VoucherItem != null
+                        && a.VoucherItem.CampaignDetail != null
+                        && a.VoucherItem.CampaignDetail.Campaign != null
+                        && a.VoucherItem.CampaignDetail.Campaign.BrandId.Equals(brandId)))
+                    .ThenInclude(a => a.ActivityTransactions.Where(at => (bool)at.Status)) // Bao gồm ActivityTransactions hợp lệ
                     .Select(s => new StudentRanking
                     {
                         Name = s.FullName,
                         Image = s.StudentCardFront,
-                        TotalSpending = s.TotalSpending,
-
+                        TotalSpending = s.Activities
+                            .Where(a => (bool)a.Status
+                                && a.VoucherItem != null
+                                && a.VoucherItem.CampaignDetail != null
+                                && a.VoucherItem.CampaignDetail.Campaign != null
+                                && a.VoucherItem.CampaignDetail.Campaign.BrandId.Equals(brandId))
+                            .SelectMany(a => a.ActivityTransactions)
+                            .Where(at => (bool)at.Status)
+                            .Sum(at => -at.Amount) // Chuyển Amount âm thành dương
                     })
+                    .OrderByDescending(s => s.TotalSpending) // Sắp xếp theo tổng chi tiêu (dương)
+                    .Take(limit) // Lấy số lượng giới hạn
                     .ToListAsync();
             }
             catch (Exception ex)
             {
-                throw new Exception($"Lỗi khi lấy danh sách xếp hạng sinh viên theo cửa hàng: {ex.Message}", ex);
+                throw new Exception($"Lỗi khi lấy danh sách xếp hạng sinh viên theo voucher của brand: {ex.Message}", ex);
             }
         }
 
