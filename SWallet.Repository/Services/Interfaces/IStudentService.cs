@@ -24,7 +24,7 @@ namespace SWallet.Repository.Services.Interfaces
 
         Task<List<Student>> GetRanking(int limit);
 
-        Task<List<StudentRanking>> GetRankingByStore(string storeId, int limit);
+        Task<List<StudentRanking>> GetRankingByBrand(string brandId, int limit);
 
         Task<long> CountStudentToday(DateOnly date);
 

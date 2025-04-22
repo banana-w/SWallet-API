@@ -315,22 +315,10 @@ namespace SWallet.Repository.Services.Implements
 
             if (role == "Quản trị viên")
             {
-                var admin = await _unitOfWork.GetRepository<Admin>().SingleOrDefaultAsync(
+                var admin = await _unitOfWork.GetRepository<Account>().SingleOrDefaultAsync(
                     selector: x => new AdminResponse
                     {
-                        Id = x.Id,
-                        AccountId = x.AccountId,
-                        UserName = x.Account.UserName,
-                        FullName = x.FullName,
-                        Phone = x.Account.Phone,
-                        Email = x.Account.Email,
-                        Avatar = x.Account.Avatar,
-                        FileName = x.Account.FileName,
-                        DateCreated = x.DateCreated,
-                        DateUpdated = x.DateUpdated,
-                        Description = x.Account.Description,
-                        State = x.State,
-                        Status = x.Status
+                        Id = x.Id
                     },
                     predicate: x => x.Id == id);
 
@@ -338,7 +326,7 @@ namespace SWallet.Repository.Services.Implements
                 {
                     if (type.Equals(typeof(Brand)))
                     {
-                        // Danh sách 10 thương hiệu tiêu nhiều đậu xanh nhất
+
                         var source = await brandService.GetRanking(10);
                         var grouped = source.GroupBy(r => r.TotalSpending)
                                             .OrderByDescending(g => g.Key)
@@ -357,7 +345,6 @@ namespace SWallet.Repository.Services.Implements
                     }
                     else if (type.Equals(typeof(Student)))
                     {
-                        // Danh sách 10 sinh viên tiêu nhiều đậu xanh nhất
                         var source = await studentService.GetRanking(10);
                         var grouped = source.GroupBy(r => r.TotalSpending)
                                             .OrderByDescending(g => g.Key)
@@ -377,6 +364,68 @@ namespace SWallet.Repository.Services.Implements
                     return result;
                 }
                 throw new InvalidParameterException("Không tìm thấy quản trị viên");
+            }
+            else if (role == "Thương hiệu")
+            {
+                try
+                {
+                    var brand = await _unitOfWork.GetRepository<Brand>().SingleOrDefaultAsync(
+                    selector: x => new BrandResponse
+                    {
+                        Id = x.Id,
+                        AccountId = x.AccountId,
+                    },
+                    predicate: x => x.Id == id);
+                    if (brand != null)
+                    {
+                        if (type.Equals(typeof(Campaign)))
+                        {
+                            var source = await campaignService.GetRanking(brand.Id, 10);
+                            var grouped = source.GroupBy(r => r.TotalSpending)
+                                                .OrderByDescending(g => g.Key)
+                                                .Select((g, index) => (group: g, rank: index + 1));
+                            result.AddRange(source.Select(r =>
+                            {
+                                var rank = grouped.First(g => g.group.Contains(r)).rank;
+                                return new RankingModel
+                                {
+                                    Rank = rank,
+                                    Name = r.CampaignName,
+                                    Image = r.Image,
+                                    Value = r.TotalSpending
+                                };
+                            }));
+                        }
+                        else if (type.Equals(typeof(Student)))
+                        {
+                            var source = await studentService.GetRankingByBrand(brand.Id, 10);
+                            var grouped = source.GroupBy(r => r.TotalSpending)
+                                                .OrderByDescending(g => g.Key)
+                                                .Select((g, index) => (group: g, rank: index + 1));
+                            result.AddRange(source.Select(r =>
+                            {
+                                var rank = grouped.First(g => g.group.Contains(r)).rank;
+                                return new RankingModel
+                                {
+                                    Rank = rank,
+                                    Name = r.Name,
+                                    Image = r.Image,
+                                    Value = r.TotalSpending
+                                };
+                            }));
+                        }
+                        return result;
+                    }
+                    throw new InvalidParameterException("Không tìm thấy cửa hàng");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error getting store");
+                    throw; // Hoặc throw custom exception
+                }
+
+
+
             }
             else if (role == "Cửa hàng")
             {
@@ -410,7 +459,7 @@ namespace SWallet.Repository.Services.Implements
                         }
                         else if (type.Equals(typeof(Student)))
                         {
-                            var source = await studentService.GetRankingByStore(store.Id.ToString(), 10);
+                            var source = await studentService.GetRankingByBrand(store.BrandId, 10);
                             var grouped = source.GroupBy(r => r.TotalSpending)
                                                 .OrderByDescending(g => g.Key)
                                                 .Select((g, index) => (group: g, rank: index + 1));
