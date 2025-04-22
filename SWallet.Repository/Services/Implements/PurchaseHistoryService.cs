@@ -40,7 +40,7 @@ namespace SWallet.Repository.Services.Implements
             return history;
         }
 
-        public async Task<PointPurchaseHistory> GetPurchaseHistoryByPaymentIdAsync(string paymentId)
+        public async Task<PointPurchaseHistory> GetPurchaseHistoryByPaymentIdAsync(long paymentId)
         {
             var history = await _unitOfWork.GetRepository<PointPurchaseHistory>().SingleOrDefaultAsync(
               selector: x => new PointPurchaseHistory
@@ -57,7 +57,7 @@ namespace SWallet.Repository.Services.Implements
                   EntityType = x.EntityType,
                  
               },
-              predicate: x => x.Id == paymentId);
+              predicate: x => x.PaymentId == paymentId);
             return history;
         }
 
