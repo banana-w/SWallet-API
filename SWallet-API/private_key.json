@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "fcmswallet",
+  "private_key_id": "0df7c2544f35830b16aaf973cd3669ece4746ee0",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCmgA6h/IW6Padq\nasUbhGlZ/YzI8tOQNhkM6WTPV8Iq3gohk3SYMBokBCA4yO+gpk7YlrsYXduZEtXl\nqoUmC6i0XHCSVpziX+624FnU/BqCFjsCCCNdkBrGL1prYrfyJtK8eM7GBuUc8rUB\n8XMxXgTMMlcDuo0w8430wFq7gIsbpAjjv8wwrAtCncj60U8Tea2iIIUfW99+1Rjq\ngHjO5idxywX2U9BbdInwn2hMBaNirnTNrmTvkqBJLa/saHUOi5hn9mY8GJOJvrd6\nU4WntYZOtXuRj1YgKB+3xye3GBscK+PMPp6QjakM1mpWt8lFOrBie1gVd6WfceCw\nmq1TNxOFAgMBAAECggEADV2oTw6jeZDreJp7mjrl7ihxfcwoeaIuHqA5zH9CAgjz\nDUD2EiWCY7PFFmni+qV/HNn0yP732vDtJNOsfqJe96OYEddMHswOsLWP4I4gXqME\nN6SJmkAwNgqlGovBMno1XpXgG3uANvOw3igQ1Dy06+N6orz+Cpjyo1wxrG2kPSKr\nv59X9OSNGMAYnDZ+KAfQOQ6gYyCaT0zxWmOB/zuquttP8dWggXc5q/oDOqwtrv1C\nZG7MYoebQKq5psd1zB0FMmLBJ5XeclTSXLbvQ/7Mxl9VROP2We8kpoINbKV+CelV\ndnRfgxxka4XA7IfYTaI08aXMNpW6PStHvSSVR/DQ/QKBgQDTw3vlcruorwJpGTRU\n9k7kfBqayRJMB0z7PZUraFDzJli/rSYmePXgcC0TlNm/fvB4+o7uHs03FkCCVZ25\nLYUoTil00/FEyXofJCt/THGAIu0r0bP3hswuKzKBvTB4/7VGXybCjCbes9M0ngRK\nYcidcESReGOzPLFD95rIJcFq5wKBgQDJSAQUeIZz7vseqXRga5vDBg+Tu/y4gHkM\nVh3XXUGoLV9bAgJ8VaMmf9RScZ3Vn8RW7lz6qwLtffYRPpDl2DoAmeA8FVVKKtH3\nli2rm+59uFsWXlTDq7qCkqEC4ffaMksktgrebTg+5HaofxlZWS2IXqQSpoVVRI7W\naasPcAWMswKBgBfq2lF99egFbDZGnHyEHUD9K1wUHbbslCtEN1bhv1LXH+r2OXra\n6ppg0RaHF1jjk3F2izIl1HPGVZ7i4J+LnqCAw3nofjWQs/RUd303OxKH31W1p6fr\nV6BXTKsOnSztZKIAGTab8b/xe4dT2ZQ1Gx19EqGDgW87CaJtktPMP949AoGAPj4A\n1Pu4SB18liy8ihx8nEBBjOOy8LL5u7DdpX13EjSFqjTi4+PvgbZByATOVAMFygQH\nyJQdYadz8j0wvYKx3QG4b5wBNeAr8a4FDW44v7PEpxQgjimKkVoaZDPQWy72QbHx\nhnqry/cGInC7O//xrpvljMblsEp1CSS/+xQfAzUCgYBus7pgAhWksxNlll3ph7hz\nEQGnk4Cyf61dzGI0vkJhiyxmcT09wKno/6cyx7WpNH7frsua+3wEVUDsB+fm8gP6\nx3HlH+KRJ/ai2l1IJfYXkh5JD7tbfByav/bQb/mJixzgycR1cUvR6ng4vI4x8LUO\nS5gtQMIe+Qr5ahH2dUsH3g==\n-----END PRIVATE KEY-----\n",
+  "client_email": "fcmswallet-owner@fcmswallet.iam.gserviceaccount.com",
+  "client_id": "117772042503759262075",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/fcmswallet-owner%40fcmswallet.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

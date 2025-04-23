@@ -14,5 +14,6 @@ namespace SWallet.Repository.Services.Interfaces
             (List<string> studentIds, List<string> brandIds, string? search, int page, int size);
 
         Task<WishlListModel> UpdateWishlist(WishListUpdateModel update);
+        Task<List<string>> GetWishlishBrandIdByStudentId(string studentId);
     }
 }

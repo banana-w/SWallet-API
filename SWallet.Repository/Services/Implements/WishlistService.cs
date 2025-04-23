@@ -101,6 +101,21 @@ namespace SWallet.Repository.Services.Implements
             return Expression.Lambda<Func<T, bool>>(body, parameter);
         }
 
+        public async Task<List<string>> GetWishlishBrandIdByStudentId(string studentId)
+        {
+            if (string.IsNullOrEmpty(studentId))
+            {
+                throw new ApiException("Student ID is required", 400, "BAD_REQUEST");
+            }
+            var wishlist = await _unitOfWork.GetRepository<Wishlist>()
+                .GetListAsync(predicate: w => w.StudentId == studentId);
+            if (wishlist == null || !wishlist.Any())
+            {
+                throw new ApiException("No wishlist found for the given student ID", 404, "NOT_FOUND");
+            }
+            return wishlist.Select(w => w.BrandId).ToList();
+        }
+
         public async Task<WishlListModel> UpdateWishlist(WishListUpdateModel update)
         {
             if (update == null || string.IsNullOrEmpty(update.StudentId) || string.IsNullOrEmpty(update.BrandId))

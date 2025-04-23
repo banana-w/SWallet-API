@@ -32,7 +32,7 @@ namespace SWallet.Repository.Services.Implements
             List<Claim> claims = new List<Claim>()
                 {
                     new Claim("Role", account.RoleName.ToString()),
-                    new Claim(ClaimTypes.NameIdentifier, account.Id.ToString())
+                    new Claim(ClaimTypes.NameIdentifier, account.Id)
                 };
 
             if (guidClaim != null) claims.Add(new Claim(guidClaim.Item1, guidClaim.Item2.ToString()));
