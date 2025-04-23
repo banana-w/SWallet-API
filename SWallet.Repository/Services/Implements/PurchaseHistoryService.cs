@@ -1,13 +1,16 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SWallet.Domain.Models;
+using SWallet.Domain.Paginate;
 using SWallet.Repository.Interfaces;
 using SWallet.Repository.Payload.ExceptionModels;
+using SWallet.Repository.Payload.Response.Brand;
 using SWallet.Repository.Payload.Response.Product;
 using SWallet.Repository.Services.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -17,6 +20,43 @@ namespace SWallet.Repository.Services.Implements
     {
         public PurchaseHistoryService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<PurchaseHistoryService> logger) : base(unitOfWork, logger)
         {
+        }
+
+        public async Task<IPaginate<PointPurchaseHistory>> GetHistoriesById(string searchName, int page, int size, string? id)
+        {
+            Expression<Func<PointPurchaseHistory, bool>> filterQuery;
+
+            // Kết hợp điều kiện lọc theo searchName và status
+            if (string.IsNullOrEmpty(searchName))
+            {
+                filterQuery = p => p.EntityId == id;
+            }
+            else
+            {
+                filterQuery = p => p.EntityId.Contains(searchName) && p.EntityId == id;
+            }
+
+            var areas = await _unitOfWork.GetRepository<PointPurchaseHistory>().GetPagingListAsync(
+                selector: x => new PointPurchaseHistory
+                {
+                    Id = x.Id,
+                    PointPackageId = x.PointPackageId,
+                    Points = x.Points,
+                    Amount = x.Amount,
+                    PaymentId = x.PaymentId,
+                    PaymentStatus = x.PaymentStatus,
+                    CreatedDate = x.CreatedDate,
+                    UpdatedDate = x.UpdatedDate,
+                    EntityId = x.EntityId,
+                    EntityType = x.EntityType,
+
+                },
+                predicate: filterQuery,
+                page: page,
+                size: size
+            );
+
+            return areas;
         }
 
         public async Task<PointPurchaseHistory> GetPurchaseHistoryById(string Id)

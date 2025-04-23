@@ -11,6 +11,8 @@ using SWallet.Repository.Payload.Request.PointPackage;
 using SWallet.Repository.Services.Interfaces;
 using SWallet.Repository.Services.Implements;
 using SWallet.Domain.Models;
+using SWallet.Domain.Paginate;
+using SWallet.Repository.Payload.Response.Brand;
 
 
 namespace SWallet_API.Controllers
@@ -38,6 +40,27 @@ namespace SWallet_API.Controllers
             _walletService = walletService;
             _brandService = brandService;
             _pointPurchaseHistoryService = pointPurchaseHistoryService;
+        }
+
+
+        [HttpGet("get-all-history-by-id")]
+        public async Task<ActionResult<IPaginate<BrandResponse>>> GetAllHistoriesById(
+            string searchName = "", int page = 1, int size = 10, string id = "")
+        {
+            try
+            {
+
+                var history = await _pointPurchaseHistoryService.GetHistoriesById(searchName, page, size, id);
+                return Ok(history);
+            }
+            catch (ApiException ex)
+            {
+                return StatusCode(ex.StatusCode, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error getting histories");
+            }
         }
 
 
