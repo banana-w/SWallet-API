@@ -1,6 +1,9 @@
 ﻿using CloudinaryDotNet;
+using FirebaseAdmin.Messaging;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using SWallet.Domain.Models;
 using SWallet.Domain.Paginate;
 using SWallet.Repository.Enums;
@@ -27,10 +30,13 @@ namespace SWallet.Repository.Services.Implements
         private const decimal PointBackRate = 0.9M;
         private readonly IWalletService _walletService;
         private readonly IVoucherItemService _voucherItemService;
-        public ActivityService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<ActivityService> logger, IWalletService walletService, IVoucherItemService voucherItemService) : base(unitOfWork, logger)
+        private readonly IFirebaseService _firebaseService;
+        public ActivityService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<ActivityService> logger, IWalletService walletService, 
+            IVoucherItemService voucherItemService, IFirebaseService firebaseService, IHttpContextAccessor httpContextAccessor) : base(unitOfWork, logger, httpContextAccessor)
         {
             _walletService = walletService;
             _voucherItemService = voucherItemService;
+            _firebaseService = firebaseService;
         }
 
         public async Task<IPaginate<VoucherStorageResponse>> GetRedeemedVouchersByStudentAsync(string search, string studentId, bool? isUsed, int page, int size)
@@ -338,17 +344,38 @@ namespace SWallet.Repository.Services.Implements
 
 
                 // Thêm ActivityTransaction cho hành động "Use"
-                var activityTransaction =
-
-                await AddActivityTransactionAsync(
+                var activityTransaction = await AddActivityTransactionAsync(
                     useActivity.Id,
                     null,
                     0,
                     $"Mã: {voucherItem.Id} \nSử dụng tại cửa hàng {storeName}"
                 );
                 // Commit transaction
-                await _unitOfWork.CommitAsync();
                 await _unitOfWork.CommitTransactionAsync();
+
+                var topic = GetUsernameFromJwt();
+
+                if (activityTransaction != null && !topic.IsNullOrEmpty())
+                {
+                    // Push notification to mobile app
+                    _firebaseService.PushNotificationToStudent(new Message
+                    {
+                        Data = new Dictionary<string, string>()
+                                    {
+                                        { "brandId", "" },
+                                        { "campaignId", "" },
+                                        { "image", "" },
+                                    },
+                        //Token = registrationToken,
+                        Topic = topic,
+                        Notification = new Notification()
+                        {
+                            Title = storeName + " đã quét thành công khuyến mãi \"" + voucherItem.Voucher.VoucherName + "\"",
+                            Body = voucherItem.Voucher.VoucherName + "\" được sử dụng tại cửa hàng "
+                            + storeName,
+                        }
+                    });
+                }
 
                 return new UseVoucherResponse
                 {
@@ -413,7 +440,7 @@ namespace SWallet.Repository.Services.Implements
 
             Expression<Func<ChallengeTransaction, bool>> challengeFilter = x =>
                 x.WalletId == walletId
-                && (string.IsNullOrEmpty(search) || (x.StudentChallenge != null && x.StudentChallenge.Challenge != null)) 
+                && (string.IsNullOrEmpty(search) || (x.StudentChallenge != null && x.StudentChallenge.Challenge != null))
                 && x.Type != 0;
 
             // Handle based on type

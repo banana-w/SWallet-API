@@ -87,5 +87,31 @@ namespace SWallet.API.Controllers
                 });
             }
         }
+
+        [HttpGet("getWishlishBrand/{studentId}")]
+        public async Task<IActionResult> GetWishlishBrand(string studentId)
+        {
+            try
+            {
+                var wishlist = await _wishlistService.GetWishlishBrandIdByStudentId(studentId);
+                return Ok(wishlist);
+            }
+            catch (ApiException ex)
+            {
+                return StatusCode(ex.StatusCode, new
+                {
+                    error = ex.Message,
+                    code = ex.ErrorCode
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    error = "An unexpected error occurred",
+                    detail = ex.Message
+                });
+            }
+        }
     }
 }
