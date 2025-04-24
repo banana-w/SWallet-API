@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static SWallet.Repository.Services.Implements.QRCodeService;
 
 namespace SWallet.Repository.Services.Interfaces
 {
@@ -17,5 +18,7 @@ namespace SWallet.Repository.Services.Interfaces
         Task<ScanQRCodeResponse> ScanQRCode(ScanQRCodeRequest request);
 
         Task<IPaginate<QrCodeHistoryResponse>> GetQrHistoryByLectureId(string lectureId, string searchName, int page, int size);
+
+        Task<IPaginate<QRCodeUsageHistoryResponse>> GetQRCodeUsageHistory(string lecturerId, string searchName , int page, int size );
     }
 }

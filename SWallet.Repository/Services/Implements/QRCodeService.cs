@@ -41,6 +41,78 @@ namespace SWallet.Repository.Services.Implements
             _walletService = walletService;
         }
 
+        public async Task<IPaginate<QRCodeUsageHistoryResponse>> GetQRCodeUsageHistory(
+        string lecturerId,
+        string searchName,
+        int page,
+        int size)
+        {
+            if (string.IsNullOrEmpty(lecturerId))
+            {
+                throw new ApiException("LecturerId cannot be empty", 400, "BAD_REQUEST");
+            }
+
+            // Lọc các bản ghi QrcodeUsage theo lecturerId trong QrcodeJson
+            Expression<Func<QrcodeUsage, bool>> filterQuery = u =>
+                u.QrcodeJson.Contains($"\"LecturerId\":\"{lecturerId}\"");
+
+            var qrCodeUsageRepository = _unitOfWork.GetRepository<QrcodeUsage>();
+            var usages = await qrCodeUsageRepository.GetPagingListAsync(
+                selector: x => x, // Lấy toàn bộ QrcodeUsage trước, xử lý sau
+                predicate: filterQuery,
+                orderBy: q => q.OrderByDescending(u => u.UsedAt),
+                page: page,
+                size: size
+            );
+
+            // Chuyển đổi sang QRCodeUsageHistoryResponse
+            var history = new List<QRCodeUsageHistoryResponse>();
+            foreach (var usage in usages.Items)
+            {
+                GenerateQRCodeRequest qrCodeData;
+                try
+                {
+                    qrCodeData = JsonConvert.DeserializeObject<GenerateQRCodeRequest>(usage.QrcodeJson);
+                }
+                catch (JsonException ex)
+                {
+                    _logger.LogWarning("Failed to deserialize QRCode JSON: {QRCodeJson}", usage.QrcodeJson);
+                    continue;
+                }
+
+                var student = await _studentService.GetStudentAsync(usage.StudentId);
+                if (student == null)
+                {
+                    _logger.LogWarning("Student not found: {StudentId}", usage.StudentId);
+                    continue;
+                }
+
+                // Lọc theo tên học sinh nếu có searchName
+                if (!string.IsNullOrEmpty(searchName) &&
+                    !student.FullName.ToLower().Contains(searchName.ToLower()))
+                {
+                    continue;
+                }
+
+                history.Add(new QRCodeUsageHistoryResponse
+                {
+                    StudentId = usage.StudentId,
+                    StudentName = student.FullName,
+                    PointsTransferred = qrCodeData.Points,
+                    UsedAt = (DateTime)usage.UsedAt
+                });
+            }
+
+            return new Paginate<QRCodeUsageHistoryResponse>(
+        history, // source
+        page,    // page
+        size,    // size
+        1        // firstPage, thường là 1
+    );
+
+
+        }
+
         public async Task<QRCodeResponse> GenerateQRCode(GenerateQRCodeRequest request)
         {
             // Kiểm tra request có null không
@@ -269,6 +341,14 @@ namespace SWallet.Repository.Services.Implements
                 size: size);
 
             return history;
+        }
+
+        public class QRCodeUsageHistoryResponse
+        {
+            public string StudentId { get; set; }
+            public string StudentName { get; set; }
+            public int PointsTransferred { get; set; }
+            public DateTime UsedAt { get; set; }
         }
     }
 }
