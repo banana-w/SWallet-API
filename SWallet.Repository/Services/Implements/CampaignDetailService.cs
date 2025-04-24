@@ -135,9 +135,9 @@ namespace SWallet.Repository.Services.Implements
                     VoucherName = x.Voucher.VoucherName,
                     VoucherImage = x.Voucher.Image,
                     CampaignName = x.Campaign.CampaignName,
-                    QuantityInStock = x.VoucherItems.Count(v => v.IsLocked == true && v.IsBought != true && v.IsUsed != true),
-                    QuantityInBought = x.VoucherItems.Count(v => v.IsLocked == true && v.IsBought == true),
-                    QuantityInUsed = x.VoucherItems.Count(v => v.IsLocked == true && v.IsUsed == true)
+                    QuantityInStock = x.VoucherItems.Count(v => v.IsLocked != true && v.IsBought != true && v.IsUsed != true),
+                    QuantityInBought = x.VoucherItems.Count(v =>  v.IsBought == true),
+                    QuantityInUsed = x.VoucherItems.Count(v => v.IsBought == true && v.IsUsed == true)
                 },
                 predicate: filterQuery,
                 include: source => source
