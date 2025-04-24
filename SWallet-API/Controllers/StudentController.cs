@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using FirebaseAdmin.Messaging;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SWallet.Domain.Paginate;
@@ -15,10 +16,12 @@ namespace SWallet_API.Controllers
     public class StudentController : ControllerBase
     {
         private readonly IStudentService _studentService;
+        private readonly IFirebaseService _firebaseService;
 
-        public StudentController(IStudentService studentService)
+        public StudentController(IStudentService studentService, IFirebaseService firebaseService)
         {
             _studentService = studentService;
+            _firebaseService = firebaseService;
         }
         [HttpGet]
         [ProducesResponseType(typeof(IPaginate<StudentResponse>), StatusCodes.Status200OK)]
@@ -122,6 +125,30 @@ namespace SWallet_API.Controllers
                 // Xử lý lỗi server
                 return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while processing your request.", error = ex.Message });
             }
+        }
+
+        [HttpGet("Testing")]
+        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+        [ProducesDefaultResponseType(typeof(ErrorResponse))]
+        public async Task<IActionResult> Testing(string id)
+        {
+            var result = _firebaseService.PushNotificationToStudent(new Message
+            {
+                Data = new Dictionary<string, string>()
+                            {
+                                { "brandId", ""},
+                                { "campaignId", ""},
+                                { "image", "" },
+                            },
+                //Token = registrationToken,
+                Topic = id,
+                Notification = new Notification()
+                {
+                    Title =  " tạo chiến dịch mới!",
+                    Body = "Chiến dịch "
+                }
+            });
+            return Ok();
         }
     }
 }

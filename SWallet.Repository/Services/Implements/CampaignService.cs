@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using CloudinaryDotNet.Core;
+using FirebaseAdmin.Messaging;
 using Microsoft.AspNetCore.Builder.Extensions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -31,6 +32,7 @@ namespace SWallet.Repository.Services.Implements
         private readonly IVoucherItemService _voucherItemService;
         private readonly IWalletService _walletService;
         private readonly SwalletDbContext _swalletDB;
+        private readonly IFirebaseService _firebaseService;
 
         public record ItemIndex
         {
@@ -38,12 +40,14 @@ namespace SWallet.Repository.Services.Implements
             public int? ToIndex { get; set; }
         }
 
-        public CampaignService(IUnitOfWork<SwalletDbContext> unitOfWork, SwalletDbContext swalletDB , ILogger<CampaignService> logger, ICloudinaryService cloudinaryService, IWalletService walletService,IVoucherItemService voucherItemService, IHttpContextAccessor httpContextAccessor) : base(unitOfWork, logger, httpContextAccessor)
+        public CampaignService(IUnitOfWork<SwalletDbContext> unitOfWork, SwalletDbContext swalletDB , ILogger<CampaignService> logger,
+            ICloudinaryService cloudinaryService, IWalletService walletService,IVoucherItemService voucherItemService, IFirebaseService firebaseService, IHttpContextAccessor httpContextAccessor) : base(unitOfWork, logger, httpContextAccessor)
         {
             _cloudinaryService = cloudinaryService;
             _voucherItemService = voucherItemService;
             _swalletDB = swalletDB;
             _walletService = walletService;
+            _firebaseService = firebaseService;
 
             var config = new MapperConfiguration(cfg =>
             {
@@ -310,6 +314,26 @@ namespace SWallet.Repository.Services.Implements
                 // Commit transaction
                 await _unitOfWork.CommitAsync();
                 await _unitOfWork.CommitTransactionAsync();
+
+
+                 _firebaseService.PushNotificationToStudent(new Message
+                {
+                    Data = new Dictionary<string, string>()
+                    {
+                        { "brandId", newCampaign.BrandId },
+                        { "campaignId", newCampaign.Id },
+                        { "image", newCampaign.Image },
+                    },
+                    //Token = registrationToken,
+                    Topic = newCampaign.BrandId,
+                    Notification = new Notification()
+                    {
+                        Title = newCampaign.Brand.BrandName + " tạo chiến dịch mới!",
+                        Body = "Chiến dịch " + newCampaign.CampaignName,
+                        ImageUrl = newCampaign.Image
+                    }
+                });
+
 
                 return new CampaignResponse
                 {
