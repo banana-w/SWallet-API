@@ -18,6 +18,8 @@ namespace SWallet.Repository.Payload.Response.Wallet
 
         public string CampusId { get; set; } = null!;
 
+        public string LecturerId { get; set; } = null!;
+
         public int? Type { get; set; }
 
         public decimal? Balance { get; set; }
