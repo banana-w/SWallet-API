@@ -108,10 +108,25 @@ namespace SWallet.Repository.Services.Implements
                 throw new ApiException("Student ID is required", 400, "BAD_REQUEST");
             }
             var wishlist = await _unitOfWork.GetRepository<Wishlist>()
-                .GetListAsync(predicate: w => w.StudentId == studentId);
+                .GetListAsync(predicate: w => w.StudentId == studentId && w.Status == true);
             if (wishlist == null || !wishlist.Any())
             {
                 throw new ApiException("No wishlist found for the given student ID", 404, "NOT_FOUND");
+            }
+            return wishlist.Select(w => w.BrandId).ToList();
+        }
+
+        public async Task<List<string>> GetUnWishlishBrandIdByStudentId(string studentId)
+        {
+            if (string.IsNullOrEmpty(studentId))
+            {
+                throw new ApiException("Student ID is required", 400, "BAD_REQUEST");
+            }
+            var wishlist = await _unitOfWork.GetRepository<Wishlist>()
+                .GetListAsync(predicate: w => w.StudentId == studentId && w.Status == false);
+            if (wishlist == null || !wishlist.Any())
+            {
+                throw new ApiException("No unWishlist found for the given student ID", 404, "NOT_FOUND");
             }
             return wishlist.Select(w => w.BrandId).ToList();
         }
