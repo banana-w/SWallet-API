@@ -353,7 +353,13 @@ namespace SWallet.Repository.Services.Implements
                 // Commit transaction
                 await _unitOfWork.CommitTransactionAsync();
 
-                var topic = GetUsernameFromJwt();
+                var accIdStu = await _unitOfWork.GetRepository<Student>()
+                    .SingleOrDefaultAsync(
+                        selector: x => x.AccountId,
+                        predicate: x => x.Id == request.StudentId
+                    );
+
+                var topic = accIdStu;
 
                 if (activityTransaction != null && !topic.IsNullOrEmpty())
                 {
