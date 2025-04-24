@@ -259,7 +259,18 @@ namespace SWallet.Repository.Services.Implements
                 if (isSuccess)
                 {
                     var campus = new List<string> { campusId };
-                    await _lecturerService.CreateCampusLecture(campus, lecturerReq, ac.Id);
+                    var lecture = await _lecturerService.CreateCampusLecture(campus, lecturerReq, ac.Id);
+
+
+                    await _walletService.AddWallet(new WalletRequest
+                    {
+                        LecturerId = lecture.Id,
+                        Type = (int)WalletType.Green,
+                        Balance = 0,
+                        Description = "Lecturer Wallet",
+                        State = true
+                    });
+
 
                     await _unitOfWork.CommitTransactionAsync();
                     return mapper.Map<AccountResponse>(ac);
