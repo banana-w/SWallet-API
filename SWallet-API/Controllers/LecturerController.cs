@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using SWallet.Domain.Models;
 using SWallet.Domain.Paginate;
+using SWallet.Repository.Payload.ExceptionModels;
 using SWallet.Repository.Payload.Request.Account;
 using SWallet.Repository.Payload.Request.Brand;
 using SWallet.Repository.Payload.Request.QRCodeRequest;
@@ -10,6 +12,7 @@ using SWallet.Repository.Payload.Response.QRCodeResponse;
 using SWallet.Repository.Payload.Response.Store;
 using SWallet.Repository.Services.Implements;
 using SWallet.Repository.Services.Interfaces;
+using static SWallet.Repository.Services.Implements.QRCodeService;
 
 namespace SWallet_API.Controllers
 {
@@ -20,7 +23,7 @@ namespace SWallet_API.Controllers
         private readonly ILecturerService _lecturerService;
         private readonly ILogger<LecturerController> _logger;
         private readonly IQRCodeService _qrCodeService;
-        
+
 
         public LecturerController(ILecturerService lecturerService, ILogger<LecturerController> logger, IQRCodeService qrCodeService)
         {
@@ -44,8 +47,35 @@ namespace SWallet_API.Controllers
         //    }
         //}
 
+        [HttpGet("lecturer/{lecturerId}/qr-code-usage-history")]
+        public async Task<ActionResult<IPaginate<QRCodeUsageHistoryResponse>>> GetQRCodeUsageHistory(
+        string lecturerId,
+        [FromQuery] string searchName = "",
+        [FromQuery] int page = 1,
+        [FromQuery] int size = 10)
+        {
+            try
+            {
+                var result = await _qrCodeService.GetQRCodeUsageHistory(lecturerId, searchName, page, size);
+                if (result == null || !result.Items.Any())
+                {
+                    return NotFound("Không tìm thấy lịch sử quét mã QR của giảng viên này");
+                }
+                return Ok(result);
+            }
+            catch (ApiException ex)
+            {
+                return StatusCode(ex.StatusCode, new { ex.Message, ex.ErrorCode });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { Message = "Internal server error", ErrorCode = "INTERNAL_SERVER_ERROR" });
+            }
+        }
+
+
         [HttpPost("create-campus-lecture")]
-        public async Task<ActionResult<LecturerResponse>> CreateCampusLecturer([FromQuery]List<string> campusIds, CreateLecturerModel creation, string accountId)
+        public async Task<ActionResult<LecturerResponse>> CreateCampusLecturer([FromQuery] List<string> campusIds, CreateLecturerModel creation, string accountId)
         {
             try
             {
@@ -161,6 +191,7 @@ namespace SWallet_API.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, "Error updating lecturer");
             }
         }
+
 
     }
 }
