@@ -1,12 +1,11 @@
 ﻿using AutoMapper;
-using CloudinaryDotNet.Core;
 using FirebaseAdmin.Messaging;
-using Microsoft.AspNetCore.Builder.Extensions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SWallet.Domain.Models;
 using SWallet.Domain.Paginate;
+using SWallet.Repository.Enums;
 using SWallet.Repository.Interfaces;
 using SWallet.Repository.Payload.ExceptionModels;
 using SWallet.Repository.Payload.Request.Campaign;
@@ -15,13 +14,7 @@ using SWallet.Repository.Payload.Response.Campaign;
 using SWallet.Repository.Payload.Response.Store;
 using SWallet.Repository.Payload.Response.Voucher;
 using SWallet.Repository.Services.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
-using static Org.BouncyCastle.Asn1.Cmp.Challenge;
 
 namespace SWallet.Repository.Services.Implements
 {
@@ -87,17 +80,13 @@ namespace SWallet.Repository.Services.Implements
             mapper = new Mapper(config);
         }
 
-
-        
-
-
         public long CountCampaign()
         {
             long count = 0;
             try
             {
                 var db = _swalletDB;
-                count = db.Campaigns.Where(c => (bool)c.Status).Count();
+                count = db.Campaigns.Where(c => c.Status == (int)CampaignStatus.Active).Count();
             }
             catch (Exception ex)
             {
@@ -105,7 +94,6 @@ namespace SWallet.Repository.Services.Implements
             }
             return count;
         }
-
 
         public async Task<CampaignResponse> UpdateCampaign(string id, UpdateCampaignModel campaign)
         {
@@ -218,7 +206,7 @@ namespace SWallet.Repository.Services.Implements
                     DateCreated = DateTime.Now,
                     DateUpdated = DateTime.Now,
                     Description = campaignModel.Description,
-                    Status = true,
+                    Status = (int)CampaignStatus.Pending,
                 };
 
                 // Thêm Campaign vào DbContext
@@ -315,26 +303,6 @@ namespace SWallet.Repository.Services.Implements
                 await _unitOfWork.CommitAsync();
                 await _unitOfWork.CommitTransactionAsync();
 
-
-                 _firebaseService.PushNotificationToStudent(new Message
-                {
-                    Data = new Dictionary<string, string>()
-                    {
-                        { "brandId", newCampaign.BrandId },
-                        { "campaignId", newCampaign.Id },
-                        { "image", newCampaign.Image },
-                    },
-                    //Token = registrationToken,
-                    Topic = newCampaign.BrandId,
-                    Notification = new Notification()
-                    {
-                        Title = newCampaign.Brand.BrandName + " tạo chiến dịch mới!",
-                        Body = "Chiến dịch " + newCampaign.CampaignName,
-                        ImageUrl = newCampaign.Image
-                    }
-                });
-
-
                 return new CampaignResponse
                 {
                     Id = newCampaign.Id,
@@ -375,198 +343,126 @@ namespace SWallet.Repository.Services.Implements
             }
         }
 
-        //public async Task<CampaignResponse> CreateCampaign(CreateCampaignModel campaignModel, List<CreateCampaignDetailModel> campaignDetails)
-        //{
-        //    await _unitOfWork.BeginTransactionAsync();
-        //    try
-        //    {
-        //        // Kiểm tra BrandId
-        //        var brandExists = await _unitOfWork.GetRepository<Brand>().SingleOrDefaultAsync(predicate: b => b.Id == campaignModel.BrandId);
-        //        if (brandExists == null)
-        //        {
-        //            throw new ApiException($"Brand with ID {campaignModel.BrandId} not found.", 400, "BAD_REQUEST");
-        //        }
+        public async Task<CampaignResponse> ApproveOrRejectCampaign(string campaignId, bool isApproved, string? rejectionReason = null)
+        {
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                var campaign = await _unitOfWork.GetRepository<Campaign>()
+                    .SingleOrDefaultAsync(
+                        predicate: x => x.Id == campaignId && x.Status == (int)CampaignStatus.Pending,
+                        include: x => x.Include(x => x.Brand).Include(x => x.Type)
+                    );
 
-        //        // Kiểm tra TypeId
-        //        var typeExists = await _unitOfWork.GetRepository<CampaignType>().SingleOrDefaultAsync(predicate: b => b.Id == campaignModel.TypeId);
-        //        if (typeExists == null)
-        //        {
-        //            throw new ApiException($"CampaignType with ID {campaignModel.TypeId} not found.", 400, "BAD_REQUEST");
-        //        }
+                if (campaign == null)
+                {
+                    throw new ApiException("Campaign not found or not in pending status", 404, "NOT_FOUND");
+                }
 
+                if (isApproved)
+                {
+                    // Approve campaign
+                    campaign.Status = (int)CampaignStatus.Active;
+                    campaign.DateUpdated = DateTime.Now;
+                }
+                else
+                {
+                    // Reject campaign
+                    if (string.IsNullOrEmpty(rejectionReason))
+                    {
+                        throw new ApiException("Rejection reason is required", 400, "BAD_REQUEST");
+                    }
 
-        //        decimal totalVoucherCost = 0m;
-        //        foreach (var cd in campaignDetails)
-        //        {
-        //            var voucher = await GetVoucherByIdAsync(cd.VoucherId);
-        //            if (voucher == null)
-        //            {
-        //                throw new ApiException($"Voucher with ID {cd.VoucherId} not found.", 400, "BAD_REQUEST");
-        //            }
-        //            totalVoucherCost += voucher.Price.GetValueOrDefault(0m) * cd.Quantity.GetValueOrDefault(0); // Xử lý cả hai nullable
-        //        }
+                    campaign.Status = (int)CampaignStatus.Rejected;
+                    campaign.Description = $"Rejected: {rejectionReason}";
+                    campaign.DateUpdated = DateTime.Now;
 
-        //        // Kiểm tra số dư trong ví của Brand (giả sử có một phương thức GetBrandWalletBalanceAsync)
-        //        var brandWalletBalance = await _walletService.GetWalletByBrandId(campaignModel.BrandId, 1); // Cần triển khai phương thức này
-        //        if (brandWalletBalance.Balance < totalVoucherCost)
-        //        {
-        //            throw new ApiException("Balance not enough for those quanity of vouchers", 400, "BAD_REQUEST");
-        //        }
+                    // Refund wallet balance
+                    var campaignDetails = await _unitOfWork.GetRepository<CampaignDetail>()
+                        .GetListAsync(predicate: x => x.CampaignId == campaignId);
 
-        //        var newCampaign = new Campaign
-        //        {
-        //            Id = Ulid.NewUlid().ToString(),
-        //            BrandId = campaignModel.BrandId,
-        //            TypeId = campaignModel.TypeId,
-        //            CampaignName = campaignModel.CampaignName,
-        //            Condition = campaignModel.Condition,
-        //            Link = campaignModel.Link,
-        //            File = "default_value_or_empty_string",
-        //            Image = "string",
-        //            ImageName = "string",
-        //            FileName = "default_value_or_empty_string",
-        //            StartOn = campaignModel.StartOn,
-        //            EndOn = campaignModel.EndOn,
-        //            Duration = ((DateOnly)campaignModel.EndOn).DayNumber - ((DateOnly)campaignModel.StartOn).DayNumber + 1,
-        //            TotalIncome = campaignModel.TotalIncome,
-        //            TotalSpending = totalVoucherCost, // Cập nhật TotalSpending bằng tổng chi phí voucher
-        //            DateCreated = DateTime.Now,
-        //            DateUpdated = DateTime.Now,
-        //            Description = campaignModel.Description,
-        //            Status = true,
-        //        };
+                    decimal totalRefund = campaignDetails
+                        .Sum(cd => cd.Price.GetValueOrDefault(0m) * cd.Quantity.GetValueOrDefault(0));
 
-        //        // Thêm Campaign vào DbContext
-        //        await _unitOfWork.GetRepository<Campaign>().InsertAsync(newCampaign);
+                    var brandWallet = await _walletService.GetWalletByBrandId(campaign.BrandId, 1);
+                    var refundSuccess = await _walletService.UpdateWallet(
+                        brandWallet.Id,
+                        (decimal)(brandWallet.Balance + totalRefund)
+                    );
 
-        //        // Thêm CampaignStore
-        //        foreach (var storeId in campaignModel.StoreIds)
-        //        {
-        //            var storeExists = await _unitOfWork.GetRepository<Store>().AnyAsync(s => s.Id == storeId);
-        //            if (!storeExists)
-        //            {
-        //                throw new ApiException($"Store with ID {storeId} not found.", 400, "BAD_REQUEST");
-        //            }
+                    if (refundSuccess == null)
+                    {
+                        throw new ApiException("Failed to refund wallet balance", 400, "BAD_REQUEST");
+                    }
 
-        //            var campaignStore = new CampaignStore
-        //            {
-        //                Id = Ulid.NewUlid().ToString(),
-        //                CampaignId = newCampaign.Id,
-        //                StoreId = storeId,
-        //                Description = "Campaign Store",
-        //                Status = true
-        //            };
+                    // Update brand total spending
+                    var brand = await _unitOfWork.GetRepository<Brand>()
+                        .SingleOrDefaultAsync(predicate: b => b.Id == campaign.BrandId);
+                    brand.TotalSpending = (brand.TotalSpending ?? 0m) - totalRefund;
+                    _unitOfWork.GetRepository<Brand>().UpdateAsync(brand);
+                }
 
-        //            newCampaign.CampaignStores.Add(campaignStore);
-        //        }
+                _unitOfWork.GetRepository<Campaign>().UpdateAsync(campaign);
+                await _unitOfWork.CommitAsync();
+                await _unitOfWork.CommitTransactionAsync();
 
-        //        // Thêm CampaignDetail
-        //        foreach (var cd in campaignDetails)
-        //        {
-        //            var voucher = await GetVoucherByIdAsync(cd.VoucherId); // Đã kiểm tra ở trên, không cần kiểm tra lại
-        //            var campaignDetail = new CampaignDetail
-        //            {
-        //                Id = Ulid.NewUlid().ToString(),
-        //                VoucherId = cd.VoucherId,
-        //                Price = voucher.Price,
-        //                Rate = voucher.Rate,
-        //                Quantity = cd.Quantity,
-        //                FromIndex = cd.FromIndex,
-        //                ToIndex = 10,
-        //                DateCreated = DateTime.UtcNow,
-        //                DateUpdated = DateTime.UtcNow,
-        //                Description = cd.Description,
-        //                State = cd.State,
-        //                Status = true
-        //            };
+                if (isApproved)
+                {
+                    // Send notification to wishlist subscribers
+                    _firebaseService.PushNotificationToStudent(new Message
+                    {
+                        Data = new Dictionary<string, string>()
+                        {
+                            { "brandId", campaign.BrandId },
+                            { "campaignId", campaign.Id },
+                            { "image", campaign.Image },
+                        },
+                        Topic = campaign.BrandId,
+                        Notification = new Notification()
+                        {
+                            Title = campaign.Brand.BrandName + " tạo chiến dịch mới!",
+                            Body = "Chiến dịch " + campaign.CampaignName,
+                            ImageUrl = campaign.Image
+                        }
+                    });
+                }
 
-        //            newCampaign.CampaignDetails.Add(campaignDetail);
+                return new CampaignResponse
+                {
+                    Id = campaign.Id,
+                    BrandId = campaign.BrandId,
+                    BrandName = campaign.Brand.BrandName,
+                    BrandAcronym = campaign.Brand.Acronym,
+                    TypeId = campaign.TypeId,
+                    TypeName = campaign.Type.TypeName,
+                    CampaignName = campaign.CampaignName,
+                    Image = campaign.Image,
+                    ImageName = campaign.ImageName,
+                    Condition = campaign.Condition,
+                    Link = campaign.Link,
+                    StartOn = campaign.StartOn,
+                    EndOn = campaign.EndOn,
+                    Duration = campaign.Duration,
+                    TotalIncome = campaign.TotalIncome,
+                    TotalSpending = campaign.TotalSpending,
+                    DateCreated = campaign.DateCreated,
+                    DateUpdated = campaign.DateUpdated,
+                    Description = campaign.Description,
+                    Status = campaign.Status
+                };
+            }
+            catch (ApiException ex)
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
+            catch (Exception ex)
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw new ApiException("Failed to process campaign approval/rejection", 500, "INTERNAL_SERVER_ERROR");
+            }
+        }
 
-        //            var isSuccess = await _unitOfWork.CommitAsync() > 0;
-        //            if (!isSuccess)
-        //            {
-        //                throw new ApiException("Create CampaignDetail Fail", 400, "BAD_REQUEST");
-        //            }
-
-        //            var voucherItemSuccess = await _voucherItemService.GenerateVoucherItemsAsync(new VoucherItemRequest
-        //            {
-        //                VoucherId = cd.VoucherId,
-        //                CampaignDetailId = campaignDetail.Id,
-        //                Quantity = (int)cd.Quantity,
-        //                ValidOn = campaignModel.StartOn,
-        //                ExpireOn = campaignModel.EndOn
-        //            });
-
-        //            if (!voucherItemSuccess)
-        //            {
-        //                throw new ApiException("Generate VoucherItem Fail", 400, "BAD_REQUEST");
-        //            }
-        //        }
-
-        //        // Upload hình ảnh
-        //        var imageUri = string.Empty;
-        //        if (campaignModel.Image != null && campaignModel.Image.Length > 0)
-        //        {
-        //            var uploadResult = await _cloudinaryService.UploadImageAsync(campaignModel.Image);
-        //            imageUri = uploadResult.SecureUrl.AbsoluteUri;
-        //            newCampaign.Image = imageUri;
-        //            newCampaign.ImageName = !string.IsNullOrEmpty(imageUri)
-        //                ? imageUri.Split('/')[^1]
-        //                : "default_cover.jpg";
-        //        }
-
-
-
-        //        var deductSuccess = await _walletService.UpdateWallet(brandWalletBalance.Id, (decimal)(brandWalletBalance.Balance - totalVoucherCost));
-
-        //        if (deductSuccess == null)
-        //        {
-        //            throw new ApiException("Failed to deduct balance from Brand wallet", 400, "BAD_REQUEST");
-        //        }
-
-        //        // Commit transaction
-        //        await _unitOfWork.CommitAsync();
-        //        await _unitOfWork.CommitTransactionAsync();
-
-        //        return new CampaignResponse
-        //        {
-        //            Id = newCampaign.Id,
-        //            BrandId = newCampaign.BrandId,
-        //            BrandAcronym = brandExists.Acronym,
-        //            BrandName = brandExists.BrandName,
-        //            TypeId = newCampaign.TypeId,
-        //            TypeName = typeExists.TypeName,
-        //            CampaignName = newCampaign.CampaignName,
-        //            Image = newCampaign.Image,
-        //            ImageName = newCampaign.ImageName,
-        //            File = newCampaign.File,
-        //            FileName = newCampaign.FileName,
-        //            Condition = newCampaign.Condition,
-        //            Link = newCampaign.Link,
-        //            StartOn = newCampaign.StartOn,
-        //            EndOn = newCampaign.EndOn,
-        //            Duration = newCampaign.Duration,
-        //            TotalIncome = newCampaign.TotalIncome,
-        //            TotalSpending = newCampaign.TotalSpending,
-        //            DateCreated = newCampaign.DateCreated,
-        //            DateUpdated = newCampaign.DateUpdated,
-        //            Description = newCampaign.Description,
-        //            Status = newCampaign.Status
-        //        };
-        //    }
-        //    catch (ApiException ex)
-        //    {
-        //        await _unitOfWork.RollbackTransactionAsync();
-        //        Console.WriteLine($"API Exception: {ex.Message}, Status Code: {ex.StatusCode}, Error Code: {ex.ErrorCode}");
-        //        throw;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        await _unitOfWork.RollbackTransactionAsync();
-        //        Console.WriteLine($"Exception: {ex.Message}, Stack Trace: {ex.StackTrace}");
-        //        throw new ApiException("Create Campaign Fail", 500, "INTERNAL_SERVER_ERROR");
-        //    }
-        //}
 
 
         public async Task<VoucherResponse> GetVoucherByIdAsync(string voucherId)
@@ -816,11 +712,11 @@ namespace SWallet.Repository.Services.Implements
             Expression<Func<Campaign, bool>> filterQuery;
             if (string.IsNullOrEmpty(searchName))
             {
-                filterQuery = p => p.Status == true;
+                filterQuery = p => p.Status == (int)CampaignStatus.Active;
             }
             else
             {
-                filterQuery = p => p.CampaignName.Contains(searchName) && p.Status == true;
+                filterQuery = p => p.CampaignName.Contains(searchName) && p.Status == (int)CampaignStatus.Active;
             }
 
             var campaigns = await _unitOfWork.GetRepository<Campaign>().GetPagingListAsync(
@@ -907,7 +803,7 @@ namespace SWallet.Repository.Services.Implements
             try
             {
                 return await _swalletDB.Campaigns
-                    .Where(c => c.BrandId.Equals(brandId) && (bool)c.Status)
+                    .Where(c => c.BrandId.Equals(brandId) && c.Status == (int)CampaignStatus.Active)
                     .OrderByDescending(c => c.TotalSpending)
                     .Take(limit)
                     .ToListAsync();

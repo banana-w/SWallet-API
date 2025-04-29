@@ -20,6 +20,7 @@ namespace SWallet.Repository.Services.Interfaces
         Task<IPaginate<CampaignResponse>> GetCampaigns(string? searchName, int page, int size);
         Task<CampaignResponseExtra> GetCampaignById(string id);
         Task<CampaignResponse> CreateCampaign(CreateCampaignModel campaign, List<CreateCampaignDetailModel> campaignDetails);
+        Task<CampaignResponse> ApproveOrRejectCampaign(string campaignId, bool isApproved, string? rejectionReason = null);
         Task<CampaignResponse> UpdateCampaign(string id, UpdateCampaignModel campaign);
 
         Task<IPaginate<StoreResponse>> GetStoresByCampaignId(string campaignId, string searchName, int page, int size);

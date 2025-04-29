@@ -139,6 +139,14 @@ namespace SWallet_API.Controllers
             }
         }
 
+        [HttpPut("approve-camp")]
+        [ProducesResponseType(typeof(CampaignResponse), 200)]
+        public async Task<IActionResult> ApproveCampaign(string campaignId, bool isApproved, string? rejectionReason = null)
+        {
+            var result = await _campaignService.ApproveOrRejectCampaign(campaignId, isApproved, rejectionReason);
+            return Ok(result);
+        }
+
 
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(CampaignResponseExtra),StatusCodes.Status200OK)]
