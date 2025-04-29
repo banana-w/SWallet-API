@@ -19,7 +19,7 @@ namespace SWallet.Repository.Interfaces.CampaignRepository
             var entity = await _dbSet.FindAsync(id);
             if (entity != null)
             {
-                entity.Status = status;
+                entity.Status = status ? 1 : 3;
                 _dbSet.Update(entity);
             }
         }

@@ -32,6 +32,6 @@ namespace SWallet.Repository.Payload.Response.Campaign
         //public int? CurrentStateId { get; set; }
         //public string CurrentState { get; set; }
         //public string CurrentStateName { get; set; }
-        public bool? Status { get; set; }
+        public int? Status { get; set; }
     }
 }

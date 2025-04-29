@@ -26,7 +26,7 @@ namespace SWallet.Repository.Repository
             try
             {
                 var db = swalletDB;
-                count = db.Campaigns.Where(c => (bool)c.Status).Count();
+                count = db.Campaigns.Where(c => c.Status == 1).Count();
             }
             catch (Exception ex)
             {

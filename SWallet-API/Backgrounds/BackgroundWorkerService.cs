@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SWallet.Domain.Models;
+using SWallet.Repository.Enums;
 using SWallet.Repository.Interfaces;
 using SWallet.Repository.Interfaces.CampaignRepository;
 using SWallet.Repository.Services.Interfaces;
@@ -83,7 +84,7 @@ public class BackgroundWorkerService : BackgroundService
                         if (isCompleted)
                         {
                             // Đảm bảo campaign được deactive nếu đã hoàn thành
-                            if (campaign.Status == true)
+                            if (campaign.Status == (int)CampaignStatus.Active)
                             {
                                 await campaignRepository.UpdateStatusAsync(campaign.Id, false);
                                 hasChanges = true;
@@ -109,7 +110,7 @@ public class BackgroundWorkerService : BackgroundService
                         }
 
                         // Xử lý campaign chưa hoàn thành
-                        if (campaign.Status == false && startDate.HasValue && startDate <= now)
+                        if (campaign.Status == (int)CampaignStatus.Inactive && startDate.HasValue && startDate <= now)
                         {
                             await campaignRepository.UpdateStatusAsync(campaign.Id, true);
                             hasChanges = true;
@@ -130,7 +131,7 @@ public class BackgroundWorkerService : BackgroundService
                                 }
                             }
                         }
-                        else if (campaign.Status == true && endDate.HasValue && endDate <= now)
+                        else if (campaign.Status == (int)CampaignStatus.Active && endDate.HasValue && endDate <= now)
                         {
                             await campaignRepository.UpdateStatusAsync(campaign.Id, false);
                             hasChanges = true;

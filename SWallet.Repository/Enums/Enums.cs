@@ -52,6 +52,24 @@ namespace SWallet.Repository.Enums
         [Description("Từ chối xác nhận tài khoản")]
         Rejected = 4,
     }
+    public enum CampaignStatus
+    {
+        [Display(Name = "Chờ duyệt")]
+        [Description("Trạng thái chờ duyệt")]
+        Pending = 2,
+
+        [Display(Name = "Hoạt động")]
+        [Description("Trạng thái hoạt động trên các nền tảng")]
+        Active = 1,
+
+        [Display(Name = "Không hoạt động")]
+        [Description("Trạng thái ngừng hoạt động trên các nền tảng")]
+        Inactive = 0,
+
+        [Display(Name = "Từ chối")]
+        [Description("Từ chối")]
+        Rejected = 3,
+    }
     public enum WalletType
     {
         [Display(Name = "Ví xanh")]

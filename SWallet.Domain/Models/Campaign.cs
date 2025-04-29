@@ -41,7 +41,7 @@ public partial class Campaign
 
     public string Description { get; set; } = null!;
 
-    public bool? Status { get; set; }
+    public int? Status { get; set; }
 
     public virtual Brand Brand { get; set; } = null!;
 
