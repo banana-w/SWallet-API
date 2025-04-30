@@ -140,7 +140,7 @@ namespace SWallet.Repository.Services.Implements
                     DateCreated = updateCampaign.DateCreated,
                     DateUpdated = updateCampaign.DateUpdated,
                     Description = updateCampaign.Description,
-                    Status = updateCampaign.Status
+                    Status = updateCampaign.Status == 1 ? true : false
 
                 };
             }
@@ -326,7 +326,7 @@ namespace SWallet.Repository.Services.Implements
                     DateCreated = newCampaign.DateCreated,
                     DateUpdated = newCampaign.DateUpdated,
                     Description = newCampaign.Description,
-                    Status = newCampaign.Status
+                    Status = newCampaign.Status == 1 ? true : false
                 };
             }
             catch (ApiException ex)
@@ -448,7 +448,7 @@ namespace SWallet.Repository.Services.Implements
                     DateCreated = campaign.DateCreated,
                     DateUpdated = campaign.DateUpdated,
                     Description = campaign.Description,
-                    Status = campaign.Status
+                    Status = campaign.Status == 1 ? true : false
                 };
             }
             catch (ApiException ex)
@@ -585,7 +585,7 @@ namespace SWallet.Repository.Services.Implements
                     DateCreated = x.DateCreated,
                     DateUpdated = x.DateUpdated,
                     Description = x.Description,
-                    Status = x.Status,
+                    Status = x.Status == 1,
                     TotalIncome = x.TotalIncome,
                     TotalSpending = x.TotalSpending,
                     CampaignDetailId = x.CampaignDetails.Select(cd => cd.Id)
@@ -637,7 +637,7 @@ namespace SWallet.Repository.Services.Implements
                     DateCreated = x.DateCreated,
                     DateUpdated = x.DateUpdated,
                     Description = x.Description,
-                    Status = x.Status
+                    Status = x.Status == 1
                 },
                 predicate: filterQuery,
                 page: page,
@@ -741,7 +741,7 @@ namespace SWallet.Repository.Services.Implements
                     DateCreated = x.DateCreated,
                     DateUpdated = x.DateUpdated,
                     Description = x.Description,
-                    Status = x.Status
+                    Status = x.Status == 1
                 },
                 predicate: filterQuery,
                 page: page,
@@ -784,7 +784,7 @@ namespace SWallet.Repository.Services.Implements
                     DateCreated = x.DateCreated,
                     DateUpdated = x.DateUpdated,
                     Description = x.Description,
-                    Status = x.Status
+                    Status = x.Status == 1
                 },
                 predicate: filterQuery,
                 page: page,
