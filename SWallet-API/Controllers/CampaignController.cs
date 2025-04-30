@@ -102,6 +102,21 @@ namespace SWallet_API.Controllers
             }
         }
 
+        [HttpGet("getCampaignsAllStatus")]
+        public async Task<ActionResult<IPaginate<CampaignResponse>>> GetAllCampaignsAll(string searchName = "", int page = 1, int size = 10) // Pagination parameters
+        {
+            try
+            {
+                var campaignRespone = await _campaignService.GetCampaignsAll(searchName, page, size);
+                return Ok(campaignRespone);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting campaigns"); // Log the error
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error getting campaigns");
+            }
+        }
+
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateCampaign(string id, UpdateCampaignModel update)
         {
