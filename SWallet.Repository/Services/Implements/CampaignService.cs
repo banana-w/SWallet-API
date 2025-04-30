@@ -448,7 +448,7 @@ namespace SWallet.Repository.Services.Implements
                     DateCreated = campaign.DateCreated,
                     DateUpdated = campaign.DateUpdated,
                     Description = campaign.Description,
-                    Status = campaign.Status == 1 ? true : false
+                    Status = campaign.Status == 1
                 };
             }
             catch (ApiException ex)
@@ -784,7 +784,7 @@ namespace SWallet.Repository.Services.Implements
                     DateCreated = x.DateCreated,
                     DateUpdated = x.DateUpdated,
                     Description = x.Description,
-                    Status = x.Status
+                    Status = x.Status == 1
                 },
                 predicate: filterQuery,
                 page: page,
