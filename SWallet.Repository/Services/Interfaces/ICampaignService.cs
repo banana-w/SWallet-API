@@ -17,6 +17,7 @@ namespace SWallet.Repository.Services.Interfaces
     {
         Task<IPaginate<CampaignResponse>> GetCampaignsInBrand(string? searchName, int page, int size);
         Task<IPaginate<CampaignResponse>> GetCampaignsByBrandId(string brandId,string? searchName, int page, int size);
+        Task<IPaginate<CampaignResponseAllStatus>> GetCampaignsByBrandIdAllStatus(string brandId,string? searchName, int page, int size);
         Task<IPaginate<CampaignResponse>> GetCampaigns(string? searchName, int page, int size);
         Task<IPaginate<CampaignResponseAllStatus>> GetCampaignsAll(string? searchName, int page, int size);
         Task<CampaignResponseExtra> GetCampaignById(string id);
