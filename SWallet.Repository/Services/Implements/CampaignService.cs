@@ -750,7 +750,7 @@ namespace SWallet.Repository.Services.Implements
             return campaigns;
         }
 
-        public async Task<IPaginate<CampaignResponse>> GetCampaignsAll(string? searchName, int page, int size)
+        public async Task<IPaginate<CampaignResponseAllStatus>> GetCampaignsAll(string? searchName, int page, int size)
         {
             Expression<Func<Campaign, bool>> filterQuery;
             if (string.IsNullOrEmpty(searchName))
@@ -763,7 +763,7 @@ namespace SWallet.Repository.Services.Implements
             }
 
             var campaigns = await _unitOfWork.GetRepository<Campaign>().GetPagingListAsync(
-                selector: x => new CampaignResponse
+                selector: x => new CampaignResponseAllStatus
                 {
                     Id = x.Id,
                     BrandId = x.BrandId,
@@ -784,7 +784,7 @@ namespace SWallet.Repository.Services.Implements
                     DateCreated = x.DateCreated,
                     DateUpdated = x.DateUpdated,
                     Description = x.Description,
-                    Status = x.Status == 1
+                    Status = x.Status
                 },
                 predicate: filterQuery,
                 page: page,
