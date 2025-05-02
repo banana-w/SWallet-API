@@ -374,7 +374,7 @@ namespace SWallet.Repository.Services.Implements
                     }
 
                     campaign.Status = (int)CampaignStatus.Rejected;
-                    campaign.Description = $"Rejected: {rejectionReason}";
+                    campaign.File = $"{rejectionReason}";
                     campaign.DateUpdated = DateTime.Now;
 
                     // Refund wallet balance
@@ -438,6 +438,7 @@ namespace SWallet.Repository.Services.Implements
                     CampaignName = campaign.CampaignName,
                     Image = campaign.Image,
                     ImageName = campaign.ImageName,
+                    File = campaign.File,
                     Condition = campaign.Condition,
                     Link = campaign.Link,
                     StartOn = campaign.StartOn,
