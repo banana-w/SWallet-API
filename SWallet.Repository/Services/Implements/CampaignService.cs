@@ -601,6 +601,46 @@ namespace SWallet.Repository.Services.Implements
             }
             return campaign;
         }
+        
+        public async Task<CampaignResponseExtraAllStatus> GetCampaignByIdAllStatus(string id)
+        {
+            var campaign = await _unitOfWork.GetRepository<Campaign>().SingleOrDefaultAsync(
+                selector: x => new CampaignResponseExtraAllStatus
+                {
+                    Id = x.Id,
+                    BrandId = x.BrandId,
+                    BrandName = x.Brand.BrandName,
+                    BrandAcronym = x.Brand.Acronym,
+                    BrandLogo = x.Brand.Account.Avatar,
+                    TypeId = x.TypeId,
+                    TypeName = x.Type.TypeName,
+                    CampaignName = x.CampaignName,
+                    Image = x.Image,
+                    ImageName = x.ImageName,
+                    Condition = x.Condition,
+                    Link = x.Link,
+                    StartOn = x.StartOn,
+                    EndOn = x.EndOn,
+                    Duration = x.Duration,
+                    DateCreated = x.DateCreated,
+                    DateUpdated = x.DateUpdated,
+                    Description = x.Description,
+                    Status = x.Status,
+                    TotalIncome = x.TotalIncome,
+                    TotalSpending = x.TotalSpending,
+                    CampaignDetailId = x.CampaignDetails.Select(cd => cd.Id)
+                },
+                
+                predicate: x => x.Id == id,
+                include: x => x.Include(x => x.CampaignDetails).Include(x => x.Type)
+                               .Include(x => x.Brand).ThenInclude(x => x.Account));
+            ;
+            if (campaign == null)
+            {
+                throw new ApiException("Campaign not found", 404, "NOT_FOUND");
+            }
+            return campaign;
+        }
 
         public async Task<IPaginate<CampaignResponse>> GetCampaignsInBrand(string? searchName, int page, int size)
         {

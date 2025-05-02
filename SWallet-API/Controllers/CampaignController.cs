@@ -120,6 +120,7 @@ namespace SWallet_API.Controllers
         }
 
         [HttpGet("getCampaignsAllStatus")]
+        [ProducesResponseType(typeof(CampaignResponseAllStatus), 200)]
         public async Task<ActionResult<IPaginate<CampaignResponse>>> GetAllCampaignsAll(string searchName = "", int page = 1, int size = 10) // Pagination parameters
         {
             try
@@ -185,6 +186,18 @@ namespace SWallet_API.Controllers
         public async Task<IActionResult> GetCampaignById(string id)
         {
             var typeResponse = await _campaignService.GetCampaignById(id);
+            if (typeResponse == null)
+            { 
+                return NotFound();
+            }
+            return Ok(typeResponse);
+        }
+        
+        [HttpGet("{id}/allStatus")]
+        [ProducesResponseType(typeof(CampaignResponseExtraAllStatus),StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetCampaignByIdAllStatus(string id)
+        {
+            var typeResponse = await _campaignService.GetCampaignByIdAllStatus(id);
             if (typeResponse == null)
             { 
                 return NotFound();
