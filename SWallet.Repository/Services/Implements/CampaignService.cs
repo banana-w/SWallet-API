@@ -364,6 +364,7 @@ namespace SWallet.Repository.Services.Implements
                     // Approve campaign
                     campaign.Status = (int)CampaignStatus.Active;
                     campaign.DateUpdated = DateTime.Now;
+                    _unitOfWork.GetRepository<Campaign>().UpdateAsync(campaign);
                 }
                 else
                 {
@@ -376,6 +377,7 @@ namespace SWallet.Repository.Services.Implements
                     campaign.Status = (int)CampaignStatus.Rejected;
                     campaign.File = $"{rejectionReason}";
                     campaign.DateUpdated = DateTime.Now;
+                    _unitOfWork.GetRepository<Campaign>().UpdateAsync(campaign);
 
                     // Refund wallet balance
                     var campaignDetails = await _unitOfWork.GetRepository<CampaignDetail>()
@@ -402,7 +404,6 @@ namespace SWallet.Repository.Services.Implements
                     _unitOfWork.GetRepository<Brand>().UpdateAsync(brand);
                 }
 
-                _unitOfWork.GetRepository<Campaign>().UpdateAsync(campaign);
                 await _unitOfWork.CommitAsync();
                 await _unitOfWork.CommitTransactionAsync();
 
