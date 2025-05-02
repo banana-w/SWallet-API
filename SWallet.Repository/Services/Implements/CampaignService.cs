@@ -15,6 +15,7 @@ using SWallet.Repository.Payload.Response.Store;
 using SWallet.Repository.Payload.Response.Voucher;
 using SWallet.Repository.Services.Interfaces;
 using System.Linq.Expressions;
+using static Org.BouncyCastle.Asn1.Cmp.Challenge;
 
 namespace SWallet.Repository.Services.Implements
 {
@@ -378,6 +379,7 @@ namespace SWallet.Repository.Services.Implements
                     campaign.File = $"{rejectionReason}";
                     campaign.DateUpdated = DateTime.Now;
                     _unitOfWork.GetRepository<Campaign>().UpdateAsync(campaign);
+                    await _unitOfWork.CommitAsync();
 
                     // Refund wallet balance
                     var campaignDetails = await _unitOfWork.GetRepository<CampaignDetail>()
@@ -397,11 +399,13 @@ namespace SWallet.Repository.Services.Implements
                         throw new ApiException("Failed to refund wallet balance", 400, "BAD_REQUEST");
                     }
 
-                    // Update brand total spending
-                    var brand = await _unitOfWork.GetRepository<Brand>()
-                        .SingleOrDefaultAsync(predicate: b => b.Id == campaign.BrandId);
-                    brand.TotalSpending = (brand.TotalSpending ?? 0m) - totalRefund;
-                    _unitOfWork.GetRepository<Brand>().UpdateAsync(brand);
+                    //// Update brand total spending
+                    //var brand = await _unitOfWork.GetRepository<Brand>()
+                    //    .SingleOrDefaultAsync(predicate: b => b.Id == campaign.BrandId);
+                    //brand.TotalSpending = (brand.TotalSpending ?? 0m) - totalRefund;
+                    //_unitOfWork.GetRepository<Brand>().UpdateAsync(brand);
+                    campaign.Brand.TotalSpending = (campaign.Brand.TotalSpending ?? 0m) - totalRefund;
+                    _unitOfWork.GetRepository<Campaign>().UpdateAsync(campaign);
                 }
 
                 await _unitOfWork.CommitAsync();
