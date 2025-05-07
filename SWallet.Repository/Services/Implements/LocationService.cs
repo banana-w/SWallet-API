@@ -58,7 +58,9 @@ namespace SWallet.Repository.Services.Implements
                     Name = newLocation.Name,
                     Latitue = newLocation.Latitue,
                     Longtitude = newLocation.Longtitude,
-                    Qrcode = newLocation.Qrcode
+                    Qrcode = newLocation.Qrcode,
+                    Address = newLocation.Address,
+                    Status = newLocation.Status
                 };
             }
 
@@ -74,7 +76,8 @@ namespace SWallet.Repository.Services.Implements
                         Id = x.Id,
                         Name = x.Name,
                         Address = x.Address
-                    }
+                    },
+                    predicate: x => x.Status == true
                 );
             if (locations == null)
             {
@@ -86,9 +89,9 @@ namespace SWallet.Repository.Services.Implements
         public async Task<Location> UpdateLocation(string id, Location location)
         {
             var updateLocation = await _unitOfWork.GetRepository<Location>()
-       .SingleOrDefaultAsync(
-           predicate: x => x.Id == id
-       );
+                           .SingleOrDefaultAsync(
+                               predicate: x => x.Id == id
+                           );
             if (updateLocation == null)
             {
                 throw new ApiException("Location not found", 404, "NOT_FOUND");
@@ -99,6 +102,9 @@ namespace SWallet.Repository.Services.Implements
             updateLocation.Latitue = location.Latitue;
             updateLocation.Longtitude = location.Longtitude;
             updateLocation.Qrcode = location.Qrcode;
+            updateLocation.Address = location.Address;
+            updateLocation.Status = location.Status;
+
             _unitOfWork.GetRepository<Location>().UpdateAsync(updateLocation);
            
             var isSuccess = await _unitOfWork.CommitAsync() > 0;
@@ -110,7 +116,9 @@ namespace SWallet.Repository.Services.Implements
                     Name = updateLocation.Name,
                     Latitue = updateLocation.Latitue,
                     Longtitude = updateLocation.Longtitude,
-                    Qrcode = updateLocation.Qrcode
+                    Qrcode = updateLocation.Qrcode,
+                    Address = updateLocation.Address,
+                    Status = updateLocation.Status
 
                 };
             }

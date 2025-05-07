@@ -16,4 +16,6 @@ public partial class Location
     public decimal? Longtitude { get; set; }
 
     public string? Qrcode { get; set; }
+
+    public bool? Status { get; set; }
 }
