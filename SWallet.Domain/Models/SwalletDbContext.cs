@@ -875,6 +875,7 @@ public partial class SwalletDbContext : DbContext
                 .HasColumnName("longtitude");
             entity.Property(e => e.Name).HasColumnName("name");
             entity.Property(e => e.Qrcode).HasColumnName("qrcode");
+            entity.Property(e => e.Status).HasColumnName("status");
         });
 
         modelBuilder.Entity<LuckyPrize>(entity =>
