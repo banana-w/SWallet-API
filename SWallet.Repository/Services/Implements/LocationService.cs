@@ -3,6 +3,7 @@ using SWallet.Domain.Models;
 using SWallet.Repository.Interfaces;
 using SWallet.Repository.Payload.ExceptionModels;
 using SWallet.Repository.Payload.Response.Campus;
+using SWallet.Repository.Payload.Response.Location;
 using SWallet.Repository.Services.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -62,6 +63,24 @@ namespace SWallet.Repository.Services.Implements
             }
 
             throw new ApiException("Create Location Fail", 400, "BAD_REQUEST");
+        }
+
+        public async Task<IEnumerable<LocationResponse>> GetLocations()
+        {
+            var locations = await _unitOfWork.GetRepository<Location>()
+                .GetListAsync(
+                    selector: x => new LocationResponse
+                    {
+                        Id = x.Id,
+                        Name = x.Name,
+                        Address = x.Address
+                    }
+                );
+            if (locations == null)
+            {
+                throw new ApiException("Location not found", 404, "NOT_FOUND");
+            }
+            return locations;
         }
 
         public async Task<Location> UpdateLocation(string id, Location location)

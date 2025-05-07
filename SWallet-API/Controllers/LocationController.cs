@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using SWallet.Domain.Models;
 using SWallet.Repository.Payload.Request.Account;
 using SWallet.Repository.Payload.Response.Lecturer;
+using SWallet.Repository.Payload.Response.Location;
 using SWallet.Repository.Services.Implements;
 using SWallet.Repository.Services.Interfaces;
 
@@ -32,6 +33,13 @@ namespace SWallet_API.Controllers
                 .Select(l => new { l.Id, l.Name, l.Latitue, l.Longtitude })
                 .ToList();
             return Ok(locations);
+        }
+
+        [HttpGet("getAll")]
+        public async Task<ActionResult<IEnumerable<LocationResponse>>> GetAllLocations()
+        {
+                var locations = await _locationService.GetLocations();
+                return Ok(locations);
         }
 
         [HttpPost("create-location")]

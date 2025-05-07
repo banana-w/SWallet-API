@@ -9,6 +9,8 @@ public partial class Location
 
     public string? Name { get; set; }
 
+    public string? Address { get; set; }
+
     public decimal? Latitue { get; set; }
 
     public decimal? Longtitude { get; set; }

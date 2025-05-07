@@ -866,6 +866,7 @@ public partial class SwalletDbContext : DbContext
                 .HasMaxLength(26)
                 .IsUnicode(false)
                 .HasColumnName("id");
+            entity.Property(e => e.Address).HasColumnName("address");
             entity.Property(e => e.Latitue)
                 .HasColumnType("decimal(38, 20)")
                 .HasColumnName("latitue");
