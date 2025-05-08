@@ -380,6 +380,33 @@ namespace SWallet.Repository.Services.Implements
                     {
                         await _challengeService.UpdateAchievementProgress(studentRequest.InviteCode, challenges, 1);
                     }
+
+                    var wallet = await _unitOfWork.GetRepository<Wallet>()
+                   .SingleOrDefaultAsync(predicate: w => w.StudentId == studentRequest.InviteCode);
+
+                    var challengeId = await _unitOfWork.GetRepository<Challenge>().SingleOrDefaultAsync(
+                            selector: x => x.Id,
+                            predicate: x => x.Category!.Contains("Mời bạn") && x.Type == (int)ChallengeType.Daily);
+
+                    if (challengeId != null && wallet != null)
+                    {
+
+
+                        var transaction = new ChallengeTransaction
+                        {
+                            Id = Ulid.NewUlid().ToString(),
+                            StudentId = studentRequest.InviteCode,
+                            WalletId = wallet.Id,
+                            ChallengeId = challengeId,
+                            Amount = 0,
+                            DateCreated = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeUtils.GetVietnamTimeZone()),
+                            Type = 0,
+                            Description = $"Mời bạn",
+                        };
+
+                        await _challengeService.AddChallengeTransaction(transaction, (int)ChallengeType.Daily);
+                    }
+
                 }
 
                 await _unitOfWork.CommitTransactionAsync();
