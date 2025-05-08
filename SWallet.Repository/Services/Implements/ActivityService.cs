@@ -118,7 +118,7 @@ namespace SWallet.Repository.Services.Implements
             Expression<Func<Activity, bool>> filter = x => x.StudentId == studentId
                 && x.VoucherItem.IsBought == true
                 && (isUsed == null || x.VoucherItem.IsUsed == isUsed)
-                && (string.IsNullOrEmpty(search) || x.VoucherItem.VoucherCode.Contains(search))
+                && (string.IsNullOrEmpty(search) || x.VoucherItem.Voucher.VoucherName.Contains(search))
                 && x.Type == (int?)ActivityType.Buy
                 && x.VoucherItem.ExpireOn >= today;
 
