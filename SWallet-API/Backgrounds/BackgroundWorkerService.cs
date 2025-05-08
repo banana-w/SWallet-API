@@ -36,8 +36,7 @@ public class BackgroundWorkerService : BackgroundService
 
                 _logger.LogInformation("Worker scheduled to run next at: {time}. Waiting for {delay} ms", nextRun, delay.TotalMilliseconds);
 
-                // Để triển khai thực tế:
-                await Task.Delay((int)delay.TotalMilliseconds, stoppingToken);
+
                 // Để test nhanh:
                 //await Task.Delay(10000, stoppingToken);
 
@@ -172,6 +171,8 @@ public class BackgroundWorkerService : BackgroundService
                 {
                     _logger.LogInformation("No campaigns found to process.");
                 }
+                // Để triển khai thực tế:
+                await Task.Delay((int)delay.TotalMilliseconds, stoppingToken);
             }
             catch (Exception ex)
             {

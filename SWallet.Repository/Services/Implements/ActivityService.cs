@@ -113,11 +113,14 @@ namespace SWallet.Repository.Services.Implements
             if (size < 1) throw new ApiException("Page size must be greater than 0", 400, "INVALID_SIZE");
             if (size > 100) size = 100;
 
+            var today = DateOnly.FromDateTime(TimeUtils.GetVietnamToday().AddDays(-10));
+
             Expression<Func<Activity, bool>> filter = x => x.StudentId == studentId
                 && x.VoucherItem.IsBought == true
                 && (isUsed == null || x.VoucherItem.IsUsed == isUsed)
                 && (string.IsNullOrEmpty(search) || x.VoucherItem.VoucherCode.Contains(search))
-                && x.Type == (int?)ActivityType.Buy;
+                && x.Type == (int?)ActivityType.Buy
+                && x.VoucherItem.ExpireOn >= today;
 
             // Bước 1: Lấy danh sách Brand với Max(DateIssued)
             var brandQuery = await _unitOfWork.GetRepository<Activity>()
