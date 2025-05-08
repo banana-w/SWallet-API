@@ -211,7 +211,7 @@ namespace SWallet.Repository.Services.Implements
 
         private async Task<(bool Success, string Message, int PointsAwarded)> RecordCheckIn(string studentId, string locationId)
         {
-            var today = DateTime.Today;
+            var today = TimeUtils.GetVietnamToday();
             const int pointsAwarded = 10;
 
             try
