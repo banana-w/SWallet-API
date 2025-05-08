@@ -249,7 +249,7 @@ namespace SWallet.Repository.Services.Implements
         }
         public async Task<(bool IsCompleted, decimal Amount)> IsDailyTaskCompletedToday(string studentId, string challengeId)
         {
-            var today = DateTime.Today;
+            var today = TimeUtils.GetVietnamToday();
             var transactions = await _unitOfWork.GetRepository<ChallengeTransaction>().GetListAsync(
                predicate: t => t.ChallengeId == challengeId && t.StudentId == studentId &&
                             t.DateCreated >= today && t.DateCreated < today.AddDays(1));
