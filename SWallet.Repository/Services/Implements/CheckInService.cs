@@ -8,6 +8,7 @@ using SWallet.Repository.Payload.ExceptionModels;
 using SWallet.Repository.Payload.Request.Student;
 using SWallet.Repository.Payload.Response.DailyCheckIn;
 using SWallet.Repository.Services.Interfaces;
+using SWallet.Repository.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -51,7 +52,7 @@ namespace SWallet.Repository.Services.Implements
                 // Tính streak và points
                 int streak = 0;
                 int points = 0;
-                DateTime today = DateTime.Today;
+                DateTime today = TimeUtils.GetVietnamToday();
                 bool canCheckInToday = true;
                 bool[] checkInHistory = new bool[7]; // Lịch sử 7 ngày trong chuỗi
                 int currentDayIndex = 0;
