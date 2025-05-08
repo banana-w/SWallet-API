@@ -386,7 +386,7 @@ namespace SWallet.Repository.Services.Implements
 
                     var challengeId = await _unitOfWork.GetRepository<Challenge>().SingleOrDefaultAsync(
                             selector: x => x.Id,
-                            predicate: x => x.Category!.Contains("Mời bạn"));
+                            predicate: x => x.Category!.Contains("Mời bạn") && x.Type == (int)ChallengeType.Daily);
 
                     if (challengeId != null && wallet != null)
                     {

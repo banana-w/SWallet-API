@@ -218,7 +218,7 @@ namespace SWallet.Repository.Services.Implements
             {
                 var challengeId = await _unitOfWork.GetRepository<Challenge>().SingleOrDefaultAsync(
                             selector: x => x.Id,
-                            predicate: x => x.Category!.Contains("Check-in"));
+                            predicate: x => x.Category!.Contains("Check-in") && x.Type == (int)ChallengeType.Daily);
 
                 // Kiểm tra check-in trùng lặp trong ngày
                 var existingCheckIn = await _unitOfWork.GetRepository<ChallengeTransaction>()
