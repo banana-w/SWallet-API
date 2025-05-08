@@ -195,6 +195,9 @@ namespace SWallet.Repository.Services.Implements
                     Id = x.Lecturer.Id, // Get Lecturer Id
                     FullName = x.Lecturer.FullName, // Get Lecturer FullName
                     AccountId = x.Lecturer.AccountId,
+                    Email = x.Lecturer.Account.Email,
+                    Phone = x.Lecturer.Account.Phone,
+                    Balance = (decimal)(x.Lecturer.Wallets != null && x.Lecturer.Wallets.Any() ? x.Lecturer.Wallets.FirstOrDefault().Balance : 0), // Lấy Balance từ Wallet đầu tiên
                     State = x.Lecturer.State,
                     Status = x.Lecturer.Status,
                     DateCreated = x.Lecturer.DateCreated,
