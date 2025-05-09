@@ -211,7 +211,7 @@ namespace SWallet.Repository.Services.Implements
 
         public async Task<BrandResponse> GetBrandById(string id, string? studentId)
         {
-            var area = await _unitOfWork.GetRepository<Brand>().SingleOrDefaultAsync(
+            var brand = await _unitOfWork.GetRepository<Brand>().SingleOrDefaultAsync(
                 selector: x => new BrandResponse
                 {
                     Id = x.Id,
@@ -235,13 +235,14 @@ namespace SWallet.Repository.Services.Implements
                     State = x.State,
                     Status = x.Status,
 
+                    FavorCount = x.Wishlists.Count(w => w.Status == true), // Đếm số lượng wishlist với Status = true
                     IsFavor = !string.IsNullOrEmpty(studentId) && x.Wishlists.Any(w => w.StudentId == studentId && w.Status == true), // Kiểm tra studentId và Status
                     NumberOfCampaigns = x.Campaigns.Where(c => c.BrandId == id).Count()
                 },
                 predicate: x => x.Id == id,
                 include: x => x.Include(a => a.Account).Include(a => a.Campaigns).Include(a => a.Wishlists)
             );
-            return area;
+            return brand;
         }
 
         public async Task<IPaginate<BrandResponse>> GetBrands(string? searchName, int page, int size, bool status, string? studentId)
@@ -278,6 +279,7 @@ namespace SWallet.Repository.Services.Implements
                     Description = x.Description,
                     State = x.State,
                     Status = x.Status,
+                    FavorCount = 0,
                     IsFavor = !string.IsNullOrEmpty(studentId) && x.Wishlists.Any(w => w.StudentId == studentId && w.Status == true),
                     NumberOfCampaigns = x.Campaigns.Count
                 },
