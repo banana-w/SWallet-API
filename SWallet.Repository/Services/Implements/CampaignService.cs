@@ -161,8 +161,8 @@ namespace SWallet.Repository.Services.Implements
                 }
 
                 // Kiểm tra TypeId
-                var typeExists = await _unitOfWork.GetRepository<CampaignType>().SingleOrDefaultAsync(predicate: b => b.Id == campaignModel.TypeId);
-                if (typeExists == null)
+                var campaignTypeExists = await _unitOfWork.GetRepository<CampaignType>().SingleOrDefaultAsync(predicate: b => b.Id == campaignModel.TypeId);
+                if (campaignTypeExists == null)
                 {
                     throw new ApiException($"CampaignType with ID {campaignModel.TypeId} not found.", 400, "BAD_REQUEST");
                 }
@@ -178,6 +178,8 @@ namespace SWallet.Repository.Services.Implements
                     }
                     totalVoucherCost += voucher.Price.GetValueOrDefault(0m) * cd.Quantity.GetValueOrDefault(0);
                 }
+
+                totalVoucherCost += (decimal)campaignTypeExists.Coin;
 
                 // Kiểm tra số dư trong ví của Brand
                 var brandWalletBalance = await _walletService.GetWalletByBrandId(campaignModel.BrandId, 1);
@@ -311,7 +313,7 @@ namespace SWallet.Repository.Services.Implements
                     BrandAcronym = brand.Acronym,
                     BrandName = brand.BrandName,
                     TypeId = newCampaign.TypeId,
-                    TypeName = typeExists.TypeName,
+                    TypeName = campaignTypeExists.TypeName,
                     CampaignName = newCampaign.CampaignName,
                     Image = newCampaign.Image,
                     ImageName = newCampaign.ImageName,

@@ -13,6 +13,10 @@ public partial class CampaignType
 
     public string FileName { get; set; } = null!;
 
+    public int? Duration { get; set; }
+
+    public int? Coin { get; set; }
+
     public DateTime? DateCreated { get; set; }
 
     public DateTime? DateUpdated { get; set; }
