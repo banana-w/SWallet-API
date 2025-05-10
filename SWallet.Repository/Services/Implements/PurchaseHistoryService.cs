@@ -26,14 +26,14 @@ namespace SWallet.Repository.Services.Implements
         {
             Expression<Func<PointPurchaseHistory, bool>> filterQuery;
 
-            // Kết hợp điều kiện lọc theo searchName và status
+            // Kết hợp điều kiện lọc theo searchName, id và paymentStatus
             if (string.IsNullOrEmpty(searchName))
             {
-                filterQuery = p => p.EntityId == id;
+                filterQuery = p => p.EntityId == id && (p.PaymentStatus == "Success" || p.PaymentStatus == "Failed");
             }
             else
             {
-                filterQuery = p => p.EntityId.Contains(searchName) && p.EntityId == id;
+                filterQuery = p => p.EntityId.Contains(searchName) && p.EntityId == id && (p.PaymentStatus == "Success" || p.PaymentStatus == "Failed");
             }
 
             var areas = await _unitOfWork.GetRepository<PointPurchaseHistory>().GetPagingListAsync(
@@ -49,7 +49,6 @@ namespace SWallet.Repository.Services.Implements
                     UpdatedDate = x.UpdatedDate,
                     EntityId = x.EntityId,
                     EntityType = x.EntityType,
-
                 },
                 predicate: filterQuery,
                 page: page,
