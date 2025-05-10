@@ -8,13 +8,8 @@ using SWallet.Repository.Payload.Request.Campaign;
 using SWallet.Repository.Payload.Response.Brand;
 using SWallet.Repository.Payload.Response.Campaign;
 using SWallet.Repository.Services.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
-using static Org.BouncyCastle.Asn1.Cmp.Challenge;
+
 
 namespace SWallet.Repository.Services.Implements
 {
@@ -51,6 +46,8 @@ namespace SWallet.Repository.Services.Implements
                 FileName = !string.IsNullOrEmpty(imageUri)
                           ? imageUri.Split('/')[imageUri.Split('/').Length - 1]
                           : "default_cover.jpg",
+                Duration = type.Duration,
+                Coin = type.Coin,
                 DateCreated = DateTime.Now,   
                 DateUpdated = DateTime.Now,
                 State = type.State,
@@ -68,6 +65,8 @@ namespace SWallet.Repository.Services.Implements
                     Description = campaignType.Description,
                     Image = campaignType.Image,
                     FileName = campaignType.FileName,
+                    Duration = campaignType.Duration,
+                    Coin = campaignType.Coin,
                     DateCreated = campaignType.DateCreated,
                     DateUpdated = campaignType.DateUpdated,
                     State = campaignType.State,
@@ -103,6 +102,8 @@ namespace SWallet.Repository.Services.Implements
                     Description = x.Description,
                     Image = x.Image,
                     FileName = x.FileName,
+                    Duration = x.Duration,
+                    Coin = x.Coin,
                     DateCreated = x.DateCreated,
                     DateUpdated = x.DateUpdated,
                     State = x.State,
@@ -125,6 +126,8 @@ namespace SWallet.Repository.Services.Implements
                     TypeName = x.TypeName,
                     Description = x.Description,
                     Image = x.Image,
+                    Duration = x.Duration,
+                    Coin = x.Coin,
                     FileName = x.FileName,
                     DateCreated = x.DateCreated,
                     DateUpdated = x.DateUpdated,
@@ -150,6 +153,8 @@ namespace SWallet.Repository.Services.Implements
             }
 
             updateCampaignType.TypeName = type.TypeName;
+            updateCampaignType.Duration = type.Duration;
+            updateCampaignType.Coin = type.Coin;
             updateCampaignType.Description = type.Description;
             updateCampaignType.State = type.State;
             updateCampaignType.DateUpdated = DateTime.Now;
@@ -163,6 +168,8 @@ namespace SWallet.Repository.Services.Implements
                     TypeName = updateCampaignType.TypeName,
                     Description = updateCampaignType.Description,
                     Image = updateCampaignType.Image,
+                    Duration = updateCampaignType.Duration,
+                    Coin = updateCampaignType.Coin,
                     FileName = updateCampaignType.FileName,
                     DateCreated = updateCampaignType.DateCreated,
                     DateUpdated = updateCampaignType.DateUpdated,
