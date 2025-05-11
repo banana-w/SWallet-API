@@ -116,12 +116,13 @@ namespace SWallet.Repository.Services.Implements
         }
 
 
-        public async Task<string> GetVoucherItemIdAvailable(string voucherId, string studentId)
+        public async Task<string> GetVoucherItemIdAvailable(string voucherId, string studentId, string campaignId)
         {
             var voucherItemId = await _unitOfWork.GetRepository<Activity>()
                     .SingleOrDefaultAsync(
                         selector: x => x.VoucherItem.Id,
                         predicate: x => x.VoucherItem.Voucher.Id == voucherId
+                            && x.VoucherItem.CampaignDetail.CampaignId == campaignId
                             && x.VoucherItem.IsBought == true
                             && x.VoucherItem.IsUsed == false
                             && x.StudentId == studentId,
