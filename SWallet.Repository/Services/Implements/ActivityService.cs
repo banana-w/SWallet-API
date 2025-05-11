@@ -223,7 +223,7 @@ namespace SWallet.Repository.Services.Implements
                 }
 
                 // Redeem voucher và lấy danh sách voucher đã redeem
-                var redeemedVouchers = await _voucherItemService.RedeemVoucherAsync(activityRequest.CampDetailId, activityRequest.CampaignId, activityRequest.Quantity);
+                var redeemedVouchers = await _voucherItemService.RedeemVoucherAsync(activityRequest.VoucherId, activityRequest.CampaignId, activityRequest.Quantity);
                 if (redeemedVouchers == null || redeemedVouchers.Count < activityRequest.Quantity)
                 {
                     await _unitOfWork.RollbackTransactionAsync();
