@@ -77,7 +77,7 @@ namespace SWallet.Repository.Services.Implements
             return result;
         }
 
-        public async Task<List<VoucherItem>> RedeemVoucherAsync(string campaignId, int quantity)
+        public async Task<List<VoucherItem>> RedeemVoucherAsync(string campDeatilId, string campaignId, int quantity)
         {
             if (quantity <= 0)
             {
@@ -87,6 +87,7 @@ namespace SWallet.Repository.Services.Implements
             var availableVouchers = await _unitOfWork.GetRepository<VoucherItem>()
                 .GetListWithTakeAsync(
                     predicate: x => x.CampaignDetail.CampaignId.Equals(campaignId)
+                        && x.CampaignDetailId.Equals(campDeatilId)
                         && x.IsBought == false
                         && (x.IsLocked == false || x.IsLocked == null)
                         && (x.ExpireOn == null || x.ExpireOn >= DateOnly.FromDateTime(TimeUtils.GetVietnamToday())),
