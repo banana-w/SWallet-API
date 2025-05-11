@@ -35,9 +35,9 @@ namespace SWallet_API.Controllers
         }
         [HttpGet("viId")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetVoucherItemIdAvailable(string voucherId, string studentId)
+        public async Task<IActionResult> GetVoucherItemIdAvailable(string voucherId, string studentId, string campaignId)
         {
-            var result = await _voucherItemService.GetVoucherItemIdAvailable(voucherId, studentId);
+            var result = await _voucherItemService.GetVoucherItemIdAvailable(voucherId, studentId, campaignId);
             return Ok(result);
         }
 
