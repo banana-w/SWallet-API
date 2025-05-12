@@ -329,7 +329,7 @@ namespace SWallet.Repository.Services.Implements
                     DateCreated = newCampaign.DateCreated,
                     DateUpdated = newCampaign.DateUpdated,
                     Description = newCampaign.Description,
-                    Status = newCampaign.Status == 1 ? true : false
+                    Status = newCampaign.Status == 1
                 };
             }
             catch (ApiException ex)
@@ -839,7 +839,8 @@ namespace SWallet.Repository.Services.Implements
                 predicate: filterQuery,
                 page: page,
                 include: query => query.Include(x => x.Brand).Include(x => x.Type),
-                size: size);
+                size: size,
+                orderBy: x => x.OrderByDescending(x => x.DateCreated));
             return campaigns;
         }
 
@@ -924,7 +925,8 @@ namespace SWallet.Repository.Services.Implements
                 predicate: filterQuery,
                 page: page,
                 include: query => query.Include(x => x.Brand).Include(x => x.Type),
-                size: size);
+                size: size,
+                orderBy: x => x.OrderByDescending(x => x.DateCreated));
             return campaigns;
         }
 
