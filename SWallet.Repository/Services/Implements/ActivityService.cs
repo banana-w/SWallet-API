@@ -263,7 +263,7 @@ namespace SWallet.Repository.Services.Implements
                     WalletId = brandWallet.Id,
                     Amount = (decimal)activityRequest.Cost * PointBackRate,
                     Rate = PointBackRate,
-                    Description = $"Redeem {activityRequest.Quantity} vouchers"
+                    Description = $"Redeem {activityRequest.Quantity} vouchers on campaigns: {activityRequest.CampaignId}"
                 };
 
                 await _campaignTransactionService.AddCampaignTransaction(campaignTransaction);
