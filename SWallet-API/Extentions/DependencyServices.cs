@@ -61,6 +61,7 @@ namespace SWallet_API.Extentions
             services.AddScoped<IWishlistService, WishlistService>();
             services.AddScoped<IPurchaseHistory, PurchaseHistoryService>();
             services.AddScoped<ILocationService, LocationService>();
+            services.AddScoped<ICampaignTransactionService, CampaignTransactionService>();
             services.AddScoped<IFirebaseService, FirebaseService>();
 
             return services;

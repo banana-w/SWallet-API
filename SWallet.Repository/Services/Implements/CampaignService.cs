@@ -8,7 +8,9 @@ using SWallet.Domain.Paginate;
 using SWallet.Repository.Enums;
 using SWallet.Repository.Interfaces;
 using SWallet.Repository.Payload.ExceptionModels;
+using SWallet.Repository.Payload.Request.Activity;
 using SWallet.Repository.Payload.Request.Campaign;
+using SWallet.Repository.Payload.Request.CampTransaction;
 using SWallet.Repository.Payload.Request.Voucher;
 using SWallet.Repository.Payload.Response.Campaign;
 using SWallet.Repository.Payload.Response.Store;
@@ -27,6 +29,7 @@ namespace SWallet.Repository.Services.Implements
         private readonly IWalletService _walletService;
         private readonly SwalletDbContext _swalletDB;
         private readonly IFirebaseService _firebaseService;
+        private readonly ICampaignTransactionService _campaignTransactionService;
 
         public record ItemIndex
         {
@@ -35,13 +38,15 @@ namespace SWallet.Repository.Services.Implements
         }
 
         public CampaignService(IUnitOfWork<SwalletDbContext> unitOfWork, SwalletDbContext swalletDB , ILogger<CampaignService> logger,
-            ICloudinaryService cloudinaryService, IWalletService walletService,IVoucherItemService voucherItemService, IFirebaseService firebaseService, IHttpContextAccessor httpContextAccessor) : base(unitOfWork, logger, httpContextAccessor)
+            ICloudinaryService cloudinaryService, IWalletService walletService,IVoucherItemService voucherItemService, IFirebaseService firebaseService, 
+            ICampaignTransactionService campaignTransactionService, IHttpContextAccessor httpContextAccessor) : base(unitOfWork, logger, httpContextAccessor)
         {
             _cloudinaryService = cloudinaryService;
             _voucherItemService = voucherItemService;
             _swalletDB = swalletDB;
             _walletService = walletService;
             _firebaseService = firebaseService;
+            _campaignTransactionService = campaignTransactionService;
 
             var config = new MapperConfiguration(cfg =>
             {
@@ -302,6 +307,18 @@ namespace SWallet.Repository.Services.Implements
                     throw new ApiException("Failed to deduct balance from Brand wallet", 400, "BAD_REQUEST");
                 }
 
+                // Thêm campaign transaction
+                var campaignTransaction = new CampaignTransactionRequest
+                {
+                    CampaignId = newCampaign.Id,
+                    WalletId = brandWalletBalance.Id,
+                    Amount = -totalVoucherCost,
+                    Rate = 1,
+                    Description = $"Create Campaign"
+                };
+
+                await _campaignTransactionService.AddCampaignTransaction(campaignTransaction);
+
                 // Commit transaction
                 await _unitOfWork.CommitAsync();
                 await _unitOfWork.CommitTransactionAsync();
@@ -400,6 +417,18 @@ namespace SWallet.Repository.Services.Implements
                     {
                         throw new ApiException("Failed to refund wallet balance", 400, "BAD_REQUEST");
                     }
+
+                    // Thêm campaign transaction
+                    var campaignTransaction = new CampaignTransactionRequest
+                    {
+                        CampaignId = campaignId,
+                        WalletId = brandWallet.Id,
+                        Amount = totalRefund,
+                        Rate = 1,
+                        Description = $"Refund coin for rejected campaign"
+                    };
+
+                    await _campaignTransactionService.AddCampaignTransaction(campaignTransaction);
 
                     //// Update brand total spending
                     //var brand = await _unitOfWork.GetRepository<Brand>()
