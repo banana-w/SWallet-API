@@ -10,6 +10,7 @@ using SWallet.Repository.Enums;
 using SWallet.Repository.Interfaces;
 using SWallet.Repository.Payload.ExceptionModels;
 using SWallet.Repository.Payload.Request.Activity;
+using SWallet.Repository.Payload.Request.CampTransaction;
 using SWallet.Repository.Payload.Request.Voucher;
 using SWallet.Repository.Payload.Response.Activity;
 using SWallet.Repository.Payload.Response.ActivityTransaction;
@@ -30,13 +31,15 @@ namespace SWallet.Repository.Services.Implements
         private const decimal PointBackRate = 0.9M;
         private readonly IWalletService _walletService;
         private readonly IVoucherItemService _voucherItemService;
+        private readonly ICampaignTransactionService _campaignTransactionService;
         private readonly IFirebaseService _firebaseService;
         public ActivityService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<ActivityService> logger, IWalletService walletService, 
-            IVoucherItemService voucherItemService, IFirebaseService firebaseService, IHttpContextAccessor httpContextAccessor) : base(unitOfWork, logger, httpContextAccessor)
+            IVoucherItemService voucherItemService, IFirebaseService firebaseService, ICampaignTransactionService campaignTransactionService, IHttpContextAccessor httpContextAccessor) : base(unitOfWork, logger, httpContextAccessor)
         {
             _walletService = walletService;
             _voucherItemService = voucherItemService;
             _firebaseService = firebaseService;
+            _campaignTransactionService = campaignTransactionService;
         }
 
         public async Task<IPaginate<VoucherStorageResponse>> GetRedeemedVouchersByStudentAsync(string search, string studentId, bool? isUsed, int page, int size)
@@ -252,6 +255,18 @@ namespace SWallet.Repository.Services.Implements
                 await _walletService.UpdateWalletForRedeem(wallet.Id, -(decimal)activityRequest.Cost);
 
                 await _walletService.UpdateWalletForRedeem(brandWallet.Id, (decimal)activityRequest.Cost * PointBackRate);
+
+                // Thêm campaign transaction
+                var campaignTransaction = new CampaignTransactionRequest
+                {
+                    CampaignId = activityRequest.CampaignId,
+                    WalletId = brandWallet.Id,
+                    Amount = (decimal)activityRequest.Cost * PointBackRate,
+                    Rate = PointBackRate,
+                    Description = $"Redeem {activityRequest.Quantity} vouchers"
+                };
+
+                await _campaignTransactionService.AddCampaignTransaction(campaignTransaction);
 
                 // Thêm activity transaction
                 await AddActivityTransactionAsync(
