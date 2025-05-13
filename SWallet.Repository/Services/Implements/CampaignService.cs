@@ -407,6 +407,15 @@ namespace SWallet.Repository.Services.Implements
                     decimal totalRefund = campaignDetails
                         .Sum(cd => cd.Price.GetValueOrDefault(0m) * cd.Quantity.GetValueOrDefault(0));
 
+                    // Kiểm tra TypeId
+                    var campaignTypeExists = await _unitOfWork.GetRepository<CampaignType>().SingleOrDefaultAsync(predicate: b => b.Id == campaign.TypeId);
+                    if (campaignTypeExists == null)
+                    {
+                        throw new ApiException($"CampaignType with ID {campaign.TypeId} not found.", 400, "BAD_REQUEST");
+                    }
+
+                    totalRefund += (decimal)campaignTypeExists.Coin;
+
                     var brandWallet = await _walletService.GetWalletByBrandId(campaign.BrandId, 1);
                     var refundSuccess = await _walletService.UpdateWallet(
                         brandWallet.Id,
