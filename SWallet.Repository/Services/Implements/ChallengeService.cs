@@ -493,7 +493,9 @@ namespace SWallet.Repository.Services.Implements
                         .GroupBy(t => t.StudentChallenge.Challenge.Category!)
                         .ToDictionary(
                             g => g.Key,
-                            g => g.Count()
+                            g => g.Key == "Tiêu sài"
+                                ? g.Sum(t => t.Amount) // Sum of Amount for "Tiêu sài"
+                                : g.Count() // Count for other categories
                         );
 
                     var claimByCategory = allTransactions
@@ -507,11 +509,14 @@ namespace SWallet.Repository.Services.Implements
                     // Cập nhật current và isCompleted cho Daily challenges
                     foreach (var challenge in studentChallenges.Items.Where(c => c.challengeType == "Daily"))
                     {
-                        var totalProgress = progressByCategory.TryGetValue(challenge.category, out var count) ? count : 0;
-                        challenge.current = Math.Min(totalProgress, challenge.condition);
+                        var totalProgress = progressByCategory.TryGetValue(challenge.category, out var progress)
+                            ? progress
+                            : 0;
+
+                        challenge.current = Math.Min((decimal)totalProgress, challenge.condition);
                         challenge.isCompleted = totalProgress >= challenge.condition;
                         challenge.isClaimed = claimByCategory.TryGetValue(challenge.category, out var claimedIds)
-                                                && claimedIds.Contains(challenge.challengeId);
+                                             && claimedIds.Contains(challenge.challengeId);
                     }
                 }
 
