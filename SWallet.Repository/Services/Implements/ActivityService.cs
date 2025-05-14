@@ -32,14 +32,18 @@ namespace SWallet.Repository.Services.Implements
         private readonly IWalletService _walletService;
         private readonly IVoucherItemService _voucherItemService;
         private readonly ICampaignTransactionService _campaignTransactionService;
+        private readonly IChallengeService _challengeService;
         private readonly IFirebaseService _firebaseService;
         public ActivityService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<ActivityService> logger, IWalletService walletService, 
-            IVoucherItemService voucherItemService, IFirebaseService firebaseService, ICampaignTransactionService campaignTransactionService, IHttpContextAccessor httpContextAccessor) : base(unitOfWork, logger, httpContextAccessor)
+            IVoucherItemService voucherItemService, IFirebaseService firebaseService, 
+            ICampaignTransactionService campaignTransactionService, IChallengeService challengeService,
+            IHttpContextAccessor httpContextAccessor) : base(unitOfWork, logger, httpContextAccessor)
         {
             _walletService = walletService;
             _voucherItemService = voucherItemService;
             _firebaseService = firebaseService;
             _campaignTransactionService = campaignTransactionService;
+            _challengeService = challengeService;
         }
 
         public async Task<IPaginate<VoucherStorageResponse>> GetRedeemedVouchersByStudentAsync(string search, string studentId, bool? isUsed, int page, int size)
@@ -216,6 +220,20 @@ namespace SWallet.Repository.Services.Implements
                 var brandId = await _unitOfWork.GetRepository<VoucherItem>()
                     .SingleOrDefaultAsync(selector: x => x.Voucher.BrandId,
                                           predicate: x => x.CampaignDetail.CampaignId == activityRequest.CampaignId);
+
+                var redeemedVoucherCount = await _unitOfWork.GetRepository<Activity>()
+                    .CountAsync(x => x.StudentId == activityRequest.StudentId
+                                        && x.VoucherItem.VoucherId.Equals(activityRequest.VoucherId)
+                                        && x.VoucherItem.CampaignDetail.CampaignId == activityRequest.CampaignId
+                                        && x.Type == (int?)ActivityType.Buy);
+
+                // Check if the student has already redeemed 2 or more vouchers
+                if (redeemedVoucherCount + activityRequest.Quantity > 2)
+                {
+                    await _unitOfWork.RollbackTransactionAsync();
+                    throw new ApiException("Bạn đã đổi tối đa 2 ưu đãi hoặc số lượng ưu đãi yêu cầu và số lượng ưu đãi đang có lớn hơn 2", 400, "REDEEM_LIMIT_EXCEEDED");
+                }
+
                 // Kiểm tra wallet
                 var wallet = await _walletService.GetWalletByStudentId(activityRequest.StudentId, (int)WalletType.Green);
                 var brandWallet = await _walletService.GetWalletByBrandId(brandId, (int)WalletType.Green);
@@ -263,7 +281,7 @@ namespace SWallet.Repository.Services.Implements
                     WalletId = brandWallet.Id,
                     Amount = (decimal)activityRequest.Cost * PointBackRate,
                     Rate = PointBackRate,
-                    Description = $"Redeem {activityRequest.Quantity} vouchers on campaigns: {activityRequest.CampaignId}"
+                    Description = $"Đổi {activityRequest.Quantity} ưu đãi"
                 };
 
                 await _campaignTransactionService.AddCampaignTransaction(campaignTransaction);
@@ -273,8 +291,34 @@ namespace SWallet.Repository.Services.Implements
                     activities.First().Id,
                     wallet.Id,
                     -(decimal)activityRequest.Cost,
-                    $"Redeem {activityRequest.Quantity} vouchers"
+                    $"Đổi {activityRequest.Quantity} ưu đãi"
                 );
+
+                var challengeId = await _unitOfWork.GetRepository<Challenge>().SingleOrDefaultAsync(
+                            selector: x => x.Id,
+                            predicate: x => x.Category!.Contains("Tiêu sài") && x.Type == (int)ChallengeType.Daily);
+
+                var transaction = new ChallengeTransaction
+                {
+                    Id = Ulid.NewUlid().ToString(),
+                    StudentId = activityRequest.StudentId,
+                    WalletId = wallet.Id,
+                    ChallengeId = challengeId,
+                    Amount = activityRequest.Cost,
+                    DateCreated = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, Utils.TimeUtils.GetVietnamTimeZone()),
+                    Type = 0,
+                    Description = $"Tiêu sài",
+                };
+
+                await _challengeService.AddChallengeTransaction(transaction, (int)ChallengeType.Daily);
+
+                var challenges = await _unitOfWork.GetRepository<Challenge>()
+                        .GetListAsync(predicate: x => x.Category.Contains("Tiêu sài") && x.Type == (int)ChallengeType.Achievement);
+
+                if (challenges.Count != 0)
+                {
+                    await _challengeService.UpdateAchievementProgress(activityRequest.StudentId, challenges, (decimal)activityRequest.Cost);
+                }
 
                 await _unitOfWork.CommitTransactionAsync();
                 return true;
