@@ -103,7 +103,7 @@ namespace SWallet_API.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, $"Error redeeming voucher: {ex.Message}");
+                return StatusCode(StatusCodes.Status500InternalServerError, $"{ex.Message}");
             }
         }
         [HttpPost("UseVoucher")]
