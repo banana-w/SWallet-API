@@ -223,15 +223,23 @@ namespace SWallet.Repository.Services.Implements
 
                 var redeemedVoucherCount = await _unitOfWork.GetRepository<Activity>()
                     .CountAsync(x => x.StudentId == activityRequest.StudentId
-                                        && x.VoucherItem.VoucherId.Equals(activityRequest.VoucherId)
-                                        && x.VoucherItem.CampaignDetail.CampaignId == activityRequest.CampaignId
-                                        && x.Type == (int?)ActivityType.Buy);
+                                     && x.VoucherItem.VoucherId.Equals(activityRequest.VoucherId)
+                                     && x.VoucherItem.CampaignDetail.CampaignId == activityRequest.CampaignId
+                                     && x.Type == (int?)ActivityType.Buy);
+
+                var usedVoucherCount = await _unitOfWork.GetRepository<Activity>()
+                    .CountAsync(x => x.StudentId == activityRequest.StudentId
+                                     && x.VoucherItem.VoucherId.Equals(activityRequest.VoucherId)
+                                     && x.VoucherItem.CampaignDetail.CampaignId == activityRequest.CampaignId
+                                     && x.Type == (int?)ActivityType.Use);
+
+                var storedVoucherCount = redeemedVoucherCount - usedVoucherCount;
 
                 // Check if the student has already redeemed 2 or more vouchers
-                if (redeemedVoucherCount + activityRequest.Quantity > 2)
+                if (storedVoucherCount + activityRequest.Quantity > 2)
                 {
                     await _unitOfWork.RollbackTransactionAsync();
-                    throw new ApiException("Bạn đã đổi tối đa 2 ưu đãi hoặc số lượng ưu đãi yêu cầu và số lượng ưu đãi đang có lớn hơn 2", 400, "REDEEM_LIMIT_EXCEEDED");
+                    throw new ApiException($"Bạn chỉ có thể lưu trữ tối đa 2 ưu đãi. Hiện tại bạn đang có {storedVoucherCount} ưu đãi.", 400, "REDEEM_LIMIT_EXCEEDED");
                 }
 
                 // Kiểm tra wallet
