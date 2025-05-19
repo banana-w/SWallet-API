@@ -16,6 +16,7 @@ namespace SWallet.Repository.Services.Interfaces
     {
         Task<StudentResponse> CreateStudentAsync(string accountId, StudentRequest studentRequest);
         Task<StudentResponse> UpdateStudentAsync(string accountId, StudentRequest studentRequest);
+        Task<bool> UpdateStudentStatusAsync(string accountId, int state);
         Task<IPaginate<StudentResponse>> GetStudentsAsync(string search, bool? isAsc, int pageIndex, int pageSize);
         Task<StudentResponse> GetStudentAsync(string studentId);
         Task<StudentResponse> GetStudentByAccountIdAsync(string accountId);
