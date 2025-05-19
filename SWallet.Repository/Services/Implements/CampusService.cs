@@ -374,7 +374,7 @@ namespace SWallet.Repository.Services.Implements
         public async Task<bool> UpdateCampusStatus(string accountId, bool status)
         {
             var campus = await _unitOfWork.GetRepository<Campus>()
-                .SingleOrDefaultAsync(predicate: x => x.AccountId == accountId);
+                .SingleOrDefaultAsync(predicate: x => x.Id == accountId);
             if (campus == null)
             {
                 throw new ApiException("Campus not found", 404, "NOT_FOUND");
