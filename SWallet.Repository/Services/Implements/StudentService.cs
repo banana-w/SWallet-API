@@ -53,28 +53,28 @@ namespace SWallet.Repository.Services.Implements
                 throw new Exception($"Lỗi khi lấy danh sách xếp hạng sinh viên: {ex.Message}", ex);
             }
         }
-        
+
 
         public async Task<long> CountStudentToday(DateOnly date)
-    {
-        if (date == default)
         {
-            throw new ArgumentException("Ngày không được để trống", nameof(date));
-        }
+            if (date == default)
+            {
+                throw new ArgumentException("Ngày không được để trống", nameof(date));
+            }
 
-        try
-        {
-            return await _dbContext.Students
-                .Where(c => (bool)c.Status && c.DateCreated.HasValue
-                           && DateOnly.FromDateTime(c.DateCreated.Value).Equals(date))
-                .CountAsync();
+            try
+            {
+                return await _dbContext.Students
+                    .Where(c => (bool)c.Status && c.DateCreated.HasValue
+                               && DateOnly.FromDateTime(c.DateCreated.Value).Equals(date))
+                    .CountAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi đếm số lượng sinh viên vào ngày {Date}", date);
+                throw new Exception("Lỗi khi đếm số lượng sinh viên: " + ex.Message, ex);
+            }
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Lỗi khi đếm số lượng sinh viên vào ngày {Date}", date);
-            throw new Exception("Lỗi khi đếm số lượng sinh viên: " + ex.Message, ex);
-        }
-    }
 
         public async Task<StudentResponse> CreateStudentAsync(string accountId, StudentRequest studentRequest)
         {
@@ -472,6 +472,22 @@ namespace SWallet.Repository.Services.Implements
                 .ToList();
 
             return brandIds;
+        }
+
+        public async Task<bool> UpdateStudentStatusAsync(string accountId, int state)
+        {
+            var student = await _unitOfWork.GetRepository<Student>().SingleOrDefaultAsync(predicate: x => x.AccountId == accountId);
+            if (student == null)
+            {
+                throw new ApiException("Student not found", 400, "STUDENT_NOT_FOUND");
+            }
+
+            student.State = state;
+            student.DateUpdated = DateTime.Now;
+            _unitOfWork.GetRepository<Student>().UpdateAsync(student);
+            var result = await _unitOfWork.CommitAsync();
+
+            return true;
         }
     }
 }

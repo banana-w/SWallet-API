@@ -150,5 +150,18 @@ namespace SWallet_API.Controllers
             });
             return Ok();
         }
+
+        [HttpPut("status/{id}")]
+        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+        [ProducesDefaultResponseType(typeof(ErrorResponse))]
+        public async Task<IActionResult> UpdateStudentStatus(string id, int state)
+        {
+            var result = await _studentService.UpdateStudentStatusAsync(id, state);
+            if (result == false)
+            {
+                throw new ApiException("Student not found", StatusCodes.Status404NotFound, "STUDENT_NOT_FOUND");
+            }
+            return Ok(result);
+        }
     }
 }
