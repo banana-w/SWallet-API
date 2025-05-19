@@ -139,6 +139,14 @@ namespace SWallet_API.Controllers
             return Ok(result);
         }
 
+        [HttpPut("status/{id}")]
+        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+        public async Task<IActionResult> UpdateCampusStatus(string id, [FromBody] bool status)
+        {
+            var result = await _campusService.UpdateCampusStatus(id, status);
+            return Ok(result);
+        }
+
         [HttpGet]
         public async Task<ActionResult<IPaginate<CampusResponse>>> GetAllCampus(string searchName = "", int page = 1, int size = 10) // Pagination parameters
         {

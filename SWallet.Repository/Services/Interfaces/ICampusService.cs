@@ -22,6 +22,7 @@ namespace SWallet.Repository.Services.Interfaces
         Task<IPaginate<CampusResponse>> GetCampusByLectureId(string lectureId, string searchName, int page, int size);
 
         Task<CampusResponse> GetCampusByAccountId(string accountId);
+        Task<bool> UpdateCampusStatus(string accountId, bool status);
         
         void Delete(string id);
 

@@ -370,5 +370,25 @@ namespace SWallet.Repository.Services.Implements
             throw new ApiException("Update Brand Fail", 400, "BAD_REQUEST");
 
         }
+
+        public async Task<bool> UpdateCampusStatus(string accountId, bool status)
+        {
+            var campus = await _unitOfWork.GetRepository<Campus>()
+                .SingleOrDefaultAsync(predicate: x => x.AccountId == accountId);
+            if (campus == null)
+            {
+                throw new ApiException("Campus not found", 404, "NOT_FOUND");
+            }
+            campus.Status = status;
+            campus.DateUpdated = DateTime.Now;
+
+            _unitOfWork.GetRepository<Campus>().UpdateAsync(campus);
+            var isSuccess = await _unitOfWork.CommitAsync() > 0;
+            if (isSuccess)
+            {
+                return true;
+            }
+            return false;
+        }
     }
 }
