@@ -139,11 +139,11 @@ namespace SWallet_API.Controllers
             return Ok(result);
         }
 
-        [HttpPut("status/{id}")]
+        [HttpPut("status/{campusId}")]
         [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
-        public async Task<IActionResult> UpdateCampusStatus(string id, [FromBody] bool status)
+        public async Task<IActionResult> UpdateCampusStatus(string campusId, [FromBody] bool status)
         {
-            var result = await _campusService.UpdateCampusStatus(id, status);
+            var result = await _campusService.UpdateCampusStatus(campusId, status);
             return Ok(result);
         }
 
