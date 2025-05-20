@@ -135,6 +135,14 @@ namespace SWallet_API.Controllers
             }
         }
 
+        [HttpGet("ranking/{brandId}")]
+        [ProducesResponseType(typeof(List<CampaignRankingResponse>), 200)]
+        public async Task<IActionResult> GetRanking(string brandId, int limit)
+        {
+                var ranking = await _campaignService.GetRankingByVoucherRatio(brandId, limit);
+                return Ok(ranking);
+        }
+
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateCampaign(string id, UpdateCampaignModel update)
         {
