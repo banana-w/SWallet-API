@@ -27,7 +27,6 @@ namespace SWallet.Repository.Services.Implements
         private readonly ICloudinaryService _cloudinaryService;
         private readonly IVoucherItemService _voucherItemService;
         private readonly IWalletService _walletService;
-        private readonly SwalletDbContext _swalletDB;
         private readonly IFirebaseService _firebaseService;
         private readonly ICampaignTransactionService _campaignTransactionService;
 
@@ -37,13 +36,12 @@ namespace SWallet.Repository.Services.Implements
             public int? ToIndex { get; set; }
         }
 
-        public CampaignService(IUnitOfWork<SwalletDbContext> unitOfWork, SwalletDbContext swalletDB , ILogger<CampaignService> logger,
-            ICloudinaryService cloudinaryService, IWalletService walletService,IVoucherItemService voucherItemService, IFirebaseService firebaseService, 
+        public CampaignService(IUnitOfWork<SwalletDbContext> unitOfWork, ILogger<CampaignService> logger,
+            ICloudinaryService cloudinaryService, IWalletService walletService, IVoucherItemService voucherItemService, IFirebaseService firebaseService,
             ICampaignTransactionService campaignTransactionService, IHttpContextAccessor httpContextAccessor) : base(unitOfWork, logger, httpContextAccessor)
         {
             _cloudinaryService = cloudinaryService;
             _voucherItemService = voucherItemService;
-            _swalletDB = swalletDB;
             _walletService = walletService;
             _firebaseService = firebaseService;
             _campaignTransactionService = campaignTransactionService;
@@ -86,13 +84,12 @@ namespace SWallet.Repository.Services.Implements
             mapper = new Mapper(config);
         }
 
-        public long CountCampaign()
+        public async Task<int> CountCampaign()
         {
-            long count = 0;
+            int count = 0;
             try
             {
-                var db = _swalletDB;
-                count = db.Campaigns.Where(c => c.Status == (int)CampaignStatus.Active).Count();
+                count = await _unitOfWork.GetRepository<Campaign>().CountAsync(x => x.Status == (int)CampaignStatus.Active);
             }
             catch (Exception ex)
             {
@@ -108,7 +105,7 @@ namespace SWallet.Repository.Services.Implements
             {
                 throw new ApiException("Brand not found", 404, "NOT_FOUND");
             }
-            if (campaign.Image!= null && campaign.Image.Length > 0)
+            if (campaign.Image != null && campaign.Image.Length > 0)
             {
 
                 var f = await _cloudinaryService.UploadImageAsync(campaign.Image);
@@ -273,19 +270,19 @@ namespace SWallet.Repository.Services.Implements
                         throw new ApiException("Create CampaignDetail Fail", 400, "BAD_REQUEST");
                     }
 
-                    var voucherItemSuccess = await _voucherItemService.GenerateVoucherItemsAsync(new VoucherItemRequest
-                    {
-                        VoucherId = cd.VoucherId,
-                        CampaignDetailId = campaignDetail.Id,
-                        Quantity = (int)cd.Quantity,
-                        ValidOn = campaignModel.StartOn,
-                        ExpireOn = campaignModel.EndOn
-                    });
+                    //var voucherItemSuccess = await _voucherItemService.GenerateVoucherItemsAsync(new VoucherItemRequest
+                    //{
+                    //    VoucherId = cd.VoucherId,
+                    //    CampaignDetailId = campaignDetail.Id,
+                    //    Quantity = (int)cd.Quantity,
+                    //    ValidOn = campaignModel.StartOn,
+                    //    ExpireOn = campaignModel.EndOn
+                    //});
 
-                    if (!voucherItemSuccess)
-                    {
-                        throw new ApiException("Generate VoucherItem Fail", 400, "BAD_REQUEST");
-                    }
+                    //if (!voucherItemSuccess)
+                    //{
+                    //    throw new ApiException("Generate VoucherItem Fail", 400, "BAD_REQUEST");
+                    //}
                 }
 
                 // Upload hình ảnh
@@ -371,7 +368,7 @@ namespace SWallet.Repository.Services.Implements
                 var campaign = await _unitOfWork.GetRepository<Campaign>()
                     .SingleOrDefaultAsync(
                         predicate: x => x.Id == campaignId && x.Status == (int)CampaignStatus.Pending,
-                        include: x => x.Include(x => x.Brand).Include(x => x.Type)
+                        include: x => x.Include(x => x.Brand).Include(x => x.Type).Include(x => x.CampaignDetails)
                     );
 
                 if (campaign == null)
@@ -385,6 +382,23 @@ namespace SWallet.Repository.Services.Implements
                     campaign.Status = (int)CampaignStatus.Active;
                     campaign.DateUpdated = DateTime.Now;
                     _unitOfWork.GetRepository<Campaign>().UpdateAsync(campaign);
+
+                    foreach (var cd in campaign.CampaignDetails)
+                    {
+                        var voucherItemSuccess = await _voucherItemService.GenerateVoucherItemsAsync(new VoucherItemRequest
+                        {
+                            VoucherId = cd.VoucherId,
+                            CampaignDetailId = cd.Id,
+                            Quantity = (int)cd.Quantity,
+                            ValidOn = campaign.StartOn,
+                            ExpireOn = campaign.EndOn
+                        });
+
+                        if (!voucherItemSuccess)
+                        {
+                            throw new ApiException("Generate VoucherItem Fail", 400, "BAD_REQUEST");
+                        }
+                    }
                 }
                 else
                 {
@@ -637,7 +651,7 @@ namespace SWallet.Repository.Services.Implements
                     TotalSpending = x.TotalSpending,
                     CampaignDetailId = x.CampaignDetails.Select(cd => cd.Id)
                 },
-                
+
                 predicate: x => x.Id == id,
                 include: x => x.Include(x => x.CampaignDetails).Include(x => x.Type)
                                .Include(x => x.Brand).ThenInclude(x => x.Account));
@@ -648,7 +662,7 @@ namespace SWallet.Repository.Services.Implements
             }
             return campaign;
         }
-        
+
         public async Task<CampaignResponseExtraAllStatus> GetCampaignByIdAllStatus(string id)
         {
             var campaign = await _unitOfWork.GetRepository<Campaign>().SingleOrDefaultAsync(
@@ -678,7 +692,7 @@ namespace SWallet.Repository.Services.Implements
                     TotalSpending = x.TotalSpending,
                     CampaignDetailId = x.CampaignDetails.Select(cd => cd.Id)
                 },
-                
+
                 predicate: x => x.Id == id,
                 include: x => x.Include(x => x.CampaignDetails).Include(x => x.Type)
                                .Include(x => x.Brand).ThenInclude(x => x.Account));
@@ -701,7 +715,7 @@ namespace SWallet.Repository.Services.Implements
             else
             {
                 filterQuery = p => p.BrandId == brandId && p.CampaignName.Contains(searchName);
-            }         
+            }
 
             var campaigns = await _unitOfWork.GetRepository<Campaign>().GetPagingListAsync(
                 selector: x => new CampaignResponse
@@ -968,7 +982,7 @@ namespace SWallet.Repository.Services.Implements
             return campaigns;
         }
 
-        public async Task<List<Campaign>> GetRanking(string brandId, int limit)
+        public async Task<List<CampaignResponse>> GetRanking(string brandId, int limit)
         {
             if (string.IsNullOrEmpty(brandId))
                 throw new ArgumentException("BrandId không được để trống", nameof(brandId));
@@ -977,15 +991,104 @@ namespace SWallet.Repository.Services.Implements
 
             try
             {
-                return await _swalletDB.Campaigns
-                    .Where(c => c.BrandId.Equals(brandId) && c.Status == (int)CampaignStatus.Active)
-                    .OrderByDescending(c => c.TotalSpending)
-                    .Take(limit)
-                    .ToListAsync();
+                var campaignList = await _unitOfWork.GetRepository<Campaign>().GetListAsync(
+                    selector: x => new CampaignResponse
+                    {
+                        Id = x.Id,
+                        BrandId = x.BrandId,
+                        BrandName = x.Brand.BrandName,
+                        BrandAcronym = x.Brand.Acronym,
+                        TypeId = x.TypeId,
+                        TypeName = x.Type.TypeName,
+                        CampaignName = x.CampaignName,
+                        Image = x.Image,
+                        ImageName = x.ImageName,
+                        Condition = x.Condition,
+                        Link = x.Link,
+                        StartOn = x.StartOn,
+                        EndOn = x.EndOn,
+                        Duration = x.Duration,
+                        TotalIncome = x.TotalIncome,
+                        TotalSpending = x.TotalSpending,
+                        DateCreated = x.DateCreated,
+                        DateUpdated = x.DateUpdated,
+                        Description = x.Description,
+                    },
+                    predicate: c => c.BrandId.Equals(brandId) && c.Status == (int)CampaignStatus.Active,
+                    include: c => c.Include(c => c.CampaignDetails)
+                                   .ThenInclude(cd => cd.VoucherItems),
+                    orderBy: c => c.OrderByDescending(c => c.TotalSpending)
+                    );
+
+                return campaignList.Take(limit).ToList();
+
             }
             catch (Exception ex)
             {
-                throw new Exception($"Lỗi khi lấy danh sách xếp hạng chiến dịch: {ex.Message}", ex);
+                _logger.LogError(ex, "Error in GetRanking for brandId {BrandId}", brandId);
+                throw new ApiException("Failed to retrieve campaign ranking", 500, "INTERNAL_SERVER_ERROR");
+            }
+        }
+
+        public async Task<List<CampaignRankingResponse>> GetRankingByVoucherRatio(string brandId, int limit)
+        {
+            try
+            {
+                var campaigns = await _unitOfWork.GetRepository<Campaign>()
+                    .GetListAsync(
+                        selector: x => new CampaignRankingResponse
+                        {
+                            Id = x.Id,
+                            BrandId = x.BrandId,
+                            BrandName = x.Brand.BrandName,
+                            BrandAcronym = x.Brand.Acronym,
+                            CampaignName = x.CampaignName,
+                            Image = x.Image,
+                            ImageName = x.ImageName,
+                            Condition = x.Condition,
+                            Link = x.Link,
+                            StartOn = x.StartOn,
+                            EndOn = x.EndOn,
+                            Duration = x.Duration,
+                            TotalIncome = x.TotalIncome,
+                            TotalSpending = x.TotalSpending,
+                            DateCreated = x.DateCreated,
+                            DateUpdated = x.DateUpdated,
+                            Description = x.Description,
+                            Status = x.Status == (int)CampaignStatus.Active,
+                            VoucherUsageRatio = x.CampaignDetails.Any()
+                                ? (double)x.CampaignDetails.SelectMany(cd => cd.VoucherItems)
+                                    .Count(vi => vi.IsUsed == true) /
+                                  x.CampaignDetails.SelectMany(cd => cd.VoucherItems).Count()
+                                : 0,
+                            VoucherBoughtRatio = x.CampaignDetails.Any()
+                                ? (double)x.CampaignDetails.SelectMany(cd => cd.VoucherItems)
+                                    .Count(vi => vi.IsBought == true) /
+                                  x.CampaignDetails.SelectMany(cd => cd.VoucherItems).Count()
+                                : 0
+                        },
+                        predicate: x => x.BrandId == brandId && x.Status == (int)CampaignStatus.Active,
+                        include: x => x.Include(c => c.CampaignDetails)
+                                       .ThenInclude(cd => cd.VoucherItems)
+                                       .Include(c => c.Brand),
+                        orderBy: x => x.OrderByDescending(a => a.CampaignDetails.Any()
+                            ? (double)a.CampaignDetails.SelectMany(cd => cd.VoucherItems)
+                                .Count(vi => vi.IsUsed == true) /
+                              a.CampaignDetails.SelectMany(cd => cd.VoucherItems).Count()
+                            : 0)
+                            .ThenByDescending(a => a.CampaignDetails.Any()
+                            ? (double)a.CampaignDetails.SelectMany(cd => cd.VoucherItems)
+                                .Count(vi => vi.IsBought == true) /
+                              a.CampaignDetails.SelectMany(cd => cd.VoucherItems).Count()
+                            : 0)
+                    );
+
+                return campaigns.Take(limit).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in GetRanking for brandId {BrandId}", brandId);
+                throw new ApiException("Failed to retrieve campaign ranking", 500, "INTERNAL_SERVER_ERROR");
             }
         }
 

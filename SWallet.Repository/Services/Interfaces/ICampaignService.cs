@@ -30,11 +30,11 @@ namespace SWallet.Repository.Services.Interfaces
 
         Task<IEnumerable<CampaignDetailResponse>> GetAllCampaignDetails();
 
-        Task<List<Campaign>> GetRanking(string brandId, int limit);
+        Task<List<CampaignResponse>> GetRanking(string brandId, int limit);
+        Task<List<CampaignRankingResponse>> GetRankingByVoucherRatio(string brandId, int limit);
 
         void Delete(string id);
-
-        long CountCampaign();
+        Task<int> CountCampaign();
 
     }
 }

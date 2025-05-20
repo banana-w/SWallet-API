@@ -506,7 +506,7 @@ namespace SWallet.Repository.Services.Implements
             return new TitleAdminModel
             {
                 NumberOfBrands =  brandService.CountBrand(),
-                NumberOfCampagins =  campaignService.CountCampaign(),
+                NumberOfCampagins = await campaignService.CountCampaign(),
                 NumberOfStudents =  studentService.CountStudent()
             };
         }
