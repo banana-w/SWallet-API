@@ -12,4 +12,8 @@ public partial class QrcodeUsage
     public string? StudentId { get; set; }
 
     public DateTime? UsedAt { get; set; }
+
+    public decimal? Longtitude { get; set; }
+
+    public decimal? Latitude { get; set; }
 }

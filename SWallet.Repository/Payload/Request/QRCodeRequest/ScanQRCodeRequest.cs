@@ -10,5 +10,7 @@ namespace SWallet.Repository.Payload.Request.QRCodeRequest
     {
         public string QRCodeJson { get; set; } // Chuỗi JSON từ QRCode
         public string StudentId { get; set; }  // ID của Student quét QRCode
+        public double Longitude { get; set; } // Thêm kinh độ của sinh viên
+        public double Latitude { get; set; }  // Thêm vĩ độ của sinh viên
     }
 }

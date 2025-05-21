@@ -85,7 +85,7 @@ public partial class SwalletDbContext : DbContext
     public virtual DbSet<Wishlist> Wishlists { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    => optionsBuilder.UseSqlServer(GetConnectionString());
+     => optionsBuilder.UseSqlServer(GetConnectionString());
 
     private string GetConnectionString()
     {
@@ -965,10 +965,16 @@ public partial class SwalletDbContext : DbContext
                 .HasColumnName("id");
             entity.Property(e => e.CreatedAt).HasColumnName("createdAt");
             entity.Property(e => e.ExpirationTime).HasColumnName("expirationTime");
+            entity.Property(e => e.Latitude)
+                .HasColumnType("decimal(9, 6)")
+                .HasColumnName("latitude");
             entity.Property(e => e.LectureId)
                 .HasMaxLength(26)
                 .IsUnicode(false)
                 .HasColumnName("lectureId");
+            entity.Property(e => e.Longtitude)
+                .HasColumnType("decimal(9, 6)")
+                .HasColumnName("longtitude");
             entity.Property(e => e.Points).HasColumnName("points");
             entity.Property(e => e.QrCodeData).HasColumnName("qrCodeData");
             entity.Property(e => e.QrCodeImageUrl).HasColumnName("qrCodeImageUrl");
@@ -980,6 +986,12 @@ public partial class SwalletDbContext : DbContext
             entity.ToTable("qrcode_usage");
 
             entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Latitude)
+                .HasColumnType("decimal(9, 6)")
+                .HasColumnName("latitude");
+            entity.Property(e => e.Longtitude)
+                .HasColumnType("decimal(9, 6)")
+                .HasColumnName("longtitude");
             entity.Property(e => e.QrcodeJson).HasColumnName("qrcode_json");
             entity.Property(e => e.StudentId)
                 .HasMaxLength(26)
