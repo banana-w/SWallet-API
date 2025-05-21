@@ -118,13 +118,13 @@ namespace SWallet.Repository.Services.Implements
             // Kiểm tra request có null không
             if (request == null)
             {
-                throw new ApiException("Request cannot be null", 400, "BAD_REQUEST");
+                throw new ApiException("Yêu cầu không được để trống", 400, "BAD_REQUEST");
             }
 
             // Kiểm tra _cloudinary có được khởi tạo không
             if (_cloudinary == null)
             {
-                throw new ApiException("Cloudinary service is not initialized", 500, "INTERNAL_SERVER_ERROR");
+                throw new ApiException("Dịch vụ Cloudinary chưa được khởi tạo", 500, "INTERNAL_SERVER_ERROR");
             }
 
             var lecturerWallet = await _unitOfWork.GetRepository<Wallet>().SingleOrDefaultAsync(
@@ -133,13 +133,13 @@ namespace SWallet.Repository.Services.Implements
 
             if (lecturerWallet == null || lecturerWallet.Balance == null)
             {
-                throw new ApiException("Wallet not found for this lecturer", 404, "NOT_FOUND");
+                throw new ApiException("Không tìm thấy ví cho giảng viên này", 404, "NOT_FOUND");
             }
 
             if (lecturerWallet.Balance < request.Points)
             {
                 throw new ApiException(
-                    $"Insufficient balance. Required: {request.Points}, Available: {lecturerWallet.Balance}",
+                    $"Số dư không đủ. Yêu cầu: {request.Points}, Số dư hiện tại: {lecturerWallet.Balance}",
                     400,
                     "INSUFFICIENT_BALANCE"
                 );
@@ -153,6 +153,8 @@ namespace SWallet.Repository.Services.Implements
                 startOnTime = DateTime.Now,
                 expirationTime = availableTime,
                 availableHours = request.AvailableHours,
+                longitude = request.Longitude, // Lưu kinh độ
+                latitude = request.Latitude   // Lưu vĩ độ
             });
 
             using (QRCodeGenerator qrGenerator = new QRCodeGenerator())
@@ -162,7 +164,7 @@ namespace SWallet.Repository.Services.Implements
                 byte[] qrCodeImageBytes = qrCode.GetGraphic(20);
                 if (qrCodeImageBytes == null || qrCodeImageBytes.Length == 0)
                 {
-                    throw new ApiException("Failed to generate QR code image", 500, "INTERNAL_SERVER_ERROR");
+                    throw new ApiException("Không thể tạo hình ảnh mã QR", 500, "INTERNAL_SERVER_ERROR");
                 }
 
                 using (MemoryStream ms = new MemoryStream(qrCodeImageBytes))
@@ -177,7 +179,7 @@ namespace SWallet.Repository.Services.Implements
                     var uploadResult = _cloudinary.Upload(uploadParams);
                     if (uploadResult == null || uploadResult.Url == null)
                     {
-                        throw new ApiException("Failed to upload QR code to Cloudinary", 500, "INTERNAL_SERVER_ERROR");
+                        throw new ApiException("Không thể tải mã QR lên Cloudinary", 500, "INTERNAL_SERVER_ERROR");
                     }
 
                     // Lưu lịch sử tạo mã QR
@@ -190,6 +192,8 @@ namespace SWallet.Repository.Services.Implements
                         ExpirationTime = availableTime,
                         QrCodeData = qrCodeJson,
                         QrCodeImageUrl = uploadResult.Url.ToString(),
+                        //Longitude = request.Longitude, // Lưu kinh độ
+                        //Latitude = request.Latitude,   // Lưu vĩ độ
                         CreatedAt = DateTime.Now
                     };
 
@@ -209,23 +213,27 @@ namespace SWallet.Repository.Services.Implements
         {
             if (request == null || string.IsNullOrEmpty(request.QRCodeJson) || string.IsNullOrEmpty(request.StudentId))
             {
-                throw new ApiException("Invalid request data", 400, "BAD_REQUEST");
+                throw new ApiException("Dữ liệu yêu cầu không hợp lệ", 400, "BAD_REQUEST");
             }
 
+            //// Kiểm tra kinh độ và vĩ độ hợp lệ
+            //if (request.Longitude < -180 || request.Longitude > 180 || request.Latitude < -90 || request.Latitude > 90)
+            //{
+            //    throw new ApiException("Kinh độ hoặc vĩ độ không hợp lệ", 400, "INVALID_COORDINATES");
+            //}
 
-            // Kiểm tra xem QRCode đã được sử dụng chưa
+            // Kiểm tra xem mã QR đã được sử dụng chưa
             var qrCodeUsageRepository = _unitOfWork.GetRepository<QrcodeUsage>();
             var isQrCodeUsed = await qrCodeUsageRepository.AnyAsync(
                 predicate: u => u.QrcodeJson == request.QRCodeJson && u.StudentId == request.StudentId
             );
             if (isQrCodeUsed)
             {
-                _logger.LogWarning("QRCode already used: {QRCodeJson} by Student: {StudentId}", request.QRCodeJson, request.StudentId);
-                throw new ApiException("This QRCode has already been used", 400, "QRCODE_ALREADY_USED");
+                _logger.LogWarning("Mã QR đã được sử dụng: {QRCodeJson} bởi Sinh viên: {StudentId}", request.QRCodeJson, request.StudentId);
+                throw new ApiException("Mã QR này đã được sử dụng", 400, "QRCODE_ALREADY_USED");
             }
 
-
-            // Giải mã dữ liệu từ QRCode
+            // Giải mã dữ liệu từ mã QR
             GenerateQRCodeRequest qrCodeData;
             try
             {
@@ -233,68 +241,80 @@ namespace SWallet.Repository.Services.Implements
             }
             catch (JsonException ex)
             {
-                _logger.LogError(ex, "Failed to deserialize QRCode JSON: {QRCodeJson}", request.QRCodeJson);
-                throw new ApiException("Invalid QRCode format", 400, "INVALID_QRCODE");
+                _logger.LogError(ex, "Không thể giải mã JSON của mã QR: {QRCodeJson}", request.QRCodeJson);
+                throw new ApiException("Định dạng mã QR không hợp lệ", 400, "INVALID_QRCODE");
             }
 
             // Kiểm tra các trường bắt buộc
             if (string.IsNullOrEmpty(qrCodeData.LecturerId) || qrCodeData.Points <= 0)
             {
-                throw new ApiException("QRCode data is incomplete", 400, "INVALID_QRCODE");
+                throw new ApiException("Dữ liệu mã QR không đầy đủ", 400, "INVALID_QRCODE");
             }
+
             // Kiểm tra thời gian hiệu lực
             if (DateTime.Now < qrCodeData.StartOnTime || DateTime.Now > qrCodeData.ExpirationTime)
             {
-                throw new ApiException("QRCode has expired or is not yet available", 400, "EXPIRED_QRCODE");
+                throw new ApiException("Mã QR đã hết hạn hoặc chưa khả dụng", 400, "EXPIRED_QRCODE");
             }
 
-            // Lấy thông tin Lecturer và Student
+            // Kiểm tra khoảng cách
+            const double maxDistanceMeters = 400; // Ngưỡng khoảng cách tối đa (100 mét)
+            var distance = CalculateDistance(qrCodeData.Latitude, qrCodeData.Longitude, request.Latitude, request.Longitude);
+            if (distance > maxDistanceMeters)
+            {
+                throw new ApiException(
+                    $"Sinh viên không ở gần vị trí mã QR. Khoảng cách: {distance:F2} mét, tối đa cho phép: {maxDistanceMeters} mét",
+                    400,
+                    "LOCATION_MISMATCH"
+                );
+            }
+
+            // Lấy thông tin giảng viên và sinh viên
             var lecturer = await _lecturerService.GetLecturerById(qrCodeData.LecturerId);
             var student = await _studentService.GetStudentAsync(request.StudentId);
 
             if (lecturer == null || student == null)
             {
-                throw new ApiException("Lecturer or Student not found", 404, "NOT_FOUND");
+                throw new ApiException("Không tìm thấy giảng viên hoặc sinh viên", 404, "NOT_FOUND");
             }
 
-            // Lấy wallet của Lecturer và Student
+            // Lấy ví của giảng viên và sinh viên
             var lecturerWallet = await _walletService.GetWalletByLecturerId(qrCodeData.LecturerId, 1);
             var studentWallet = await _walletService.GetWalletByStudentId(request.StudentId, 1);
 
             if (lecturerWallet == null || studentWallet == null)
             {
-                throw new ApiException("Lecturer or Student wallet not found", 404, "NOT_FOUND");
+                throw new ApiException("Không tìm thấy ví của giảng viên hoặc sinh viên", 404, "NOT_FOUND");
             }
 
             if (lecturerWallet.Balance < qrCodeData.Points)
             {
                 throw new ApiException(
-                    $"Insufficient balance in lecturer wallet. Required: {qrCodeData.Points}, Available: {lecturerWallet.Balance}",
+                    $"Số dư ví giảng viên không đủ. Yêu cầu: {qrCodeData.Points}, Số dư hiện tại: {lecturerWallet.Balance}",
                     400,
                     "INSUFFICIENT_BALANCE"
                 );
             }
 
-           
-
             // Chuyển điểm
             await _walletService.UpdateWallet(lecturerWallet.Id, (int)(lecturerWallet.Balance - qrCodeData.Points));
             await _walletService.UpdateWallet(studentWallet.Id, (int)(studentWallet.Balance + qrCodeData.Points));
-           
 
-
+            // Lưu lịch sử sử dụng mã QR
             var qrCodeUsage = new QrcodeUsage
             {
                 QrcodeJson = request.QRCodeJson,
                 StudentId = request.StudentId,
-                UsedAt = DateTime.Now
+                UsedAt = DateTime.Now,
+                Longtitude = (decimal?)request.Longitude, // Lưu kinh độ của sinh viên
+                Latitude = (decimal?)request.Latitude    // Lưu vĩ độ của sinh viên
             };
             await _unitOfWork.GetRepository<QrcodeUsage>().InsertAsync(qrCodeUsage);
 
             await _unitOfWork.CommitAsync();
 
-            _logger.LogInformation("Transferred {Points} points from Lecturer {LecturerId} to Student {StudentId}",
-            qrCodeData.Points, qrCodeData.LecturerId, request.StudentId);
+            _logger.LogInformation("Đã chuyển {Points} điểm từ Giảng viên {LecturerId} sang Sinh viên {StudentId}",
+                qrCodeData.Points, qrCodeData.LecturerId, request.StudentId);
 
             return new ScanQRCodeResponse
             {
@@ -302,6 +322,22 @@ namespace SWallet.Repository.Services.Implements
                 PointsTransferred = qrCodeData.Points,
                 NewBalance = (int)studentWallet.Balance + qrCodeData.Points
             };
+        }
+
+        private double CalculateDistance(double lat1, double lon1, double lat2, double lon2)
+        {
+            const double R = 6371000; // Bán kính Trái Đất (mét)
+            double lat1Rad = lat1 * Math.PI / 180;
+            double lat2Rad = lat2 * Math.PI / 180;
+            double deltaLat = (lat2 - lat1) * Math.PI / 180;
+            double deltaLon = (lon2 - lon1) * Math.PI / 180;
+
+            double a = Math.Sin(deltaLat / 2) * Math.Sin(deltaLat / 2) +
+                       Math.Cos(lat1Rad) * Math.Cos(lat2Rad) *
+                       Math.Sin(deltaLon / 2) * Math.Sin(deltaLon / 2);
+            double c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+
+            return R * c; // Khoảng cách tính bằng mét
         }
 
         public async Task<IPaginate<QrCodeHistoryResponse>> GetQrHistoryByLectureId(string lectureId, string searchName, int page, int size)

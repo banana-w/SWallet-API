@@ -13,5 +13,7 @@ namespace SWallet.Repository.Payload.Request.QRCodeRequest
         public DateTime ExpirationTime { get; set; }
         public DateTime StartOnTime { get; set; }
         public int AvailableHours { get; set; }
+        public double Longitude { get; set; } // Thêm kinh độ
+        public double Latitude { get; set; }  // Thêm vĩ độ
     }
 }

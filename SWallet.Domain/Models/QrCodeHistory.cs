@@ -20,4 +20,8 @@ public partial class QrCodeHistory
     public string? QrCodeImageUrl { get; set; }
 
     public DateTime CreatedAt { get; set; }
+
+    public decimal? Longtitude { get; set; }
+
+    public decimal? Latitude { get; set; }
 }
