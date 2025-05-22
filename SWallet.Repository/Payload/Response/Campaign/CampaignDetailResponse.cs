@@ -24,6 +24,7 @@ namespace SWallet.Repository.Payload.Response.Campaign
         public string Description { get; set; }
         public bool? State { get; set; }
         public bool? Status { get; set; }
+        public int? CampaignStatus { get; set; }
         public int? QuantityInStock { get; set; }
         public int? QuantityInBought { get; set; }
         public int? QuantityInUsed { get; set; }

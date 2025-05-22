@@ -394,7 +394,10 @@ namespace SWallet.Repository.Services.Implements
                     ExpirationTime = x.ExpirationTime,
                     QRCodeData = x.QrCodeData,
                     QRCodeImageUrl = x.QrCodeImageUrl,
-                    CreatedAt = x.CreatedAt
+                    CreatedAt = x.CreatedAt,
+                    MaxUsageCount = x.MaxUsageCount,
+                    CurrentUsageCount = x.CurrentUsageCount
+
 
 
                 },

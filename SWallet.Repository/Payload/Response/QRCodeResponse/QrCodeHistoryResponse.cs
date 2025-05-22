@@ -16,6 +16,8 @@ namespace SWallet.Repository.Payload.Response.QRCodeResponse
         public string QRCodeData { get; set; } = null!;
         public string QRCodeImageUrl { get; set; } = null!;
         public DateTime CreatedAt { get; set; }
+        public int MaxUsageCount { get; set; }
+        public int CurrentUsageCount { get; set; }
 
     }
 }

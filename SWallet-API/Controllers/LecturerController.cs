@@ -145,7 +145,7 @@ namespace SWallet_API.Controllers
 
 
         [HttpGet("qr-history")]
-        public async Task<ActionResult<IPaginate<LecturerResponse>>> GetQrHistory(string lectureId, string searchName = "", int page = 1, int size = 10)
+        public async Task<ActionResult<IPaginate<LecturerResponse>>> GetQrHistory(string lectureId, string searchName = "", int page = 1, int size = 99)
         {
 
             var result = await _qrCodeService.GetQrHistoryByLectureId(lectureId, searchName, page, size);
@@ -159,7 +159,7 @@ namespace SWallet_API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IPaginate<LecturerResponse>>> GetAllLecturers(string searchName = "", int page = 1, int size = 10)
+        public async Task<ActionResult<IPaginate<LecturerResponse>>> GetAllLecturers(string searchName = "", int page = 1, int size = 20)
         {
             try
             {
