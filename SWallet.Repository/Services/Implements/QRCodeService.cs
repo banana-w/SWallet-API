@@ -121,6 +121,12 @@ namespace SWallet.Repository.Services.Implements
                 throw new ApiException("Yêu cầu không được để trống", 400, "BAD_REQUEST");
             }
 
+            // Kiểm tra MaxUsageCount hợp lệ
+            if (request.MaxUsageCount <= 0)
+            {
+                throw new ApiException("Số lần sử dụng tối đa phải lớn hơn 0", 400, "INVALID_MAX_USAGE_COUNT");
+            }
+
             // Kiểm tra _cloudinary có được khởi tạo không
             if (_cloudinary == null)
             {
@@ -153,8 +159,9 @@ namespace SWallet.Repository.Services.Implements
                 startOnTime = DateTime.Now,
                 expirationTime = availableTime,
                 availableHours = request.AvailableHours,
-                longitude = request.Longitude, // Lưu kinh độ
-                latitude = request.Latitude   // Lưu vĩ độ
+                longitude = request.Longitude,
+                latitude = request.Latitude,
+                maxUsageCount = request.MaxUsageCount // Lưu số lần tối đa
             });
 
             using (QRCodeGenerator qrGenerator = new QRCodeGenerator())
@@ -192,8 +199,10 @@ namespace SWallet.Repository.Services.Implements
                         ExpirationTime = availableTime,
                         QrCodeData = qrCodeJson,
                         QrCodeImageUrl = uploadResult.Url.ToString(),
-                        //Longitude = request.Longitude, // Lưu kinh độ
-                        //Latitude = request.Latitude,   // Lưu vĩ độ
+                        Longtitude = (decimal?)request.Longitude,
+                        Latitude = (decimal?)request.Latitude,
+                        MaxUsageCount = request.MaxUsageCount, // Lưu số lần tối đa
+                        CurrentUsageCount = 0, // Khởi tạo số lần đã sử dụng
                         CreatedAt = DateTime.Now
                     };
 
@@ -216,11 +225,7 @@ namespace SWallet.Repository.Services.Implements
                 throw new ApiException("Dữ liệu yêu cầu không hợp lệ", 400, "BAD_REQUEST");
             }
 
-            //// Kiểm tra kinh độ và vĩ độ hợp lệ
-            //if (request.Longitude < -180 || request.Longitude > 180 || request.Latitude < -90 || request.Latitude > 90)
-            //{
-            //    throw new ApiException("Kinh độ hoặc vĩ độ không hợp lệ", 400, "INVALID_COORDINATES");
-            //}
+           
 
             // Kiểm tra xem mã QR đã được sử dụng chưa
             var qrCodeUsageRepository = _unitOfWork.GetRepository<QrcodeUsage>();
@@ -246,7 +251,7 @@ namespace SWallet.Repository.Services.Implements
             }
 
             // Kiểm tra các trường bắt buộc
-            if (string.IsNullOrEmpty(qrCodeData.LecturerId) || qrCodeData.Points <= 0)
+            if (string.IsNullOrEmpty(qrCodeData.LecturerId) || qrCodeData.Points <= 0 || qrCodeData.MaxUsageCount <= 0)
             {
                 throw new ApiException("Dữ liệu mã QR không đầy đủ", 400, "INVALID_QRCODE");
             }
@@ -257,8 +262,26 @@ namespace SWallet.Repository.Services.Implements
                 throw new ApiException("Mã QR đã hết hạn hoặc chưa khả dụng", 400, "EXPIRED_QRCODE");
             }
 
+            // Kiểm tra số lần sử dụng
+            var qrCodeHistory = await _unitOfWork.GetRepository<QrCodeHistory>().SingleOrDefaultAsync(
+                predicate: h => h.QrCodeData == request.QRCodeJson
+            );
+            if (qrCodeHistory == null)
+            {
+                throw new ApiException("Không tìm thấy lịch sử mã QR", 404, "QRCODE_NOT_FOUND");
+            }
+
+            if (qrCodeHistory.CurrentUsageCount >= qrCodeHistory.MaxUsageCount)
+            {
+                throw new ApiException(
+                    $"Mã QR đã đạt số lần sử dụng tối đa: {qrCodeHistory.MaxUsageCount}",
+                    400,
+                    "MAX_USAGE_REACHED"
+                );
+            }
+
             // Kiểm tra khoảng cách
-            const double maxDistanceMeters = 400; // Ngưỡng khoảng cách tối đa (100 mét)
+            const double maxDistanceMeters = 100; // Ngưỡng khoảng cách tối đa (100 mét)
             var distance = CalculateDistance(qrCodeData.Latitude, qrCodeData.Longitude, request.Latitude, request.Longitude);
             if (distance > maxDistanceMeters)
             {
@@ -306,10 +329,14 @@ namespace SWallet.Repository.Services.Implements
                 QrcodeJson = request.QRCodeJson,
                 StudentId = request.StudentId,
                 UsedAt = DateTime.Now,
-                Longtitude = (decimal?)request.Longitude, // Lưu kinh độ của sinh viên
-                Latitude = (decimal?)request.Latitude    // Lưu vĩ độ của sinh viên
+                Longtitude = (decimal?)request.Longitude,
+                Latitude = (decimal?)request.Latitude
             };
             await _unitOfWork.GetRepository<QrcodeUsage>().InsertAsync(qrCodeUsage);
+
+            // Cập nhật số lần sử dụng
+            qrCodeHistory.CurrentUsageCount += 1;
+             _unitOfWork.GetRepository<QrCodeHistory>().UpdateAsync(qrCodeHistory);
 
             await _unitOfWork.CommitAsync();
 

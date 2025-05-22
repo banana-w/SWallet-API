@@ -975,6 +975,7 @@ public partial class SwalletDbContext : DbContext
             entity.Property(e => e.Longtitude)
                 .HasColumnType("decimal(9, 6)")
                 .HasColumnName("longtitude");
+            entity.Property(e => e.MaxUsageCount).HasDefaultValue(1);
             entity.Property(e => e.Points).HasColumnName("points");
             entity.Property(e => e.QrCodeData).HasColumnName("qrCodeData");
             entity.Property(e => e.QrCodeImageUrl).HasColumnName("qrCodeImageUrl");
