@@ -15,5 +15,6 @@ namespace SWallet.Repository.Payload.Request.QRCodeRequest
         public int AvailableHours { get; set; }
         public double Longitude { get; set; } // Thêm kinh độ
         public double Latitude { get; set; }  // Thêm vĩ độ
+        public int MaxUsageCount { get; set; }
     }
 }

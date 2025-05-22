@@ -24,4 +24,8 @@ public partial class QrCodeHistory
     public decimal? Longtitude { get; set; }
 
     public decimal? Latitude { get; set; }
+
+    public int MaxUsageCount { get; set; }
+
+    public int CurrentUsageCount { get; set; }
 }
