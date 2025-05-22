@@ -102,18 +102,19 @@ namespace SWallet.Repository.Services.Implements
                 };
             }
 
-            // Bước 2: Lấy danh sách CampaignDetail dựa trên CampaignId
+            // Bước 2: Lấy danh sách CampaignDetail dựa trên CampaignId và CampaignStatus
             var campaignDetailRepo = _unitOfWork.GetRepository<CampaignDetail>();
             Expression<Func<CampaignDetail, bool>> filterQuery;
             if (string.IsNullOrEmpty(searchName))
             {
-                filterQuery = cd => campaignStores.Contains(cd.CampaignId);
+                filterQuery = cd => campaignStores.Contains(cd.CampaignId) && cd.Campaign.Status == 1;
             }
             else
             {
                 filterQuery = cd => campaignStores.Contains(cd.CampaignId) &&
                                    (cd.Campaign.CampaignName.Contains(searchName) ||
-                                    cd.Description.Contains(searchName));
+                                    cd.Description.Contains(searchName)) &&
+                                   cd.Campaign.Status == 1;
             }
 
             var campaignDetails = await campaignDetailRepo.GetPagingListAsync(
@@ -132,11 +133,12 @@ namespace SWallet.Repository.Services.Implements
                     Description = x.Description,
                     State = x.State,
                     Status = x.Status,
+                    CampaignStatus = x.Campaign.Status,
                     VoucherName = x.Voucher.VoucherName,
                     VoucherImage = x.Voucher.Image,
                     CampaignName = x.Campaign.CampaignName,
                     QuantityInStock = x.VoucherItems.Count(v => v.IsLocked != true && v.IsBought != true && v.IsUsed != true),
-                    QuantityInBought = x.VoucherItems.Count(v =>  v.IsBought == true),
+                    QuantityInBought = x.VoucherItems.Count(v => v.IsBought == true),
                     QuantityInUsed = x.VoucherItems.Count(v => v.IsBought == true && v.IsUsed == true)
                 },
                 predicate: filterQuery,
