@@ -86,6 +86,22 @@ namespace SWallet_API.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, "Error getting campaigns");
             }
         }
+        
+        [HttpGet("brand-mobile/{brandId}")]
+        [ProducesResponseType(typeof(IPaginate<CampaignResponse>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<IPaginate<CampaignResponse>>> GetCampaignsByBrandIdMobile(string brandId, string searchName = "", int page = 1, int size = 10) // Pagination parameters
+        {
+            try
+            {
+                var campaignRespone = await _campaignService.GetCampaignsByBrandIdMobile(brandId, searchName, page, size);
+                return Ok(campaignRespone);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting campaigns"); // Log the error
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error getting campaigns");
+            }
+        }
 
         [HttpGet("brandAllStatus/{brandId}")]
         [ProducesResponseType(typeof(IPaginate<CampaignResponse>), StatusCodes.Status200OK)]
