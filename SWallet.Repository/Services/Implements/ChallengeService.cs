@@ -250,24 +250,63 @@ namespace SWallet.Repository.Services.Implements
         public async Task<(bool IsCompleted, decimal Amount)> IsDailyTaskCompletedToday(string studentId, string challengeId)
         {
             var today = TimeUtils.GetVietnamToday();
-            var transactions = await _unitOfWork.GetRepository<ChallengeTransaction>().GetListAsync(
-               predicate: t => t.ChallengeId == challengeId && t.StudentId == studentId &&
-                            t.DateCreated >= today && t.DateCreated < today.AddDays(1));
+            //var transactions = await _unitOfWork.GetRepository<ChallengeTransaction>().GetListAsync(
+            //   predicate: t => t.ChallengeId == challengeId && t.StudentId == studentId &&
+            //                t.DateCreated >= today && t.DateCreated < today.AddDays(1));
 
-            var totalAmount = transactions.Count;
-            var challenge = await _unitOfWork.GetRepository<Challenge>().SingleOrDefaultAsync(predicate: c => c.Id == challengeId);
+            //var totalAmount = transactions.Count;
+            //var challenge = await _unitOfWork.GetRepository<Challenge>().SingleOrDefaultAsync(predicate: c => c.Id == challengeId);
 
-            var isCompletedSC = await _unitOfWork.GetRepository<StudentChallenge>().SingleOrDefaultAsync(
-                selector: sc => sc.IsCompleted,
-                predicate: sc => sc.StudentId == studentId && sc.ChallengeId == challengeId);
-            if ((bool)isCompletedSC)
+            //var isCompletedSC = await _unitOfWork.GetRepository<StudentChallenge>().SingleOrDefaultAsync(
+            //    selector: sc => sc.IsCompleted,
+            //    predicate: sc => sc.StudentId == studentId && sc.ChallengeId == challengeId);
+
+
+            //if ((bool)isCompletedSC)
+            //{
+            //    decimal amount1 = challenge.Amount ?? 0;
+            //    return (true, amount1);
+            //}
+
+            //bool isCompleted = totalAmount >= challenge.Condition;
+            //decimal amount = challenge.Amount ?? 0;
+
+            var studentChallenge = await _unitOfWork.GetRepository<StudentChallenge>()
+                .SingleOrDefaultAsync(
+                    predicate: sc => sc.StudentId == studentId
+                                  && sc.ChallengeId == challengeId
+                                  && sc.Status == true
+                                  && sc.Challenge.Type == (int)ChallengeType.Daily,
+                    include: source => source.Include(sc => sc.Challenge));
+
+            if (studentChallenge == null || studentChallenge.Challenge == null)
             {
-                decimal amount1 = challenge.Amount ?? 0;
-                return (true, amount1);
+                return (false, 0);
             }
 
-            bool isCompleted = totalAmount >= challenge.Condition;
-            decimal amount = challenge.Amount ?? 0;
+            if (studentChallenge.IsCompleted == true)
+            {
+                return (true, studentChallenge.Challenge.Amount ?? 0);
+            }
+
+            // Lấy tất cả giao dịch trong ngày cho studentId và category của challenge
+            var transactions = await _unitOfWork.GetRepository<ChallengeTransaction>()
+                .GetListAsync(
+                    predicate: t => t.StudentId == studentId
+                                 && t.DateCreated >= today
+                                 && t.DateCreated < today.AddDays(1)
+                                 && t.StudentChallenge.Challenge.Category == studentChallenge.Challenge.Category
+                                 && t.Type == 0
+                   );
+
+            // Tính tổng tiến trình dựa trên danh mục
+            decimal totalProgress = studentChallenge.Challenge.Category == "Tiêu sài"
+                ? transactions.Sum(t => t.Amount ?? 0)
+                : transactions.Count;
+
+            // Kiểm tra xem có hoàn thành hay không
+            bool isCompleted = totalProgress >= (studentChallenge.Challenge.Condition ?? 0);
+            decimal amount = studentChallenge.Challenge.Amount ?? 0;
 
             return (isCompleted, amount);
         }
