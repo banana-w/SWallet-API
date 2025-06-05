@@ -281,7 +281,7 @@ namespace SWallet.Repository.Services.Implements
             }
 
             // Kiểm tra khoảng cách
-            const double maxDistanceMeters = 100; // Ngưỡng khoảng cách tối đa (100 mét)
+            const double maxDistanceMeters = 1000; // Ngưỡng khoảng cách tối đa (100 mét)
             var distance = CalculateDistance(qrCodeData.Latitude, qrCodeData.Longitude, request.Latitude, request.Longitude);
             if (distance > maxDistanceMeters)
             {
