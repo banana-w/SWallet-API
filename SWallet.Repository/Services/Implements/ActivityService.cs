@@ -270,7 +270,7 @@ namespace SWallet.Repository.Services.Implements
                     Description = $"Buy Voucher {voucher.VoucherCode}",
                     State = true,
                     Status = true,
-                    DateCreated = DateTime.UtcNow
+                    DateCreated = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, Utils.TimeUtils.GetVietnamTimeZone())
                 }).ToList();
 
                 // Thêm tất cả activities
