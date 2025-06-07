@@ -52,7 +52,7 @@ namespace SWallet_API.Controllers
         string lecturerId,
         [FromQuery] string searchName = "",
         [FromQuery] int page = 1,
-        [FromQuery] int size = 10)
+        [FromQuery] int size = 30)
         {
             try
             {
@@ -130,7 +130,7 @@ namespace SWallet_API.Controllers
 
 
         [HttpGet("campus")]
-        public async Task<ActionResult<IPaginate<LecturerResponse>>> GetAllLecturerByCampusId(string campusId, string searchName = "", int page = 1, int size = 10)
+        public async Task<ActionResult<IPaginate<LecturerResponse>>> GetAllLecturerByCampusId(string campusId, string searchName = "", int page = 1, int size = 30)
         {
 
             var result = await _lecturerService.GetLecturersByCampusId(campusId, searchName, page, size);

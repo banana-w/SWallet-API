@@ -42,30 +42,30 @@ namespace SWallet.Repository.Services.Implements
         }
 
         public async Task<IPaginate<QRCodeUsageHistoryResponse>> GetQRCodeUsageHistory(
-        string lecturerId,
-        string searchName,
-        int page,
-        int size)
+            string lecturerId,
+            string searchName,
+            int page,
+            int size)
         {
             if (string.IsNullOrEmpty(lecturerId))
             {
                 throw new ApiException("LecturerId cannot be empty", 400, "BAD_REQUEST");
             }
 
-            // Lọc các bản ghi QrcodeUsage theo lecturerId trong QrcodeJson
+            // Filter QrcodeUsage records by lecturerId in QrcodeJson
             Expression<Func<QrcodeUsage, bool>> filterQuery = u =>
                 u.QrcodeJson.Contains($"\"LecturerId\":\"{lecturerId}\"");
 
             var qrCodeUsageRepository = _unitOfWork.GetRepository<QrcodeUsage>();
             var usages = await qrCodeUsageRepository.GetPagingListAsync(
-                selector: x => x, // Lấy toàn bộ QrcodeUsage trước, xử lý sau
+                selector: x => x,
                 predicate: filterQuery,
                 orderBy: q => q.OrderByDescending(u => u.UsedAt),
                 page: page,
                 size: size
             );
 
-            // Chuyển đổi sang QRCodeUsageHistoryResponse
+            // Convert to QRCodeUsageHistoryResponse
             var history = new List<QRCodeUsageHistoryResponse>();
             foreach (var usage in usages.Items)
             {
@@ -87,7 +87,7 @@ namespace SWallet.Repository.Services.Implements
                     continue;
                 }
 
-                // Lọc theo tên học sinh nếu có searchName
+                // Filter by student name if searchName is provided
                 if (!string.IsNullOrEmpty(searchName) &&
                     !student.FullName.ToLower().Contains(searchName.ToLower()))
                 {
@@ -103,14 +103,15 @@ namespace SWallet.Repository.Services.Implements
                 });
             }
 
+            // Sort the final history list by UsedAt in descending order
+            history = history.OrderByDescending(h => h.UsedAt).ToList();
+
             return new Paginate<QRCodeUsageHistoryResponse>(
-        history, // source
-        page,    // page
-        size,    // size
-        1        // firstPage, thường là 1
-    );
-
-
+                history,
+                page,
+                size,
+                1
+            );
         }
 
         public async Task<QRCodeResponse> GenerateQRCode(GenerateQRCodeRequest request)
@@ -397,12 +398,9 @@ namespace SWallet.Repository.Services.Implements
                     CreatedAt = x.CreatedAt,
                     MaxUsageCount = x.MaxUsageCount,
                     CurrentUsageCount = x.CurrentUsageCount
-
-
-
                 },
                 predicate: filterQuery,
-                
+                orderBy: q => q.OrderByDescending(x => x.CreatedAt),
                 page: page,
                 size: size);
 
