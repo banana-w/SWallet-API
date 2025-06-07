@@ -156,5 +156,13 @@ namespace SWallet_API.Controllers
             var transactions = await _activityService.GetAllUseVoucherTransactionAsync(studentId, searchName!, page, size);
             return Ok(transactions);
         }
+
+        [HttpGet("UseVoucherStoreTransaction")]
+        [ProducesResponseType(typeof(IPaginate<TransactionResponse>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<IPaginate<TransactionResponse>>> GetUseVoucherStoreTransactions(string? searchName = "", string storeId = "", int page = 1, int size = 10)
+        {
+            var transactions = await _activityService.GetAllUseVoucherStoreTransactionAsync(storeId, searchName!, page, size);
+            return Ok(transactions);
+        }
     }
 }

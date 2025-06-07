@@ -681,6 +681,46 @@ namespace SWallet.Repository.Services.Implements
             return transactions;
         }
 
+        public async Task<IPaginate<TransactionResponse>> GetAllUseVoucherStoreTransactionAsync(string storeId, string search, int page, int size)
+        {
+            if (page < 1)
+                throw new ApiException("Page number must be greater than 0", 400, "INVALID_PAGE");
+            if (size < 1)
+                throw new ApiException("Page size must be greater than 0", 400, "INVALID_SIZE");
+            if (size > 100) // Giới hạn kích thước tối đa
+                size = 100;
+            if (string.IsNullOrEmpty(storeId))
+                throw new ApiException("ID is required", 400, "WALLET_ID_REQUIRED");
+
+            Expression<Func<ActivityTransaction, bool>> filter = x =>
+                x.Activity.StoreId == storeId
+                && string.IsNullOrEmpty(x.WalletId)
+                && x.Amount == 0
+                && (string.IsNullOrEmpty(search) || (x.Activity != null && x.Activity.VoucherItem != null && x.Activity.VoucherItem.Voucher.VoucherName.Contains(search)));
+
+            var transactions = await _unitOfWork.GetRepository<ActivityTransaction>()
+                .GetPagingListAsync(
+                    selector: x => new TransactionResponse
+                    {
+                        Id = x.Id,
+                        TransId = x.ActivityId,
+                        WalletId = x.WalletId,
+                        Amount = x.Amount,
+                        Description = x.Description,
+                        Status = x.Status ?? false,
+                        Name = x.Activity.VoucherItem.Voucher.VoucherName,
+                        CreatedAt = x.Activity.DateCreated
+                    },
+                    predicate: filter,
+                    include: q => q.Include(x => x.Activity).ThenInclude(a => a.VoucherItem).ThenInclude(v => v.Voucher),
+                    orderBy: q => q.OrderByDescending(x => x.Activity.DateCreated),
+                    page: page,
+                    size: size
+                );
+
+            return transactions;
+        }
+
         public Task<bool> DeleteActivityAsync()
         {
             throw new NotImplementedException();
@@ -743,5 +783,7 @@ namespace SWallet.Repository.Services.Implements
 
             return result > 0;
         }
+
+        
     }
 }
