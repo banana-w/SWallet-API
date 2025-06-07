@@ -29,6 +29,11 @@ namespace SWallet.Repository.Services.Interfaces
                      string search,
                      int page,
                      int size);
+        Task<IPaginate<TransactionResponse>> GetAllUseVoucherStoreTransactionAsync(
+                     string storeId,
+                     string search,
+                     int page,
+                     int size);
         Task<IPaginate<VoucherStorageResponse>> GetRedeemedVouchersByStudentAsync(string search, string studentId, bool? isUsed, int page, int size);
         Task<IPaginate<VoucherStorageGroupByBrandResponse>> GetRedeemedVouchersByStudentGroupedByBrandAsync(
             string search, string studentId, bool? isUsed, int page, int size);
