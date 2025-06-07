@@ -151,13 +151,13 @@ namespace SWallet.Repository.Services.Implements
                     "INSUFFICIENT_BALANCE"
                 );
             }
-
-            var availableTime = DateTime.Now.AddHours(request.AvailableHours);
+            var vnTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, Utils.TimeUtils.GetVietnamTimeZone());
+            var availableTime = vnTime.AddHours(request.AvailableHours);
             var qrCodeJson = JsonConvert.SerializeObject(new
             {
                 lecturerId = request.LecturerId,
                 points = request.Points,
-                startOnTime = DateTime.Now,
+                startOnTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, Utils.TimeUtils.GetVietnamTimeZone()),
                 expirationTime = availableTime,
                 availableHours = request.AvailableHours,
                 longitude = request.Longitude,
@@ -196,7 +196,7 @@ namespace SWallet.Repository.Services.Implements
                         Id = Ulid.NewUlid().ToString(),
                         LectureId = request.LecturerId,
                         Points = request.Points,
-                        StartOnTime = DateTime.Now,
+                        StartOnTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, Utils.TimeUtils.GetVietnamTimeZone()),
                         ExpirationTime = availableTime,
                         QrCodeData = qrCodeJson,
                         QrCodeImageUrl = uploadResult.Url.ToString(),
@@ -204,7 +204,7 @@ namespace SWallet.Repository.Services.Implements
                         Latitude = (decimal?)request.Latitude,
                         MaxUsageCount = request.MaxUsageCount, // Lưu số lần tối đa
                         CurrentUsageCount = 0, // Khởi tạo số lần đã sử dụng
-                        CreatedAt = DateTime.Now
+                        CreatedAt = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, Utils.TimeUtils.GetVietnamTimeZone())
                     };
 
                     await _unitOfWork.GetRepository<QrCodeHistory>().InsertAsync(qrCodeHistory);
