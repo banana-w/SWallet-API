@@ -221,6 +221,8 @@ namespace SWallet.Repository.Services.Implements
 
         public async Task<ScanQRCodeResponse> ScanQRCode(ScanQRCodeRequest request)
         {
+            var vnTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, Utils.TimeUtils.GetVietnamTimeZone());
+
             if (request == null || string.IsNullOrEmpty(request.QRCodeJson) || string.IsNullOrEmpty(request.StudentId))
             {
                 throw new ApiException("Dữ liệu yêu cầu không hợp lệ", 400, "BAD_REQUEST");
@@ -258,7 +260,7 @@ namespace SWallet.Repository.Services.Implements
             }
 
             // Kiểm tra thời gian hiệu lực
-            if (DateTime.Now < qrCodeData.StartOnTime || DateTime.Now > qrCodeData.ExpirationTime)
+            if (vnTime < qrCodeData.StartOnTime || vnTime > qrCodeData.ExpirationTime)
             {
                 throw new ApiException("Mã QR đã hết hạn hoặc chưa khả dụng", 400, "EXPIRED_QRCODE");
             }
@@ -329,7 +331,7 @@ namespace SWallet.Repository.Services.Implements
             {
                 QrcodeJson = request.QRCodeJson,
                 StudentId = request.StudentId,
-                UsedAt = DateTime.Now,
+                UsedAt = vnTime,
                 Longtitude = (decimal?)request.Longitude,
                 Latitude = (decimal?)request.Latitude
             };
