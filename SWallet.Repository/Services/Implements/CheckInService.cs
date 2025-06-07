@@ -45,46 +45,37 @@ namespace SWallet.Repository.Services.Implements
 
             try
             {
-                // Lấy lịch sử điểm danh của student
                 var checkInHistories = await _unitOfWork.GetRepository<DailyGiftHistory>()
                     .GetListAsync(predicate: x => x.StudentId == studentId);
 
-                // Tính streak và points
                 int streak = 0;
                 int points = 0;
                 DateTime today = TimeUtils.GetVietnamToday();
                 bool canCheckInToday = true;
-                bool[] checkInHistory = new bool[7]; // Lịch sử 7 ngày trong chuỗi
+                bool[] checkInHistory = new bool[7];
                 int currentDayIndex = 0;
 
                 if (checkInHistories.Any())
                 {
-                    // Sắp xếp theo ngày điểm danh
                     var orderedHistories = checkInHistories.OrderBy(x => x.CheckInDate).ToList();
-
-                    // Tìm bản ghi gần nhất
                     var lastCheckIn = orderedHistories.Last();
                     streak = (int)lastCheckIn.Streak;
                     points = (int)lastCheckIn.Points;
 
-                    // Kiểm tra xem có thể điểm danh hôm nay không
                     canCheckInToday = lastCheckIn.CheckInDate < today;
 
-                    // Nếu đã bỏ lỡ một ngày, reset streak
                     var yesterday = today.AddDays(-1);
-                    if (!orderedHistories.Any(x => x.CheckInDate == yesterday) &&
-                        lastCheckIn.CheckInDate < yesterday)
+                    if (!orderedHistories.Any(x => x.CheckInDate == yesterday) && lastCheckIn.CheckInDate < yesterday)
                     {
-                        streak = 0;
+                        streak = 0; // Reset streak nếu bỏ lỡ một ngày
                     }
 
-                    // Tính currentDayIndex
-                    currentDayIndex = streak == 0 ? 0 : (streak >= 7 ? 6 : (streak - 1) % 7);
+                    // Tính currentDayIndex: Nếu có thể điểm danh hôm nay, lấy ngày tiếp theo
+                    currentDayIndex = canCheckInToday ? (streak % 7) : (streak >= 7 ? 6 : (streak - 1) % 7);
 
-                    // Tính checkInHistory dựa trên streak
                     for (int i = 0; i < 7; i++)
                     {
-                        checkInHistory[i] = i < streak && i < 7; // Đánh dấu true cho các ngày đã điểm danh
+                        checkInHistory[i] = i < streak && i < 7;
                     }
                 }
 
@@ -95,7 +86,7 @@ namespace SWallet.Repository.Services.Implements
                     Points = points,
                     CanCheckInToday = canCheckInToday,
                     CurrentDayIndex = currentDayIndex,
-                    RewardPoints = 0 
+                    RewardPoints = 0
                 };
             }
             catch (Exception ex)
@@ -189,26 +180,7 @@ namespace SWallet.Repository.Services.Implements
             }
         }
 
-        public async Task<(bool Success, string Message, int PointsAwarded)> CheckInWithQR(string studentId, string qrCode, double userLat, double userLong)
-        {
-            // Tìm địa điểm từ qrCode
-            var location = await _unitOfWork.GetRepository<Location>().SingleOrDefaultAsync(predicate: l => l.Qrcode == qrCode);
-            if (location == null)
-            {
-                return (false, "Mã QR không hợp lệ hoặc địa điểm không tồn tại", 0);
-            }
-
-            // Tính khoảng cách và kiểm tra bán kính
-            double distance = CalculateDistance(userLat, userLong, (double)location.Latitue, (double)location.Longtitude);
-            if (distance > 100)
-            {
-                return (false, "Bạn không ở gần địa điểm này để check-in", 0);
-            }
-
-            // Ghi lại check-in
-            return await RecordCheckIn(studentId, location.Id);
-        }
-
+       
         private async Task<(bool Success, string Message, int PointsAwarded)> RecordCheckIn(string studentId, string locationId)
         {
             var today = TimeUtils.GetVietnamToday();
@@ -270,6 +242,27 @@ namespace SWallet.Repository.Services.Implements
                 return (false, $"Lỗi khi xử lý check-in: {ex.Message}", 0);
             }
         }
+
+        public async Task<(bool Success, string Message, int PointsAwarded)> CheckInWithQR(string studentId, string qrCode, double userLat, double userLong)
+        {
+            // Tìm địa điểm từ qrCode
+            var location = await _unitOfWork.GetRepository<Location>().SingleOrDefaultAsync(predicate: l => l.Qrcode == qrCode);
+            if (location == null)
+            {
+                return (false, "Mã QR không hợp lệ hoặc địa điểm không tồn tại", 0);
+            }
+
+            // Tính khoảng cách và kiểm tra bán kính
+            double distance = CalculateDistance(userLat, userLong, (double)location.Latitue, (double)location.Longtitude);
+            if (distance > 100)
+            {
+                return (false, "Bạn không ở gần địa điểm này để check-in", 0);
+            }
+
+            // Ghi lại check-in
+            return await RecordCheckIn(studentId, location.Id);
+        }
+
 
         private double CalculateDistance(double lat1, double lon1, double lat2, double lon2)
         {
